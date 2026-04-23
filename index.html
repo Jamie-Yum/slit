@@ -160,6 +160,14 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .board-time-val { font-family:var(--mono); font-size:18px; font-weight:600; color:var(--text3); }
 .board-time-val.set-st { color:var(--start); }
 .board-time-val.set-et { color:var(--end); }
+.board-time-edit {
+  width:100%; background:none; border:none; outline:none;
+  font-family:var(--mono); font-size:20px; font-weight:700;
+  color:var(--text3); text-align:center; cursor:pointer;
+  -webkit-appearance:none; padding:0;
+}
+.board-time-box.box-start-t .board-time-edit:not(:placeholder-shown) { color:var(--start); }
+.board-time-box.box-end-t .board-time-edit:not(:placeholder-shown) { color:var(--end); }
 .board-dur-mid { flex:1; text-align:center; }
 .board-dur-text { font-size:12px; color:var(--text2); margin-bottom:4px; font-weight:500; }
 .board-dur-bar { height:3px; background:var(--border); border-radius:2px; position:relative; overflow:hidden; }
@@ -300,7 +308,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .htl-wrap { background:var(--surface); border:2px solid var(--border2); border-radius:var(--radius-lg); padding:16px; margin-bottom:12px; }
 .htl-label { font-family:var(--mono); font-size:10px; color:var(--text2); letter-spacing:0.12em; text-transform:uppercase; font-weight:700; margin-bottom:12px; }
 .htl-scroll-outer { overflow-x:auto; padding-bottom:6px; -webkit-overflow-scrolling:touch; }
-.htl-scroll-inner { min-width:640px; position:relative; }
+.htl-scroll-inner { min-width:1200px; position:relative; }
 .htl-hours { height:22px; position:relative; margin-bottom:6px; }
 .htl-hour-tick {
   position:absolute; transform:translateX(-50%);
@@ -311,7 +319,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
   transform:translateX(-50%); width:1.5px; height:5px; background:var(--border2);
 }
 .htl-track {
-  position:relative; height:76px;
+  position:relative; height:80px;
   background:var(--surface2); border-radius:10px;
   cursor:crosshair; overflow:visible;
   border:2px solid var(--border2);
@@ -371,6 +379,25 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 }
 .htl-hint-btn.primary { background:var(--ft); border-color:var(--ft); color:white; font-weight:600; }
 .htl-hint-btn.primary:hover { background:#1244a0; }
+
+/* 선택 시간 */
+.sel-time-wrap { background:var(--surface); border:2px solid var(--border2); border-radius:var(--radius-lg); padding:14px 16px; margin-bottom:8px; }
+.sel-time-label { font-family:var(--mono); font-size:10px; color:var(--text3); letter-spacing:0.12em; text-transform:uppercase; font-weight:700; margin-bottom:10px; }
+.sel-time-row { display:flex; align-items:center; gap:10px; }
+.sel-time-box { flex:1; }
+.sel-time-tag { font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px; }
+.sel-time-input {
+  width:100%; background:var(--surface2); border:2px solid var(--border2);
+  border-radius:var(--radius); padding:10px 12px;
+  font-family:var(--mono); font-size:18px; font-weight:600; color:var(--text);
+  outline:none; transition:border-color 0.12s; -webkit-appearance:none;
+  text-align:center;
+}
+.sel-time-input:focus { background:white; }
+.sel-time-input.has-start { border-color:var(--start-border); color:var(--start); }
+.sel-time-input.has-end { border-color:var(--end-border); color:var(--end); }
+.sel-time-arrow { font-size:18px; color:var(--text3); font-weight:500; flex-shrink:0; }
+.sel-time-dur { font-family:var(--mono); font-size:13px; font-weight:700; color:var(--accent); min-width:50px; text-align:center; flex-shrink:0; }
 
 /* 빠른 슬릿 버튼 */
 .quick-row { display:flex; gap:8px; margin-bottom:16px; align-items:stretch; }
@@ -450,6 +477,55 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
   font-size:13px; cursor:pointer; transition:all 0.12s;
 }
 .reflection-prompt-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-bg); }
+
+/* 메모 */
+.memo-wrap { background:var(--surface); border:2px solid var(--border2); border-radius:var(--radius-lg); padding:16px; margin-top:8px; }
+.memo-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.memo-title { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--text2); letter-spacing:0.1em; text-transform:uppercase; }
+.memo-date { font-family:var(--mono); font-size:10px; color:var(--text3); }
+.memo-types { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
+.memo-type-btn { font-size:12px; padding:5px 12px; border-radius:20px; border:1.5px solid var(--border2); background:white; color:var(--text2); cursor:pointer; transition:all 0.12s; font-weight:500; }
+.memo-type-btn.active { background:var(--text); color:white; border-color:transparent; font-weight:700; }
+.memo-textarea { width:100%; background:var(--surface2); border:1.5px solid var(--border2); border-radius:var(--radius); padding:12px; font-family:var(--sans); font-size:14px; color:var(--text); resize:none; outline:none; min-height:80px; line-height:1.7; transition:border-color 0.12s; }
+.memo-textarea:focus { border-color:var(--accent); background:white; }
+.memo-item { background:var(--surface2); border-radius:var(--radius); padding:12px 14px; margin-bottom:8px; border-left:3px solid var(--border2); }
+.memo-item-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.memo-item-type { font-family:var(--mono); font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; }
+.memo-item-time { font-family:var(--mono); font-size:10px; color:var(--text3); margin-left:auto; }
+.memo-item-content { font-size:13px; color:var(--text); line-height:1.7; white-space:pre-wrap; }
+.memo-item-del { font-size:11px; color:var(--text3); background:none; border:none; cursor:pointer; padding:2px 6px; }
+.memo-item-del:hover { color:#c0392b; }
+
+/* 타임라인 메모 마커 */
+.htl-memo-marker {
+  position:absolute; bottom:0; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center;
+  pointer-events:none; z-index:8;
+}
+.htl-memo-dot { width:8px; height:8px; border-radius:50%; box-shadow:0 0 0 2px white; margin-bottom:2px; }
+.htl-memo-label { font-family:var(--mono); font-size:9px; font-weight:700; padding:1px 5px; border-radius:4px; white-space:nowrap; }
+
+/* 통계 메모 타임라인 */
+.memo-timeline-row { display:flex; align-items:flex-start; gap:10px; margin-bottom:12px; }
+.memo-timeline-time { font-family:var(--mono); font-size:11px; font-weight:600; color:var(--text2); width:38px; flex-shrink:0; padding-top:2px; }
+.memo-timeline-line { display:flex; flex-direction:column; align-items:center; flex-shrink:0; width:16px; }
+.memo-timeline-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+.memo-timeline-connector { width:2px; background:var(--border); flex:1; min-height:16px; margin-top:4px; }
+.memo-timeline-card { flex:1; background:white; border:1.5px solid var(--border); border-left:3px solid; border-radius:var(--radius); padding:10px 12px; }
+
+/* 통계/가꾸기 탭 */
+.stats-tab { font-family:var(--mono); font-size:11px; font-weight:600; padding:7px 16px; border-radius:var(--radius); border:1.5px solid var(--border2); background:white; color:var(--text2); cursor:pointer; transition:all 0.12s; letter-spacing:0.04em; }
+.stats-tab.active { background:var(--text); color:white; border-color:transparent; }
+.vmv-card { background:var(--surface); border:1.5px solid var(--border2); border-radius:var(--radius-lg); padding:16px 18px; margin-bottom:12px; }
+.vmv-card-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.vmv-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:16px; font-weight:700; flex-shrink:0; }
+.vmv-label { font-size:15px; font-weight:700; color:var(--text); }
+.vmv-sublabel { font-size:11px; color:var(--text3); margin-top:1px; }
+.vmv-edit-btn { margin-left:auto; background:none; border:1px solid var(--border2); border-radius:var(--radius); padding:5px 10px; font-size:12px; color:var(--text2); cursor:pointer; transition:all 0.12s; flex-shrink:0; }
+.vmv-edit-btn:hover { border-color:var(--accent); color:var(--accent); }
+.vmv-content { min-height:32px; }
+.vmv-empty { font-size:13px; color:var(--text3); font-style:italic; }
+.vmv-text { font-size:14px; color:var(--text); line-height:1.7; white-space:pre-wrap; }
 
 /* 빠른 슬릿 모달 */
 .quick-modal { max-height:70vh; }
@@ -543,7 +619,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <button class="active" onclick="showView('today',this)">오늘</button>
       <button onclick="showView('plan',this)">계획</button>
       <button onclick="showView('stats',this)">통계</button>
-      <button onclick="showView('people',this)">사람</button>
+      <button onclick="showView('garden',this)">가꾸기</button>
     </nav>
   </header>
 
@@ -559,9 +635,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <div class="htl-label">오늘 타임라인</div>
         <div class="htl-scroll-outer">
           <div class="htl-scroll-inner" id="htlInner">
-            <!-- 시간 눈금 -->
             <div class="htl-hours" id="htlHours"></div>
-            <!-- 트랙 -->
             <div class="htl-track" id="htlTrack"
               onmousedown="htlStartDrag(event)"
               ontouchstart="htlStartTouch(event)"
@@ -574,39 +648,50 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
             </div>
           </div>
         </div>
-        <!-- 선택 결과 + 상황 선택 -->
-        <div class="htl-hint" id="htlHint" style="display:none">
-          <div class="htl-hint-title" id="htlHintText"></div>
+      </div>
 
-          <!-- 모드 선택 -->
-          <div style="display:flex;gap:6px;margin-bottom:12px;">
-            <button id="htlModeFt" onclick="htlSelectMode('between')" style="flex:1;padding:8px;border-radius:var(--radius);border:2px solid var(--ft);background:var(--ft-bg);color:var(--ft);font-size:13px;font-weight:700;cursor:pointer;">from to</button>
-            <button id="htlModeIng" onclick="htlSelectMode('during')" style="flex:1;padding:8px;border-radius:var(--radius);border:2px solid var(--border2);background:white;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">~ing</button>
+      <!-- 선택 시간 -->
+      <div class="sel-time-wrap">
+        <div class="sel-time-label">선택 시간</div>
+        <div class="sel-time-row">
+          <div class="sel-time-box">
+            <div class="sel-time-tag" style="color:var(--start);">시작</div>
+            <input class="sel-time-input" type="time" id="selStart" placeholder="--:--" oninput="selTimeChanged()">
           </div>
-
-          <!-- 상황 선택 -->
-          <div style="margin-bottom:12px;">
-            <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;" id="htlSitLabel" style="color:var(--ft)">상황 (선택)</div>
-            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;" id="htlCatTabs"></div>
-            <div style="display:flex;gap:5px;flex-wrap:wrap;" id="htlActBtns"></div>
+          <div class="sel-time-arrow">→</div>
+          <div class="sel-time-box">
+            <div class="sel-time-tag" style="color:var(--end);">종료</div>
+            <input class="sel-time-input" type="time" id="selEnd" placeholder="--:--" oninput="selTimeChanged()">
           </div>
-
-          <div style="display:flex;gap:6px;">
-            <button class="htl-hint-btn primary" onclick="htlConfirm()">슬릿 만들기</button>
-            <button class="htl-hint-btn" onclick="htlClear()">취소</button>
-          </div>
+          <div class="sel-time-dur" id="selDur"></div>
+        </div>
+        <div id="selTimeActions" style="display:none;margin-top:10px;display:none;">
+          <button class="step-next-btn dark" style="margin-bottom:0;" onclick="selTimeConfirm()">슬릿 만들기</button>
         </div>
       </div>
 
-      <!-- 버튼 -->
-      <div class="quick-row">
+      <!-- ⚡ 지금 바로 -->
+      <div class="quick-row" style="margin-top:8px;">
         <button class="btn-quick" onclick="openQuickSlit()">
           <span class="btn-quick-icon">⚡</span>지금 바로
         </button>
-        <button class="btn-add-big" onclick="openNewSlit()" style="flex:1;margin-top:0;">
-          <span class="btn-add-plus">+</span>
-          <span>새 슬릿</span>
-        </button>
+      </div>
+
+      <!-- 메모 -->
+      <div class="memo-wrap">
+        <div class="memo-header">
+          <span class="memo-title">메모</span>
+          <span class="memo-date" id="memoDateLabel"></span>
+        </div>
+        <!-- 종류 선택 -->
+        <div class="memo-types" id="memoTypes"></div>
+        <!-- 입력 -->
+        <textarea class="memo-textarea" id="memoInput" placeholder="지금 이 순간을 기록해보세요..."></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+          <button class="htl-hint-btn primary" onclick="saveMemo()">기록하기</button>
+        </div>
+        <!-- 오늘 메모 목록 -->
+        <div id="todayMemos" style="margin-top:14px;"></div>
       </div>
     </div>
 
@@ -626,13 +711,108 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <button class="period-tab" onclick="setPeriod('half',this)">반기</button>
         <button class="period-tab" onclick="setPeriod('year',this)">올해</button>
       </div>
+      <!-- 통계 탭 -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;">
+        <button class="stats-tab active" id="statsTabSlit" onclick="switchStatsTab('slit',this)">슬릿</button>
+        <button class="stats-tab" id="statsTabMemo" onclick="switchStatsTab('memo',this)">메모</button>
+      </div>
       <div id="statsContent"></div>
+      <div id="statsMemoContent" style="display:none;"></div>
     </div>
 
-    <div id="view-people" class="view">
-      <div class="section-title">사람 & 그룹</div>
-      <div id="peopleGrid" class="people-grid"></div>
-      <button class="btn-add" style="margin-top:12px" onclick="openPersonModal()">+ 사람 / 그룹 추가</button>
+    <!-- 가꾸기 (VMV + 사람) -->
+    <div id="view-garden" class="view">
+      <!-- 탭 -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;">
+        <button class="stats-tab active" id="gardenTabVmv" onclick="switchGardenTab('vmv',this)">VMV</button>
+        <button class="stats-tab" id="gardenTabPeople" onclick="switchGardenTab('people',this)">사람</button>
+      </div>
+
+      <!-- VMV -->
+      <div id="gardenVmv">
+        <div class="section-title">Vision · Mission · Value</div>
+        <div class="vmv-card" id="vmvVisionCard">
+          <div class="vmv-card-header">
+            <div class="vmv-icon" style="background:#e8f0fb;color:var(--ft);">V</div>
+            <div><div class="vmv-label">Vision</div><div class="vmv-sublabel">내가 되고 싶은 모습</div></div>
+            <button class="vmv-edit-btn" onclick="toggleVmvEdit('vision')">✎</button>
+          </div>
+          <div class="vmv-content" id="vmvVisionView">
+            <p class="vmv-empty" id="vmvVisionEmpty">아직 Vision이 없어요. ✎ 를 눌러 작성해보세요.</p>
+            <p class="vmv-text" id="vmvVisionText" style="display:none;"></p>
+          </div>
+          <div class="vmv-edit" id="vmvVisionEdit" style="display:none;">
+            <textarea class="form-textarea" id="vmvVisionInput" placeholder="5년 후 나는 어떤 사람이 되어 있을까?" style="min-height:100px;"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
+              <button class="btn btn-ghost btn-sm" onclick="cancelVmvEdit('vision')">취소</button>
+              <button class="btn btn-primary btn-sm" onclick="saveVmv('vision')">저장</button>
+            </div>
+          </div>
+        </div>
+        <div class="vmv-card" id="vmvMissionCard">
+          <div class="vmv-card-header">
+            <div class="vmv-icon" style="background:var(--ing-bg);color:var(--ing);">M</div>
+            <div><div class="vmv-label">Mission</div><div class="vmv-sublabel">내가 매일 해야 할 것</div></div>
+            <button class="vmv-edit-btn" onclick="toggleVmvEdit('mission')">✎</button>
+          </div>
+          <div class="vmv-content" id="vmvMissionView">
+            <p class="vmv-empty" id="vmvMissionEmpty">아직 Mission이 없어요. ✎ 를 눌러 작성해보세요.</p>
+            <p class="vmv-text" id="vmvMissionText" style="display:none;"></p>
+          </div>
+          <div class="vmv-edit" id="vmvMissionEdit" style="display:none;">
+            <textarea class="form-textarea" id="vmvMissionInput" placeholder="나는 매일 무엇을 해야 하는가?" style="min-height:100px;"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
+              <button class="btn btn-ghost btn-sm" onclick="cancelVmvEdit('mission')">취소</button>
+              <button class="btn btn-primary btn-sm" onclick="saveVmv('mission')">저장</button>
+            </div>
+          </div>
+        </div>
+        <div class="vmv-card" id="vmvValueCard">
+          <div class="vmv-card-header">
+            <div class="vmv-icon" style="background:var(--end-bg);color:var(--end);">V</div>
+            <div><div class="vmv-label">Value</div><div class="vmv-sublabel">내가 중요하게 여기는 것</div></div>
+            <button class="vmv-edit-btn" onclick="toggleVmvEdit('value')">✎</button>
+          </div>
+          <div class="vmv-content" id="vmvValueView">
+            <p class="vmv-empty" id="vmvValueEmpty">아직 Value가 없어요. ✎ 를 눌러 작성해보세요.</p>
+            <div class="chip-list" id="vmvValueTags" style="display:none;"></div>
+          </div>
+          <div class="vmv-edit" id="vmvValueEdit" style="display:none;">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">쉼표로 구분. 예: 성장, 관계, 자유</div>
+            <input class="form-input" id="vmvValueInput" placeholder="성장, 관계, 자유, 창조...">
+            <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
+              <button class="btn btn-ghost btn-sm" onclick="cancelVmvEdit('value')">취소</button>
+              <button class="btn btn-primary btn-sm" onclick="saveVmv('value')">저장</button>
+            </div>
+          </div>
+        </div>
+        <div class="section-title" style="margin-top:20px;">오늘의 다짐</div>
+        <div class="vmv-card">
+          <div class="vmv-card-header">
+            <div class="vmv-icon" style="background:var(--start-bg);color:var(--start);">!</div>
+            <div style="flex:1;"><div class="vmv-label">오늘 나는</div><div class="vmv-sublabel" id="todayDateLabel"></div></div>
+            <button class="vmv-edit-btn" onclick="toggleVmvEdit('today')">✎</button>
+          </div>
+          <div class="vmv-content" id="vmvTodayView">
+            <p class="vmv-empty" id="vmvTodayEmpty">오늘의 한 줄 다짐을 적어보세요.</p>
+            <p class="vmv-text" id="vmvTodayText" style="display:none;font-size:16px;font-weight:600;"></p>
+          </div>
+          <div class="vmv-edit" id="vmvTodayEdit" style="display:none;">
+            <input class="form-input" id="vmvTodayInput" placeholder="오늘 나는 _____ 하는 사람이다.">
+            <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
+              <button class="btn btn-ghost btn-sm" onclick="cancelVmvEdit('today')">취소</button>
+              <button class="btn btn-primary btn-sm" onclick="saveVmv('today')">저장</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 사람 -->
+      <div id="gardenPeople" style="display:none;">
+        <div class="section-title">사람 & 그룹</div>
+        <div id="peopleGrid" class="people-grid"></div>
+        <button class="btn-add" style="margin-top:12px" onclick="openPersonModal()">+ 사람 / 그룹 추가</button>
+      </div>
     </div>
   </main>
 </div>
@@ -671,18 +851,24 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
           <div class="board-during-name" id="b-during-act">—</div>
         </div>
       </div>
+      <!-- 숨겨진 input (JS 호환용) -->
+      <input type="hidden" id="startDateInput">
+      <input type="hidden" id="startTimeInput">
+      <input type="hidden" id="endDateInput">
+      <input type="hidden" id="endTimeInput">
+
       <div class="board-time-row">
-        <div class="board-time-box box-start-t">
+        <div class="board-time-box box-start-t" style="flex:1;">
           <div class="board-time-label lbl-st">시작</div>
-          <div class="board-time-val" id="b-start-time">--:--</div>
+          <input class="board-time-edit" id="b-start-time" type="time" oninput="overviewTimeChanged('start')" placeholder="--:--">
         </div>
         <div class="board-dur-mid">
           <div class="board-dur-text" id="b-duration">—</div>
           <div class="board-dur-bar"><div class="board-dur-fill" id="b-dur-fill" style="width:0%"></div></div>
         </div>
-        <div class="board-time-box box-end-t" onclick="goStep('end-time')">
-          <div class="board-time-label lbl-et">종료 ✎</div>
-          <div class="board-time-val" id="b-end-time">--:--</div>
+        <div class="board-time-box box-end-t" style="flex:1;">
+          <div class="board-time-label lbl-et">종료</div>
+          <input class="board-time-edit" id="b-end-time" type="time" oninput="overviewTimeChanged('end')" placeholder="--:--">
         </div>
       </div>
     </div>
@@ -730,54 +916,13 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <div class="cat-section-label"><span class="lbl">소분류</span><div class="line"></div><span class="cur" id="curCatLabel">나 혼자</span></div>
       <p id="catDesc" style="font-size:11px;color:var(--text3);margin:-4px 0 10px;"></p>
       <div class="act-btns" id="actBtns"></div>
+      <button class="step-next-btn dark" onclick="goStep('extra')" style="margin-top:4px;">다음 — 할 일 & 사람</button>
     </div>
 
-    <!-- STEP 2: 종료 시간 -->
-    <div class="step" id="step-end-time">
-      <div class="step-header">
-        <div class="step-num green">2</div>
-        <span class="step-title">종료 시간</span>
-        <span class="step-sub" id="end-step-sub"></span>
-      </div>
-      <div class="date-btns" id="endDateBtns"></div>
-      <div class="form-group">
-        <label class="form-label">날짜</label>
-        <input class="form-input" type="date" id="endDateInput" oninput="updateBoard()">
-      </div>
-      <div class="form-group">
-        <label class="form-label">시간</label>
-        <input class="form-input" type="time" id="endTimeInput" oninput="updateBoard()">
-      </div>
-      <button class="step-next-btn green" onclick="goStep('start-time')">다음 — 시작 시간 설정</button>
-      <button class="step-back-btn" onclick="goStep('situation')">← 상황 다시 선택</button>
-    </div>
-
-    <!-- STEP 3: 시작 시간 -->
-    <div class="step" id="step-start-time">
-      <div class="step-header">
-        <div class="step-num blue">3</div>
-        <span class="step-title">시작 시간</span>
-        <span class="step-sub" id="start-step-sub"></span>
-      </div>
-      <div class="date-btns" id="startQuickBtns"></div>
-      <div class="form-row" style="margin-bottom:14px;">
-        <div>
-          <label class="form-label">날짜</label>
-          <input class="form-input" type="date" id="startDateInput" oninput="updateBoard()">
-        </div>
-        <div>
-          <label class="form-label">시간</label>
-          <input class="form-input" type="time" id="startTimeInput" oninput="updateBoard()">
-        </div>
-      </div>
-      <button class="step-next-btn dark" onclick="goStep('extra')">다음 — 할 일 & 사람</button>
-      <button class="step-back-btn" onclick="goStep('end-time')">← 종료 시간 수정</button>
-    </div>
-
-    <!-- STEP 4: 할 일 & 사람 & 제목 -->
+    <!-- STEP 2: 할 일 & 사람 & 제목 -->
     <div class="step" id="step-extra">
       <div class="step-header">
-        <div class="step-num dark">4</div>
+        <div class="step-num dark">2</div>
         <span class="step-title">할 일 & 사람</span>
       </div>
 
@@ -946,22 +1091,23 @@ const CATS=[
    acts:['산책','카페','멍때리기','낮잠','목욕','아무것도 안 하기']},
 ];
 
-let slits=[],people=[],pMap={},tMap={};
+let slits=[],people=[],pMap={},tMap={},memos=[];
 let slitMode='between',picks={start:null,end:null,during:null},activeSlot='start',curCat=0;
 let draftTasks=[],selPeople=[],draftAvoids=[],curPeriod='day',pType='person';
 
 async function init() {
-  await loadAll(); startClock(); renderToday(); renderStats();
+  await loadAll(); startClock(); renderToday(); renderStats(); initMemo();
 }
 async function loadAll() {
   try {
-    const [s,p,par,t]=await Promise.all([
+    const [s,p,par,t,m]=await Promise.all([
       sb.from('slit_slits').select('*').order('start_time'),
       sb.from('slit_people').select('*').order('name'),
       sb.from('slit_participants').select('*'),
       sb.from('slit_tasks').select('*').order('order_index'),
+      sb.from('slit_memos').select('*').order('created_at',{ascending:false}),
     ]);
-    slits=s.data||[]; people=p.data||[];
+    slits=s.data||[]; people=p.data||[]; memos=m.data||[];
     pMap={}; (par.data||[]).forEach(r=>{if(!pMap[r.slit_id])pMap[r.slit_id]=[];pMap[r.slit_id].push(r.person_id);});
     tMap={}; (t.data||[]).forEach(r=>{if(!tMap[r.slit_id])tMap[r.slit_id]=[];tMap[r.slit_id].push(r);});
   } catch(e){showToast('DB 연결 중... SQL 테이블 생성이 필요해요');}
@@ -991,14 +1137,235 @@ function showView(name,btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active'); btn.classList.add('active');
-  if(name==='today')renderToday();
+  if(name==='today'){renderToday();renderTodayMemos();}
   if(name==='plan')renderPlan();
   if(name==='stats')renderStats();
-  if(name==='people')renderPeople();
+  if(name==='garden'){renderVmv();renderPeople();}
 }
+
+// ── 메모 ──
+const MEMO_TYPES=['인사이트','약속','필사','계획','영어','기타'];
+const MEMO_COLORS={
+  '인사이트':['#fff3e0','#e65100'],
+  '약속':['#e8f5e9','#2e7d32'],
+  '필사':['#e3f2fd','#1565c0'],
+  '계획':['#f3e5f5','#6a1b9a'],
+  '영어':['#e0f7fa','#00695c'],
+  '기타':['var(--surface2)','var(--text2)'],
+};
+let curMemoType='인사이트';
+
+function initMemo(){
+  const now=new Date();
+  const days=['일','월','화','수','목','금','토'];
+  const lbl=document.getElementById('memoDateLabel');
+  if(lbl) lbl.textContent=`${now.getMonth()+1}.${now.getDate()} ${days[now.getDay()]}`;
+  document.getElementById('memoTypes').innerHTML=MEMO_TYPES.map(t=>
+    `<button class="memo-type-btn ${t===curMemoType?'active':''}" onclick="selectMemoType('${t}',this)">${t}</button>`
+  ).join('');
+  renderTodayMemos();
+}
+function selectMemoType(t,el){
+  curMemoType=t;
+  document.querySelectorAll('.memo-type-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+async function saveMemo(){
+  const content=document.getElementById('memoInput').value.trim();
+  if(!content){showToast('내용을 입력해주세요');return;}
+  const{error}=await sb.from('slit_memos').insert({type:curMemoType,content});
+  if(error){showToast('저장 실패: '+error.message);return;}
+  document.getElementById('memoInput').value='';
+  await loadAll();
+  renderTodayMemos();
+  showToast('메모가 기록됐어요!');
+}
+function renderTodayMemos(){
+  const now=new Date();
+  const today=toDateStr(now);
+  const todayMemos=memos.filter(m=>m.created_at.startsWith(today));
+  const el=document.getElementById('todayMemos');
+  if(!el)return;
+  if(!todayMemos.length){el.innerHTML='<div style="text-align:center;padding:16px 0;font-size:13px;color:var(--text3);">오늘 기록한 메모가 없어요</div>';return;}
+  el.innerHTML=todayMemos.map(m=>{
+    const [bg,color]=MEMO_COLORS[m.type]||MEMO_COLORS['기타'];
+    const t=new Date(m.created_at);
+    return `<div class="memo-item" style="border-left-color:${color};">
+      <div class="memo-item-header">
+        <span class="memo-item-type" style="background:${bg};color:${color};">${m.type}</span>
+        <span class="memo-item-time">${fmtTime(t)}</span>
+        <button class="memo-item-del" onclick="deleteMemo('${m.id}')">×</button>
+      </div>
+      <div class="memo-item-content">${m.content}</div>
+    </div>`;
+  }).join('');
+}
+async function deleteMemo(id){
+  await sb.from('slit_memos').delete().eq('id',id);
+  await loadAll();renderTodayMemos();showToast('삭제됐어요');
+}
+
+// ── 통계 탭 (슬릿 / 메모) ──
+let curStatsTab='slit';
+function switchStatsTab(tab,btn){
+  curStatsTab=tab;
+  document.querySelectorAll('.stats-tab').forEach(b=>{
+    if(b.id&&b.id.startsWith('statsTab'))b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  document.getElementById('statsContent').style.display=tab==='slit'?'block':'none';
+  document.getElementById('statsMemoContent').style.display=tab==='memo'?'block':'none';
+  if(tab==='memo')renderStatsMemos();
+}
+function renderStatsMemos(){
+  const now=new Date();let start,end;
+  if(curPeriod==='day'){start=new Date(now);start.setHours(0,0,0,0);end=new Date(now);end.setHours(23,59,59,999);}
+  else if(curPeriod==='week'){const d=now.getDay();start=new Date(now);start.setDate(now.getDate()-d);start.setHours(0,0,0,0);end=new Date(start);end.setDate(start.getDate()+6);end.setHours(23,59,59,999);}
+  else if(curPeriod==='month'){start=new Date(now.getFullYear(),now.getMonth(),1);end=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59);}
+  else if(curPeriod==='quarter'){const q=Math.floor(now.getMonth()/3);start=new Date(now.getFullYear(),q*3,1);end=new Date(now.getFullYear(),q*3+3,0,23,59,59);}
+  else if(curPeriod==='half'){const h=now.getMonth()<6?0:6;start=new Date(now.getFullYear(),h,1);end=new Date(now.getFullYear(),h+6,0,23,59,59);}
+  else{start=new Date(now.getFullYear(),0,1);end=new Date(now.getFullYear(),11,31,23,59,59);}
+
+  const filtered=[...memos].filter(m=>{const t=new Date(m.created_at);return t>=start&&t<=end;})
+    .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const el=document.getElementById('statsMemoContent');
+  if(!filtered.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">✏</div><div class="empty-text">이 기간에 메모가 없어요</div></div>`;
+    return;
+  }
+
+  // 타입별 집계 칩
+  const byType={};
+  filtered.forEach(m=>{byType[m.type]=(byType[m.type]||0)+1;});
+  const typeBar=Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([t,c])=>{
+    const [bg,color]=MEMO_COLORS[t]||MEMO_COLORS['기타'];
+    return `<span class="chip" style="background:${bg};border-color:${color};color:${color};cursor:default;">${t} <strong>${c}</strong></span>`;
+  }).join('');
+
+  // 날짜별 묶기 → 날짜 내 시간 타임라인
+  const byDate={};
+  filtered.forEach(m=>{
+    const d=toDateStr(new Date(m.created_at));
+    if(!byDate[d])byDate[d]=[];
+    byDate[d].push(m);
+  });
+
+  const dateBlocks=Object.entries(byDate).reverse().map(([date,list])=>{
+    const dateLabel=new Date(date).toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+    // 시간 타임라인 — 각 메모를 시간순으로
+    const rows=list.map(m=>{
+      const t=new Date(m.created_at);
+      const [bg,color]=MEMO_COLORS[m.type]||MEMO_COLORS['기타'];
+      return `<div class="memo-timeline-row">
+        <div class="memo-timeline-time">${fmtTime(t)}</div>
+        <div class="memo-timeline-line">
+          <div class="memo-timeline-dot" style="background:${color};box-shadow:0 0 0 3px ${bg};"></div>
+          ${list.indexOf(m)<list.length-1?'<div class="memo-timeline-connector"></div>':''}
+        </div>
+        <div class="memo-timeline-card" style="border-left-color:${color};">
+          <span class="memo-item-type" style="background:${bg};color:${color};font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">${m.type}</span>
+          <div class="memo-item-content" style="margin-top:6px;">${m.content}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div style="margin-bottom:20px;">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text2);font-weight:700;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">${dateLabel} · ${list.length}개</div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div style="margin-bottom:16px;">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-bottom:8px;font-weight:600;">총 ${filtered.length}개</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">${typeBar}</div>
+    </div>
+    ${dateBlocks}
+  `;
+}
+
+// ── 가꾸기 탭 ──
+function switchGardenTab(tab,btn){
+  document.querySelectorAll('.stats-tab').forEach(b=>{
+    if(b.id&&b.id.startsWith('gardenTab'))b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  document.getElementById('gardenVmv').style.display=tab==='vmv'?'block':'none';
+  document.getElementById('gardenPeople').style.display=tab==='people'?'block':'none';
+}
+
+// ── VMV ──
+const VMV_KEYS=['vision','mission','value','today'];
+
+function renderVmv(){
+  const now=new Date();
+  const days=['일','월','화','수','목','금','토'];
+  const lbl=document.getElementById('todayDateLabel');
+  if(lbl) lbl.textContent=`${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())} ${days[now.getDay()]}`;
+
+  VMV_KEYS.forEach(k=>{
+    const val=localStorage.getItem('slit_vmv_'+k)||'';
+    applyVmvValue(k,val);
+  });
+}
+
+function applyVmvValue(k,val){
+  if(k==='value'){
+    const empty=document.getElementById('vmvValueEmpty');
+    const tags=document.getElementById('vmvValueTags');
+    if(!val){empty.style.display='block';tags.style.display='none';return;}
+    empty.style.display='none';
+    const arr=val.split(',').map(v=>v.trim()).filter(Boolean);
+    tags.style.display='flex';
+    tags.innerHTML=arr.map(v=>`<span class="chip selected" style="cursor:default;">${v}</span>`).join('');
+    return;
+  }
+  const empty=document.getElementById('vmv'+cap(k)+'Empty');
+  const text=document.getElementById('vmv'+cap(k)+'Text');
+  if(!val){
+    if(empty)empty.style.display='block';
+    if(text)text.style.display='none';
+    return;
+  }
+  if(empty)empty.style.display='none';
+  if(text){text.style.display='block';text.textContent=val;}
+}
+
+function toggleVmvEdit(k){
+  const editEl=document.getElementById('vmv'+cap(k)+'Edit');
+  const viewEl=document.getElementById('vmv'+cap(k)+'View');
+  const isOpen=editEl.style.display!=='none';
+  if(isOpen){cancelVmvEdit(k);return;}
+  // 현재 값 불러오기
+  const cur=localStorage.getItem('slit_vmv_'+k)||'';
+  const input=document.getElementById('vmv'+cap(k)+'Input');
+  if(input) input.value=cur;
+  editEl.style.display='block';
+  viewEl.style.display='none';
+  if(input) input.focus();
+}
+
+function cancelVmvEdit(k){
+  document.getElementById('vmv'+cap(k)+'Edit').style.display='none';
+  document.getElementById('vmv'+cap(k)+'View').style.display='block';
+}
+
+function saveVmv(k){
+  const input=document.getElementById('vmv'+cap(k)+'Input');
+  const val=input?input.value.trim():'';
+  if(val) localStorage.setItem('slit_vmv_'+k,val);
+  else localStorage.removeItem('slit_vmv_'+k);
+  cancelVmvEdit(k);
+  applyVmvValue(k,val);
+  showToast('저장됐어요!');
+}
+
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 
 function renderToday(){
   htlInit();
+  initMemo();
+  renderTodayMemos();
 }
 
 // ── 가로 타임라인 ──
@@ -1040,11 +1407,15 @@ function htlUpdateNow(){
 
 function htlRenderBlocks(){
   const now=new Date();
+  const todayStr=toDateStr(now);
   const todaySlits=slits.filter(s=>{
     const d=new Date(s.start_time);
     return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();
   });
-  document.getElementById('htlBlocks').innerHTML=todaySlits.map(s=>{
+  const todayMemoList=memos.filter(m=>m.created_at.startsWith(todayStr));
+
+  // 슬릿 블록
+  const slitHTML=todaySlits.map(s=>{
     const st=new Date(s.start_time),en=new Date(s.end_time);
     const sh=st.getHours()+st.getMinutes()/60;
     const eh=en.getHours()+en.getMinutes()/60;
@@ -1055,6 +1426,21 @@ function htlRenderBlocks(){
       <span class="htl-block-label">${title}</span>
     </div>`;
   }).join('');
+
+  // 메모 마커
+  const memoHTML=todayMemoList.map(m=>{
+    const t=new Date(m.created_at);
+    const h=t.getHours()+t.getMinutes()/60;
+    const left=htlHourToPct(h);
+    const [bg,color]=MEMO_COLORS[m.type]||MEMO_COLORS['기타'];
+    const short=m.content.length>10?m.content.slice(0,10)+'…':m.content;
+    return `<div class="htl-memo-marker" style="left:${left}%;" title="${m.type}: ${m.content}">
+      <div class="htl-memo-dot" style="background:${color};"></div>
+      <div class="htl-memo-label" style="color:${color};background:${bg};">${m.type}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('htlBlocks').innerHTML=slitHTML+memoHTML;
 }
 
 function htlHover(e){
@@ -1154,23 +1540,102 @@ function htlOnTouchEnd(){
 // 클릭 핀 로직
 function htlHandleClick(h){
   if(htlClickState===null){
-    // 첫 클릭 — START 핀
     htlClickStart=h;
     htlClickState='start-set';
     htlRenderStartPin(h);
+    // 시작 시간을 선택 시간에 미리 반영
+    const el=document.getElementById('selStart');
+    el.value=htlFmtH(h); el.classList.add('has-start');
+    selUpdateDur();
   } else {
-    // 두 번째 클릭 — END 핀, 확정
     const s=Math.min(htlClickStart,h), e=Math.max(htlClickStart,h);
     htlClickState=null; htlClickStart=null;
     htlRemoveStartPin();
-    if(e-s<0.08){
-      // 같은 곳 두 번 클릭 → 취소
-      return;
-    }
+    if(e-s<0.08){ htlClear(); return; }
     htlSelStart=s; htlSelEnd=e;
     htlUpdateSelRange(s,e);
-    htlShowHint(`${htlFmtH(s)} – ${htlFmtH(e)} (${Math.round((e-s)*60)}분)`);
+    selSetFromHtl(s,e);
   }
+}
+
+// ── 선택 시간 연동 ──
+function selSetFromHtl(s,e){
+  const sv=htlFmtH(s), ev=htlFmtH(e);
+  const startEl=document.getElementById('selStart');
+  const endEl=document.getElementById('selEnd');
+  if(startEl){startEl.value=sv; startEl.classList.add('has-start');}
+  if(endEl){endEl.value=ev; endEl.classList.add('has-end');}
+  // Overview time input 동기화
+  document.getElementById('b-start-time').value=sv;
+  document.getElementById('b-end-time').value=ev;
+  const today=toDateStr(new Date());
+  document.getElementById('startDateInput').value=today;
+  document.getElementById('startTimeInput').value=sv;
+  document.getElementById('endDateInput').value=today;
+  document.getElementById('endTimeInput').value=ev;
+  selUpdateDur();
+  selShowActions();
+  updateBoard();
+}
+
+function selTimeChanged(){
+  const s=document.getElementById('selStart').value;
+  const e=document.getElementById('selEnd').value;
+  const today=toDateStr(new Date());
+  // Overview 동기화
+  if(s){
+    document.getElementById('b-start-time').value=s;
+    document.getElementById('startDateInput').value=today;
+    document.getElementById('startTimeInput').value=s;
+    document.getElementById('selStart').classList.add('has-start');
+  }
+  if(e){
+    document.getElementById('b-end-time').value=e;
+    document.getElementById('endDateInput').value=today;
+    document.getElementById('endTimeInput').value=e;
+    document.getElementById('selEnd').classList.add('has-end');
+  }
+  if(s&&e){
+    const sh=parseInt(s.split(':')[0])+parseInt(s.split(':')[1])/60;
+    const eh=parseInt(e.split(':')[0])+parseInt(e.split(':')[1])/60;
+    if(eh>sh){htlSelStart=sh;htlSelEnd=eh;htlUpdateSelRange(sh,eh);selShowActions();}
+  }
+  selUpdateDur();
+  updateBoard();
+}
+
+function selUpdateDur(){
+  const s=document.getElementById('selStart').value;
+  const e=document.getElementById('selEnd').value;
+  const el=document.getElementById('selDur');
+  if(!s||!e){el.textContent='';return;}
+  const today=toDateStr(new Date());
+  const diff=Math.round((new Date(today+'T'+e)-new Date(today+'T'+s))/60000);
+  if(diff<=0){el.textContent='';return;}
+  el.textContent=fmtDur(diff);
+}
+
+function selShowActions(){
+  const act=document.getElementById('selTimeActions');
+  if(act) act.style.display='block';
+}
+
+function selTimeConfirm(){
+  const s=document.getElementById('selStart').value;
+  const e=document.getElementById('selEnd').value;
+  if(!s||!e){showToast('시작/종료 시간을 선택해주세요');return;}
+  // 시간이 이미 Overview에 세팅된 상태로 모달 열기
+  openNewSlit(s,e);
+}
+
+function selClear(){
+  document.getElementById('selStart').value='';
+  document.getElementById('selEnd').value='';
+  document.getElementById('selStart').classList.remove('has-start');
+  document.getElementById('selEnd').classList.remove('has-end');
+  document.getElementById('selDur').textContent='';
+  const act=document.getElementById('selTimeActions');
+  if(act) act.style.display='none';
 }
 
 function htlRenderStartPin(h){
@@ -1213,7 +1678,7 @@ function htlFinalizeDrag(){
   if(e-s<0.08) return;
   htlSelStart=s; htlSelEnd=e;
   htlUpdateSelRange(s,e);
-  htlShowHint(`${htlFmtH(s)} – ${htlFmtH(e)} (${Math.round((e-s)*60)}분)`);
+  selSetFromHtl(s,e);
 }
 
 function htlUpdateSel(){
@@ -1313,7 +1778,7 @@ function htlClear(){
   htlClickState=null;htlClickStart=null;
   htlRemoveStartPin();
   document.getElementById('htlSel').style.display='none';
-  document.getElementById('htlHint').style.display='none';
+  selClear();
 }
 
 function htlConfirm(){
@@ -1503,6 +1968,7 @@ function openDetail(id){
   `;
   document.getElementById('detailActions').innerHTML=`
     <button class="btn btn-ghost btn-sm" onclick="closeModal('detailModal')">닫기</button>
+    <button class="btn btn-ghost btn-sm" onclick="openEditSlit('${id}')">✎ 수정</button>
     <button class="btn btn-danger btn-sm" onclick="deleteSlit('${id}')">삭제</button>
     ${s.status!=='done'?`<button class="btn btn-ghost btn-sm" onclick="updateStatus('${id}','active')">시작</button>`:''}
     <button class="btn btn-primary btn-sm" onclick="${s.status==='done'?`saveReflection('${id}')`:`completeSlit('${id}')`}">${s.status==='done'?'저장':'완료'}</button>
@@ -1552,23 +2018,29 @@ async function completeSlit(id){
 async function deleteSlit(id){if(!confirm('삭제할까요?'))return;await sb.from('slit_slits').delete().eq('id',id);await loadAll();closeModal('detailModal');renderToday();renderPlan();showToast('삭제됐어요');}
 
 // ── New Slit ──
-function openNewSlit(){
+function openNewSlit(preStart, preEnd){
   slitMode='between';picks={start:null,end:null,during:null};activeSlot='start';
   draftTasks=[];selPeople=[];draftAvoids=[];
-  ['slitTitle','originInput','destInput','newTaskName'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('taskList').innerHTML='';
-  document.getElementById('travelResult').innerHTML='';
-  document.getElementById('avoidCustom').value='';
+  ['slitTitle','originInput','destInput','newTaskName'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const tl=document.getElementById('taskList');if(tl)tl.innerHTML='';
+  const tr=document.getElementById('travelResult');if(tr)tr.innerHTML='';
+  const ac=document.getElementById('avoidCustom');if(ac)ac.value='';
   document.querySelectorAll('.avoid-preset-btn').forEach(b=>b.classList.remove('on'));
-  document.getElementById('avoidList').style.display='none';
-  document.getElementById('avoidList').innerHTML='';
-  const now=new Date();
-  const r=new Date(now);r.setMinutes(Math.ceil(now.getMinutes()/10)*10,0,0);
-  document.getElementById('endDateInput').value=toDateStr(now);
-  document.getElementById('startDateInput').value=toDateStr(now);
-  document.getElementById('startTimeInput').value=toTimeStr(r);
-  resetBoard();goStep('situation');
-  renderCatTabs();renderActBtns(0);renderEndDateBtns();renderParticipantChips();
+  const al=document.getElementById('avoidList');if(al){al.style.display='none';al.innerHTML='';}
+  const today=toDateStr(new Date());
+  document.getElementById('startDateInput').value=today;
+  document.getElementById('endDateInput').value=today;
+  // 선택 시간 우선, 없으면 현재 시각
+  const s=preStart||document.getElementById('selStart')?.value||'';
+  const e=preEnd||document.getElementById('selEnd')?.value||'';
+  document.getElementById('b-start-time').value=s;
+  document.getElementById('b-end-time').value=e;
+  if(s) document.getElementById('startTimeInput').value=s;
+  if(e) document.getElementById('endTimeInput').value=e;
+  resetBoard();
+  selectMode('between');
+  goStep('situation');
+  renderCatTabs();renderActBtns(0);renderParticipantChips();
   document.getElementById('slitModal').classList.add('open');
 }
 function resetBoard(){
@@ -1576,22 +2048,56 @@ function resetBoard(){
   if(bsa){bsa.textContent='—';bsa.className='board-act-name';}
   if(bea){bea.textContent='—';bea.className='board-act-name';}
   if(bda){bda.textContent='—';bda.className='board-during-name';}
-  const bst=document.getElementById('b-start-time'),bet=document.getElementById('b-end-time');
-  if(bst){bst.textContent='--:--';bst.className='board-time-val';}
-  if(bet){bet.textContent='--:--';bet.className='board-time-val';}
+  // 선택 시간에서 가져온 값은 유지 (리셋 안 함)
   document.getElementById('b-duration').textContent='—';
   document.getElementById('b-dur-fill').style.width='0%';
-  // 현재 모드에 맞게 뷰 전환
   document.getElementById('board-between-view').style.display=slitMode==='between'?'block':'none';
   document.getElementById('board-during-view').style.display=slitMode==='during'?'block':'none';
+  updateBoard();
 }
 function goStep(name){
   document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
   if(name==='done'){updateBoard();return;}
-  document.getElementById('step-'+name).classList.add('active');
-  if(name==='start-time')renderStartQuickBtns();
-  if(name==='end-time'){document.getElementById('end-step-sub').textContent=picks.end?`(${picks.end})`:picks.during?`(${picks.during})`:'';}
-  if(name==='start-time'){document.getElementById('start-step-sub').textContent=picks.start?`(${picks.start})`:picks.during?`(${picks.during})`:'';}
+  const el=document.getElementById('step-'+name);
+  if(el) el.classList.add('active');
+}
+// Overview 시간 input 직접 수정 시
+function overviewTimeChanged(which){
+  const st=document.getElementById('b-start-time').value;
+  const et=document.getElementById('b-end-time').value;
+  const today=toDateStr(new Date());
+  // 숨김 input 동기화
+  document.getElementById('startDateInput').value=today;
+  document.getElementById('endDateInput').value=today;
+  if(st) document.getElementById('startTimeInput').value=st;
+  if(et) document.getElementById('endTimeInput').value=et;
+  // 선택 시간 칸 동기화
+  const selStart=document.getElementById('selStart');
+  const selEnd=document.getElementById('selEnd');
+  if(selStart&&st){selStart.value=st;selStart.classList.toggle('has-start',!!st);}
+  if(selEnd&&et){selEnd.value=et;selEnd.classList.toggle('has-end',!!et);}
+  // 타임라인 선택 영역 동기화
+  if(st&&et){
+    const sh=parseInt(st.split(':')[0])+parseInt(st.split(':')[1])/60;
+    const eh=parseInt(et.split(':')[0])+parseInt(et.split(':')[1])/60;
+    if(eh>sh){htlSelStart=sh;htlSelEnd=eh;htlUpdateSelRange(sh,eh);}
+  }
+  updateBoard();
+}
+function updateBoard(){
+  const st=document.getElementById('b-start-time').value;
+  const et=document.getElementById('b-end-time').value;
+  const today=toDateStr(new Date());
+  if(st&&et){
+    const diff=Math.round((new Date(today+'T'+et)-new Date(today+'T'+st))/60000);
+    if(diff>0){
+      document.getElementById('b-duration').textContent=fmtDur(diff);
+      document.getElementById('b-dur-fill').style.width=Math.min(100,diff/180*100)+'%';
+    } else {
+      document.getElementById('b-duration').textContent='⚠';
+    }
+  }
+  updateTaskTimeBar();
 }
 function selectMode(m){
   slitMode=m;picks={start:null,end:null,during:null};activeSlot='start';
@@ -1854,26 +2360,29 @@ function calcTravel(){
 function setTravelMin(){const min=parseInt(document.getElementById('manualTravel').value)||0;document.getElementById('travelResult').innerHTML=`<div style="font-size:12px;color:var(--accent);margin-top:4px">🚇 이동 ${min}분 설정됨</div>`;document.getElementById('travelResult').dataset.minutes=min;}
 
 async function saveSlit(){
-  const ed=document.getElementById('endDateInput').value,et=document.getElementById('endTimeInput').value;
-  const sd=document.getElementById('startDateInput').value,st=document.getElementById('startTimeInput').value;
-  if(!ed||!et||!sd||!st){showToast('시작/종료 시간을 입력해주세요');goStep('end-time');return;}
-  const start=new Date(sd+'T'+st),end=new Date(ed+'T'+et);
+  const today=toDateStr(new Date());
+  const st=document.getElementById('b-start-time').value;
+  const et=document.getElementById('b-end-time').value;
+  if(!st||!et){showToast('선택 시간에서 시작/종료를 먼저 설정해주세요');return;}
+  const start=new Date(today+'T'+st), end=new Date(today+'T'+et);
   if(end<=start){showToast('종료가 시작보다 앞서 있어요');return;}
-  const sitLabel=slitMode==='during'?(picks.during?picks.during+' 중':null):(picks.start&&picks.end?picks.start+' 후 → '+picks.end+' 전':null);
+  const sitLabel=slitMode==='during'
+    ?(picks.during?picks.during+' 중':null)
+    :(picks.start&&picks.end?picks.start+' → '+picks.end:null);
   const {data,error}=await sb.from('slit_slits').insert({
-    title:document.getElementById('slitTitle').value||null,
-    type:slitMode,situation_label:sitLabel,
-    start_time:start.toISOString(),end_time:end.toISOString(),
-    origin:document.getElementById('originInput').value||null,
-    destination:document.getElementById('destInput').value||null,
-    travel_minutes:parseInt(document.getElementById('travelResult').dataset?.minutes||0),
+    title:document.getElementById('slitTitle')?.value||null,
+    type:slitMode, situation_label:sitLabel,
+    start_time:start.toISOString(), end_time:end.toISOString(),
+    origin:document.getElementById('originInput')?.value||null,
+    destination:document.getElementById('destInput')?.value||null,
     status:'planned',
     avoids: draftAvoids.length ? draftAvoids : null
   }).select().single();
   if(error){showToast('저장 실패: '+error.message);return;}
   if(draftTasks.length)await sb.from('slit_tasks').insert(draftTasks.map(t=>({...t,slit_id:data.id})));
   if(selPeople.length)await sb.from('slit_participants').insert(selPeople.map(pid=>({slit_id:data.id,person_id:pid})));
-  await loadAll();closeModal('slitModal');renderToday();renderPlan();showToast('슬릿이 만들어졌어요!');
+  await loadAll();closeModal('slitModal');renderToday();renderPlan();
+  showToast('슬릿이 만들어졌어요!');
 }
 
 function setPeriod(p,btn){curPeriod=p;document.querySelectorAll('.period-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderStats();}
@@ -1956,6 +2465,192 @@ function applyPrompt(q){
   const cur=el.value.trim();
   el.value=cur?(cur+'\n\n'+q+'\n'):q+'\n';
   el.focus();el.setSelectionRange(el.value.length,el.value.length);
+}
+
+// ── 인라인 슬릿 설정 ──
+let inlineMode='between', inlinePicks={start:null,end:null,during:null}, inlineActiveSlot='start', inlineCurCat=0;
+
+function toggleInlineSlit(){
+  const body=document.getElementById('inlineSlitBody');
+  const arrow=document.getElementById('inlineArrow');
+  const isOpen=body.style.display!=='none';
+  body.style.display=isOpen?'none':'block';
+  arrow.classList.toggle('open',!isOpen);
+  if(!isOpen){
+    // 열릴 때 초기화
+    inlineMode='between'; inlinePicks={start:null,end:null,during:null}; inlineActiveSlot='start';
+    inlineCurCat=0;
+    const now=new Date();
+    const end=new Date(now.getTime()+60*60000);
+    document.getElementById('inlineStartTime').value=toTimeStr(now);
+    document.getElementById('inlineEndTime').value=toTimeStr(end);
+    document.getElementById('inlineTitle').value='';
+    inlineRenderCatTabs();
+    inlineRenderActBtns(0);
+    inlineUpdateDur();
+    inlineApplyMode();
+  }
+}
+function inlineSelectMode(m){
+  inlineMode=m; inlinePicks={start:null,end:null,during:null}; inlineActiveSlot='start';
+  inlineApplyMode();
+  inlineRenderActBtns(inlineCurCat);
+}
+function inlineApplyMode(){
+  document.getElementById('inline-mode-btn-between').classList.toggle('active',inlineMode==='between');
+  document.getElementById('inline-mode-btn-during').classList.toggle('active',inlineMode==='during');
+  document.getElementById('inline-slots-between').style.display=inlineMode==='between'?'flex':'none';
+  document.getElementById('inline-slots-during').style.display=inlineMode==='during'?'block':'none';
+  document.getElementById('inline-guide').style.display=inlineMode==='between'?'block':'none';
+  // 슬롯 초기화
+  document.getElementById('inline-slot-start-val').textContent='—';
+  document.getElementById('inline-slot-end-val').textContent='—';
+  document.getElementById('inline-slot-during-val').textContent='—';
+  inlineUpdateSlots();
+}
+function inlineActivateSlot(slot){
+  inlineActiveSlot=slot; inlineUpdateSlots(); inlineUpdateGuide();
+}
+function inlineUpdateSlots(){
+  const sEl=document.getElementById('inline-slot-start');
+  const eEl=document.getElementById('inline-slot-end');
+  const sInd=document.getElementById('inline-slot-start-ind');
+  const eInd=document.getElementById('inline-slot-end-ind');
+  if(sEl) sEl.className='slot-box '+(inlineActiveSlot==='start'?'start-active':inlinePicks.start?'start-set':'');
+  if(eEl) eEl.className='slot-box '+(inlineActiveSlot==='end'?'end-active':inlinePicks.end?'end-set':'');
+  if(sInd) sInd.style.background=inlineActiveSlot==='start'?'var(--start)':'transparent';
+  if(eInd) eInd.style.background=inlineActiveSlot==='end'?'var(--end)':'transparent';
+}
+function inlineUpdateGuide(){
+  const el=document.getElementById('inline-guide');
+  if(!el) return;
+  if(inlineActiveSlot==='start'){el.style.color='var(--start)';el.textContent=inlinePicks.start?`START: ${inlinePicks.start} ✓  —  END 슬롯을 눌러 선택하세요`:'START 행위를 선택하세요';}
+  else{el.style.color='var(--end)';el.textContent=inlinePicks.end?`END: ${inlinePicks.end} ✓`:'END 행위를 선택하세요';}
+}
+function inlineRenderCatTabs(){
+  document.getElementById('inlineCatTabs').innerHTML=CATS.map((c,i)=>
+    `<button class="cat-tab ${i===0?'active':''}" onclick="inlineSelectCat(${i},this)">${c.label}</button>`
+  ).join('');
+}
+function inlineSelectCat(i,el){
+  inlineCurCat=i;
+  document.querySelectorAll('#inlineCatTabs .cat-tab').forEach((b,j)=>b.classList.toggle('active',j===i));
+  document.getElementById('inlineCurCat').textContent=CATS[i].name;
+  inlineRenderActBtns(i);
+}
+function inlineRenderActBtns(i){
+  document.getElementById('inlineActBtns').innerHTML=CATS[i].acts.map(a=>{
+    const cls=inlinePicks.start===a?'start-pick':inlinePicks.end===a?'end-pick':inlinePicks.during===a?'during-pick':'';
+    return `<button class="act-btn ${cls}" onclick="inlinePickAct('${a}')">${a}</button>`;
+  }).join('');
+}
+function inlinePickAct(val){
+  if(inlineMode==='during'){
+    inlinePicks.during=inlinePicks.during===val?null:val;
+    document.getElementById('inline-slot-during-val').textContent=inlinePicks.during||'—';
+    document.getElementById('inline-slot-during-val').style.color=inlinePicks.during?'var(--ing)':'var(--text2)';
+  } else {
+    if(inlineActiveSlot==='start'){
+      inlinePicks.start=inlinePicks.start===val?null:val;
+      document.getElementById('inline-slot-start-val').textContent=inlinePicks.start||'—';
+      if(inlinePicks.start) inlineActiveSlot='end';
+    } else {
+      inlinePicks.end=inlinePicks.end===val?null:val;
+      document.getElementById('inline-slot-end-val').textContent=inlinePicks.end||'—';
+    }
+    inlineUpdateSlots(); inlineUpdateGuide();
+  }
+  inlineRenderActBtns(inlineCurCat);
+}
+function inlineSetDur(min){
+  const st=document.getElementById('inlineStartTime').value;
+  if(!st){showToast('시작 시간을 먼저 입력해주세요');return;}
+  const start=new Date(toDateStr(new Date())+'T'+st);
+  const end=new Date(start.getTime()+min*60000);
+  document.getElementById('inlineEndTime').value=toTimeStr(end);
+  document.querySelectorAll('.inline-slit-body .date-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  inlineUpdateDur();
+}
+function inlineUpdateDur(){
+  const st=document.getElementById('inlineStartTime').value;
+  const et=document.getElementById('inlineEndTime').value;
+  const el=document.getElementById('inlineDurDisplay');
+  if(!st||!et){el.textContent='';return;}
+  const today=toDateStr(new Date());
+  const diff=Math.round((new Date(today+'T'+et)-new Date(today+'T'+st))/60000);
+  if(diff<=0){el.textContent='⚠ 종료가 시작보다 앞서 있어요';el.style.color='#c0392b';return;}
+  el.style.color='var(--accent)';
+  el.textContent=`총 ${fmtDur(diff)}`;
+}
+async function saveInlineSlit(){
+  const st=document.getElementById('inlineStartTime').value;
+  const et=document.getElementById('inlineEndTime').value;
+  if(!st||!et){showToast('시작/종료 시간을 입력해주세요');return;}
+  const today=toDateStr(new Date());
+  const start=new Date(today+'T'+st), end=new Date(today+'T'+et);
+  if(end<=start){showToast('종료가 시작보다 앞서 있어요');return;}
+  const sitLabel=inlineMode==='during'
+    ?(inlinePicks.during?inlinePicks.during+' 중':null)
+    :(inlinePicks.start&&inlinePicks.end?inlinePicks.start+' 후 → '+inlinePicks.end+' 전':null);
+  const{data,error}=await sb.from('slit_slits').insert({
+    title:document.getElementById('inlineTitle').value||null,
+    type:inlineMode, situation_label:sitLabel,
+    start_time:start.toISOString(), end_time:end.toISOString(),
+    status:'planned'
+  }).select().single();
+  if(error){showToast('저장 실패: '+error.message);return;}
+  await loadAll(); renderToday(); htlRenderBlocks();
+  toggleInlineSlit();
+  showToast('슬릿이 만들어졌어요!');
+}
+
+// ── 슬릿 수정 ──
+async function openEditSlit(id){
+  const s=slits.find(x=>x.id===id); if(!s) return;
+  const start=new Date(s.start_time), end=new Date(s.end_time);
+  // 상세 모달을 수정 모드로 열기
+  document.getElementById('detailTitle').textContent='슬릿 수정';
+  document.getElementById('detailContent').innerHTML=`
+    <div class="detail-section">
+      <div class="detail-label">제목</div>
+      <input class="form-input" id="editSlitTitle" value="${s.title||''}" placeholder="제목 (선택)">
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">상황</div>
+      <input class="form-input" id="editSlitSit" value="${s.situation_label||''}" placeholder="상황 레이블">
+    </div>
+    <div class="detail-section">
+      <div class="detail-label" style="color:var(--start);">시작 시간</div>
+      <input class="form-input" type="time" id="editSlitStart" value="${toTimeStr(start)}" style="border-color:var(--start-border);">
+    </div>
+    <div class="detail-section">
+      <div class="detail-label" style="color:var(--end);">종료 시간</div>
+      <input class="form-input" type="time" id="editSlitEnd" value="${toTimeStr(end)}" style="border-color:var(--end-border);">
+    </div>
+  `;
+  document.getElementById('detailActions').innerHTML=`
+    <button class="btn btn-ghost btn-sm" onclick="openDetail('${id}')">취소</button>
+    <button class="btn btn-primary btn-sm" onclick="saveEditSlit('${id}')">저장</button>
+  `;
+  document.getElementById('detailModal').classList.add('open');
+}
+async function saveEditSlit(id){
+  const s=slits.find(x=>x.id===id); if(!s) return;
+  const startDate=toDateStr(new Date(s.start_time));
+  const endDate=toDateStr(new Date(s.end_time));
+  const st=document.getElementById('editSlitStart').value;
+  const et=document.getElementById('editSlitEnd').value;
+  const start=new Date(startDate+'T'+st), end=new Date(endDate+'T'+et);
+  if(end<=start){showToast('종료가 시작보다 앞서 있어요');return;}
+  const{error}=await sb.from('slit_slits').update({
+    title:document.getElementById('editSlitTitle').value||null,
+    situation_label:document.getElementById('editSlitSit').value||null,
+    start_time:start.toISOString(), end_time:end.toISOString()
+  }).eq('id',id);
+  if(error){showToast('저장 실패: '+error.message);return;}
+  await loadAll(); closeModal('detailModal'); renderToday(); renderPlan();
+  showToast('수정됐어요!');
 }
 
 function renderPeople(){
