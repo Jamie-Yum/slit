@@ -459,18 +459,30 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .timeline-empty { text-align:center; padding:32px 0; color:var(--text3); font-size:13px; }
 
 /* 스트릭 캘린더 */
-.streak-section { margin-bottom:20px; }
+.streak-section { margin-bottom:16px; }
 .streak-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .streak-count { font-family:var(--mono); font-size:13px; color:var(--accent); font-weight:600; }
-.streak-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-.streak-day-label { font-family:var(--mono); font-size:9px; color:var(--text3); text-align:center; padding-bottom:2px; }
-.streak-dot {
-  aspect-ratio:1; border-radius:4px; background:var(--border);
-  cursor:default; transition:all 0.12s; position:relative;
+.streak-grid-cal {
+  display:grid; grid-template-columns:repeat(7,1fr); gap:3px;
 }
-.streak-dot.has-slit { background:var(--accent-bg); border:1px solid var(--accent); }
-.streak-dot.all-done { background:var(--accent); }
-.streak-dot.today { box-shadow:0 0 0 2px var(--accent); }
+.streak-day-label {
+  font-family:var(--mono); font-size:10px; color:var(--text3);
+  text-align:center; padding-bottom:4px; font-weight:600;
+}
+.streak-cal-day {
+  aspect-ratio:1; border-radius:var(--radius); background:var(--surface2);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:2px; transition:all 0.12s; position:relative; min-height:36px;
+}
+.streak-cal-day:hover:not(.future) { background:var(--border); }
+.streak-cal-day.today { box-shadow:0 0 0 2px var(--accent); background:var(--accent-bg); }
+.streak-cal-day.has-slit { background:var(--accent-bg); border:1px solid var(--accent); }
+.streak-cal-day.all-done { background:var(--accent); }
+.streak-cal-day.all-done .streak-cal-num { color:white !important; }
+.streak-cal-day.all-done .streak-cal-dot { color:rgba(255,255,255,0.8); }
+.streak-cal-day.future { opacity:0.35; }
+.streak-cal-num { font-family:var(--mono); font-size:12px; color:var(--text2); line-height:1; }
+.streak-cal-dot { font-family:var(--mono); font-size:9px; color:var(--accent); margin-top:2px; font-weight:600; }
 
 /* 회고 프롬프트 */
 .reflection-prompts { margin-bottom:12px; }
@@ -741,14 +753,15 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
     </div>
 
     <div id="view-stats" class="view">
-      <!-- 종합 탭 -->
-      <div style="display:flex;gap:6px;margin-bottom:14px;">
+      <!-- 종합 탭 — 일렬 4개 -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
         <button class="stats-tab active" id="synthTabStats" onclick="switchSynthTab('stats',this)">통계</button>
-        <button class="stats-tab" id="synthTabDates" onclick="switchSynthTab('dates',this)">날짜별</button>
-        <button class="stats-tab" id="synthTabReflect" onclick="switchSynthTab('reflect',this)">회고</button>
+        <button class="stats-tab" id="synthTabDates" onclick="switchSynthTab('dates',this)">날짜별 슬릿</button>
+        <button class="stats-tab" id="synthTabReflect" onclick="switchSynthTab('reflect',this)">회고 모음</button>
+        <button class="stats-tab" id="synthTabMemo" onclick="switchSynthTab('memo',this)">메모 모음</button>
       </div>
 
-      <!-- 통계 탭 내용 -->
+      <!-- 통계 -->
       <div id="synthStats">
         <div class="period-tabs">
           <button class="period-tab active" onclick="setPeriod('day',this)">오늘</button>
@@ -758,22 +771,22 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
           <button class="period-tab" onclick="setPeriod('half',this)">반기</button>
           <button class="period-tab" onclick="setPeriod('year',this)">올해</button>
         </div>
-        <div style="display:flex;gap:6px;margin-bottom:14px;">
-          <button class="stats-tab active" id="statsTabSlit" onclick="switchStatsTab('slit',this)">슬릿</button>
-          <button class="stats-tab" id="statsTabMemo" onclick="switchStatsTab('memo',this)">메모</button>
-        </div>
         <div id="statsContent"></div>
-        <div id="statsMemoContent" style="display:none;"></div>
       </div>
 
-      <!-- 날짜별 탭 내용 -->
+      <!-- 날짜별 슬릿 -->
       <div id="synthDates" style="display:none;">
         <div id="dateCalendar"></div>
       </div>
 
-      <!-- 회고 탭 내용 -->
+      <!-- 회고 모음 -->
       <div id="synthReflect" style="display:none;">
         <div id="reflectList"></div>
+      </div>
+
+      <!-- 메모 모음 -->
+      <div id="synthMemo" style="display:none;">
+        <div id="statsMemoContent"></div>
       </div>
     </div>
 
@@ -1271,7 +1284,7 @@ let curStatsTab='slit';
 let curSynthTab='stats';
 function switchSynthTab(tab,btn){
   curSynthTab=tab;
-  ['synthTabStats','synthTabDates','synthTabReflect'].forEach(id=>{
+  ['synthTabStats','synthTabDates','synthTabReflect','synthTabMemo'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.classList.remove('active');
   });
@@ -1279,8 +1292,10 @@ function switchSynthTab(tab,btn){
   document.getElementById('synthStats').style.display=tab==='stats'?'block':'none';
   document.getElementById('synthDates').style.display=tab==='dates'?'block':'none';
   document.getElementById('synthReflect').style.display=tab==='reflect'?'block':'none';
+  document.getElementById('synthMemo').style.display=tab==='memo'?'block':'none';
   if(tab==='dates')renderDateCalendar();
   if(tab==='reflect')renderReflections();
+  if(tab==='memo')renderStatsMemos();
 }
 
 // ── 날짜별 캘린더 ──
@@ -2005,57 +2020,122 @@ function htlConfirm(){
 function renderCountdown(){} // 타임라인으로 대체
 
 // ── 스트릭 캘린더 ──
+// 달력 현재 표시 월
+let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+
+function moveCalMonth(delta){
+  calMonth+=delta;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  renderStreak(document.getElementById('streakContainer'));
+}
+
 function renderStreak(container){
   const now=new Date();
-  // 오늘 기준 최근 5주(35일)
-  const days=[];
-  for(let i=34;i>=0;i--){
-    const d=new Date(now);
-    d.setDate(d.getDate()-i);
-    days.push(d);
-  }
+  const year=calYear, month=calMonth;
+  const firstDay=new Date(year,month,1);
+  const lastDay=new Date(year,month+1,0);
+  const totalDays=lastDay.getDate();
+
   // 날짜별 슬릿 집계
   const dayMap={};
   slits.forEach(s=>{
     const d=new Date(s.start_time);
     const key=toDateStr(d);
-    if(!dayMap[key])dayMap[key]={total:0,done:0};
+    if(!dayMap[key])dayMap[key]={total:0,done:0,slits:[]};
     dayMap[key].total++;
     if(s.status==='done')dayMap[key].done++;
+    dayMap[key].slits.push(s);
   });
-  // 스트릭 계산
+
+  // 스트릭 계산 (오늘 기준)
   let streak=0;
-  for(let i=0;i<35;i++){
-    const d=new Date(now);d.setDate(d.getDate()-i);
+  for(let i=0;i<60;i++){
+    const d=new Date(now); d.setDate(d.getDate()-i);
     const key=toDateStr(d);
-    if(dayMap[key]&&dayMap[key].done>0)streak++;
+    if(dayMap[key]&&dayMap[key].done>0) streak++;
     else break;
   }
-  const DAY_LABELS=['일','월','화','수','목','금','토'];
-  const firstDow=days[0].getDay();
-  let dotsHTML='';
-  // 요일 헤더
-  DAY_LABELS.forEach(d=>{dotsHTML+=`<div class="streak-day-label">${d}</div>`;});
-  // 빈 칸 채우기
-  for(let i=0;i<firstDow;i++)dotsHTML+=`<div></div>`;
-  days.forEach(d=>{
+
+  const DOW_LABELS=['월','화','수','목','금','토','일'];
+  const firstDowRaw=firstDay.getDay();
+  const firstDowMon=firstDowRaw===0?6:firstDowRaw-1;
+
+  let dotsHTML=DOW_LABELS.map(d=>`<div class="streak-day-label">${d}</div>`).join('');
+  for(let i=0;i<firstDowMon;i++) dotsHTML+=`<div></div>`;
+
+  const todayStr=toDateStr(now);
+  for(let day=1;day<=totalDays;day++){
+    const d=new Date(year,month,day);
     const key=toDateStr(d);
     const data=dayMap[key]||{total:0,done:0};
-    const isToday=key===toDateStr(now);
-    const cls=data.done>0&&data.done===data.total?'all-done':data.total>0?'has-slit':'';
-    dotsHTML+=`<div class="streak-dot ${cls} ${isToday?'today':''}" title="${key}"></div>`;
-  });
+    const isToday=key===todayStr;
+    const isFuture=d>now&&key!==todayStr;
+    const allDone=data.done>0&&data.done===data.total;
+    const hasSlit=data.total>0;
+    const dowRaw=d.getDay();
+    const isSun=dowRaw===0, isSat=dowRaw===6;
+
+    let cls='streak-cal-day';
+    if(isToday) cls+=' today';
+    if(allDone) cls+=' all-done';
+    else if(hasSlit) cls+=' has-slit';
+    if(isFuture) cls+=' future';
+
+    const dateColor=isSun?'color:#c0392b;':isSat?'color:var(--ft);':'';
+    dotsHTML+=`<div class="${cls}" onclick="${hasSlit?`showStreakDay('${key}')`:''}" style="${hasSlit?'cursor:pointer;':''}">
+      <span class="streak-cal-num" style="${dateColor}${isToday?'font-weight:700;':''}">${day}</span>
+      ${hasSlit?`<span class="streak-cal-dot">${data.done}/${data.total}</span>`:''}
+    </div>`;
+  }
+
+  const isCurrentMonth=year===now.getFullYear()&&month===now.getMonth();
+
   container.innerHTML=`
     <div class="streak-section">
       <div class="streak-header">
-        <span class="section-title" style="margin:0;">스트릭</span>
-        <span class="streak-count">${streak}일 연속 🔥</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button onclick="moveCalMonth(-1)" style="background:none;border:1.5px solid var(--border2);border-radius:var(--radius);width:28px;height:28px;cursor:pointer;font-size:14px;color:var(--text2);display:flex;align-items:center;justify-content:center;">‹</button>
+          <span class="section-title" style="margin:0;">${year}년 ${month+1}월</span>
+          <button onclick="moveCalMonth(1)" style="background:none;border:1.5px solid var(--border2);border-radius:var(--radius);width:28px;height:28px;cursor:pointer;font-size:14px;color:var(--text2);display:flex;align-items:center;justify-content:center;">›</button>
+          ${!isCurrentMonth?`<button onclick="calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderStreak(document.getElementById('streakContainer'))" style="background:none;border:1.5px solid var(--border2);border-radius:var(--radius);padding:2px 8px;cursor:pointer;font-family:var(--mono);font-size:10px;color:var(--text2);">오늘</button>`:''}
+        </div>
+        <span class="streak-count">${streak>0?streak+'일 연속 🔥':''}</span>
       </div>
-      <div class="streak-grid">${dotsHTML}</div>
-      <div style="display:flex;gap:12px;margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--text3);">
+      <div class="streak-grid-cal">${dotsHTML}</div>
+      <div style="display:flex;gap:12px;margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--text3);">
         <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--accent);margin-right:4px;vertical-align:middle;"></span>전부 완료</span>
         <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--accent-bg);border:1px solid var(--accent);margin-right:4px;vertical-align:middle;"></span>일부 완료</span>
       </div>
+    </div>
+    <div id="streakDayDetail" style="margin-top:12px;"></div>
+  `;
+function showStreakDay(dateKey){
+  const data=slits.filter(s=>toDateStr(new Date(s.start_time))===dateKey);
+  const el=document.getElementById('streakDayDetail');
+  if(!el) return;
+  const d=new Date(dateKey+'T00:00:00');
+  const DOW=['일','월','화','수','목','금','토'];
+  const label=`${d.getMonth()+1}월 ${d.getDate()}일 ${DOW[d.getDay()]}요일`;
+  const STATUS_MAP={planned:['var(--ft-bg)','var(--ft)','예정'],active:['var(--ing-bg)','var(--ing)','진행'],done:['var(--surface2)','var(--text2)','완료']};
+  el.innerHTML=`
+    <div style="background:var(--surface);border:1.5px solid var(--border2);border-radius:var(--radius-lg);padding:14px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:14px;font-weight:700;color:var(--text);">${label}</span>
+        <button onclick="document.getElementById('streakDayDetail').innerHTML=''" style="background:none;border:none;font-size:16px;color:var(--text3);cursor:pointer;">×</button>
+      </div>
+      ${data.sort((a,b)=>new Date(a.start_time)-new Date(b.start_time)).map(s=>{
+        const st=new Date(s.start_time),en=new Date(s.end_time);
+        const title=s.title||(s.situation_label||'슬릿');
+        const dur=Math.round((en-st)/60000);
+        const [bg,color,label]=STATUS_MAP[s.status]||STATUS_MAP.planned;
+        return `<div class="date-slit-row" onclick="openDetail('${s.id}')">
+          <span class="date-slit-time">${fmtTime(st)} – ${fmtTime(en)}</span>
+          <span class="date-slit-title">${title}</span>
+          <span class="date-slit-status" style="background:${bg};color:${color};">${label} · ${dur<60?dur+'분':Math.floor(dur/60)+'h'+(dur%60?dur%60+'m':'')}</span>
+          ${s.reflection?'<span style="font-size:12px;">📝</span>':''}
+        </div>`;
+      }).join('')}
     </div>
   `;
 }
@@ -2951,6 +3031,7 @@ async function savePerson(){const name=document.getElementById('personName').val
 async function confirmDelPerson(id,name){if(!confirm(`${name}을(를) 삭제할까요?`))return;await sb.from('slit_people').delete().eq('id',id);await loadAll();renderPeople();showToast('삭제됐어요');}
 
 init();
+}
 </script>
 </body>
 </html>
