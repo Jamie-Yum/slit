@@ -151,23 +151,27 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .board-during-name { font-size:24px; font-weight:700; color:var(--text3); transition:all 0.2s; letter-spacing:-0.01em; }
 .board-during-name.set { color:var(--ing); transform:scale(1.05); display:inline-block; }
 .board-time-row { display:flex; align-items:center; gap:6px; }
-.board-time-box { flex:1; background:white; border-radius:var(--radius); padding:8px; text-align:center; border:2px solid var(--border2); }
+.board-time-box { flex:1; background:white; border-radius:var(--radius); padding:8px 6px; text-align:center; border:2px solid var(--border2); position:relative; overflow:hidden; }
 .board-time-box.box-start-t { border-color:var(--start-border); background:var(--start-bg); }
-.board-time-box.box-end-t { border-color:var(--end-border); background:var(--end-bg); cursor:pointer; }
+.board-time-box.box-end-t { border-color:var(--end-border); background:var(--end-bg); }
 .board-time-label { font-size:10px; margin-bottom:2px; font-weight:700; font-family:var(--mono); letter-spacing:0.08em; }
 .board-time-label.lbl-st { color:var(--start); }
 .board-time-label.lbl-et { color:var(--end); }
 .board-time-val { font-family:var(--mono); font-size:18px; font-weight:600; color:var(--text3); }
 .board-time-val.set-st { color:var(--start); }
 .board-time-val.set-et { color:var(--end); }
+/* time input을 박스 전체에 투명하게 깔아서 탭하면 피커가 뜨도록 */
 .board-time-edit {
-  width:100%; background:none; border:none; outline:none;
-  font-family:var(--mono); font-size:20px; font-weight:700;
-  color:var(--text3); text-align:center; cursor:pointer;
-  -webkit-appearance:none; padding:0;
+  position:absolute; inset:0; width:100%; height:100%;
+  opacity:0; cursor:pointer;
+  -webkit-appearance:none; border:none; background:none;
 }
-.board-time-box.box-start-t .board-time-edit:not(:placeholder-shown) { color:var(--start); }
-.board-time-box.box-end-t .board-time-edit:not(:placeholder-shown) { color:var(--end); }
+.board-time-display {
+  font-family:var(--mono); font-size:18px; font-weight:700;
+  color:var(--text3); pointer-events:none;
+}
+.board-time-display.set-st { color:var(--start); }
+.board-time-display.set-et { color:var(--end); }
 .board-dur-mid { flex:1; text-align:center; }
 .board-dur-text { font-size:12px; color:var(--text2); margin-bottom:4px; font-weight:500; }
 .board-dur-bar { height:3px; background:var(--border); border-radius:2px; position:relative; overflow:hidden; }
@@ -513,6 +517,40 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .memo-timeline-connector { width:2px; background:var(--border); flex:1; min-height:16px; margin-top:4px; }
 .memo-timeline-card { flex:1; background:white; border:1.5px solid var(--border); border-left:3px solid; border-radius:var(--radius); padding:10px 12px; }
 
+/* 날짜별 캘린더 */
+.date-cal-month { margin-bottom:20px; }
+.date-cal-month-label { font-family:var(--mono); font-size:12px; font-weight:700; color:var(--text2); letter-spacing:0.08em; margin-bottom:10px; }
+.date-cal-day {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border-radius:var(--radius); margin-bottom:6px;
+  border:1.5px solid var(--border); background:white; cursor:pointer;
+  transition:all 0.12s;
+}
+.date-cal-day:hover { border-color:var(--accent); background:var(--accent-bg); }
+.date-cal-day.expanded { border-color:var(--accent); background:var(--accent-bg); border-radius:var(--radius) var(--radius) 0 0; margin-bottom:0; }
+.date-cal-day.no-slit { opacity:0.45; cursor:default; }
+.date-cal-day.no-slit:hover { border-color:var(--border); background:white; }
+.date-cal-daynum { font-family:var(--mono); font-size:13px; font-weight:700; color:var(--text); min-width:24px; }
+.date-cal-dow { font-family:var(--mono); font-size:10px; color:var(--text3); min-width:16px; }
+.date-cal-badges { display:flex; gap:4px; flex-wrap:wrap; flex:1; }
+.date-cal-badge { font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; }
+.date-cal-count { font-family:var(--mono); font-size:11px; color:var(--text3); margin-left:auto; }
+.date-cal-expand { padding:0 12px 10px; background:var(--accent-bg); border:1.5px solid var(--accent); border-top:none; border-radius:0 0 var(--radius) var(--radius); margin-bottom:6px; }
+.date-slit-row { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid rgba(0,0,0,0.06); cursor:pointer; }
+.date-slit-row:last-child { border-bottom:none; }
+.date-slit-row:hover .date-slit-title { color:var(--accent); }
+.date-slit-time { font-family:var(--mono); font-size:11px; color:var(--text3); min-width:90px; flex-shrink:0; }
+.date-slit-title { font-size:13px; font-weight:600; color:var(--text); flex:1; }
+.date-slit-status { font-size:10px; font-family:var(--mono); padding:2px 7px; border-radius:20px; flex-shrink:0; }
+
+/* 회고 목록 */
+.reflect-item { background:white; border:1.5px solid var(--border2); border-radius:var(--radius-lg); padding:14px 16px; margin-bottom:12px; }
+.reflect-item-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.reflect-item-title { font-size:14px; font-weight:700; color:var(--text); flex:1; }
+.reflect-item-date { font-family:var(--mono); font-size:10px; color:var(--text3); }
+.reflect-item-sit { font-size:11px; color:var(--text2); margin-bottom:8px; }
+.reflect-item-text { font-size:13px; color:var(--text); line-height:1.75; white-space:pre-wrap; background:var(--surface2); border-radius:var(--radius); padding:10px 12px; }
+
 /* 통계/가꾸기 탭 */
 .stats-tab { font-family:var(--mono); font-size:11px; font-weight:600; padding:7px 16px; border-radius:var(--radius); border:1.5px solid var(--border2); background:white; color:var(--text2); cursor:pointer; transition:all 0.12s; letter-spacing:0.04em; }
 .stats-tab.active { background:var(--text); color:white; border-color:transparent; }
@@ -617,8 +655,8 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
     <div class="logo">SLIT<span> · 시간의 틈</span></div>
     <nav>
       <button class="active" onclick="showView('today',this)">오늘</button>
-      <button onclick="showView('plan',this)">계획</button>
-      <button onclick="showView('stats',this)">통계</button>
+      <button onclick="showView('plan',this)">슬릿</button>
+      <button onclick="showView('stats',this)">종합</button>
       <button onclick="showView('garden',this)">가꾸기</button>
     </nav>
   </header>
@@ -696,28 +734,46 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
     </div>
 
     <div id="view-plan" class="view">
-      <div class="section-title">전체 슬릿</div>
+      <div class="section-title">슬릿 목록</div>
       <div id="allSlits"></div>
       <button class="btn-add" onclick="openNewSlit()">+ 새 슬릿</button>
     </div>
 
     <div id="view-stats" class="view">
-      <div class="section-title">돌아보기</div>
-      <div class="period-tabs">
-        <button class="period-tab active" onclick="setPeriod('day',this)">오늘</button>
-        <button class="period-tab" onclick="setPeriod('week',this)">이번 주</button>
-        <button class="period-tab" onclick="setPeriod('month',this)">이번 달</button>
-        <button class="period-tab" onclick="setPeriod('quarter',this)">분기</button>
-        <button class="period-tab" onclick="setPeriod('half',this)">반기</button>
-        <button class="period-tab" onclick="setPeriod('year',this)">올해</button>
-      </div>
-      <!-- 통계 탭 -->
+      <!-- 종합 탭 -->
       <div style="display:flex;gap:6px;margin-bottom:14px;">
-        <button class="stats-tab active" id="statsTabSlit" onclick="switchStatsTab('slit',this)">슬릿</button>
-        <button class="stats-tab" id="statsTabMemo" onclick="switchStatsTab('memo',this)">메모</button>
+        <button class="stats-tab active" id="synthTabStats" onclick="switchSynthTab('stats',this)">통계</button>
+        <button class="stats-tab" id="synthTabDates" onclick="switchSynthTab('dates',this)">날짜별</button>
+        <button class="stats-tab" id="synthTabReflect" onclick="switchSynthTab('reflect',this)">회고</button>
       </div>
-      <div id="statsContent"></div>
-      <div id="statsMemoContent" style="display:none;"></div>
+
+      <!-- 통계 탭 내용 -->
+      <div id="synthStats">
+        <div class="period-tabs">
+          <button class="period-tab active" onclick="setPeriod('day',this)">오늘</button>
+          <button class="period-tab" onclick="setPeriod('week',this)">이번 주</button>
+          <button class="period-tab" onclick="setPeriod('month',this)">이번 달</button>
+          <button class="period-tab" onclick="setPeriod('quarter',this)">분기</button>
+          <button class="period-tab" onclick="setPeriod('half',this)">반기</button>
+          <button class="period-tab" onclick="setPeriod('year',this)">올해</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;">
+          <button class="stats-tab active" id="statsTabSlit" onclick="switchStatsTab('slit',this)">슬릿</button>
+          <button class="stats-tab" id="statsTabMemo" onclick="switchStatsTab('memo',this)">메모</button>
+        </div>
+        <div id="statsContent"></div>
+        <div id="statsMemoContent" style="display:none;"></div>
+      </div>
+
+      <!-- 날짜별 탭 내용 -->
+      <div id="synthDates" style="display:none;">
+        <div id="dateCalendar"></div>
+      </div>
+
+      <!-- 회고 탭 내용 -->
+      <div id="synthReflect" style="display:none;">
+        <div id="reflectList"></div>
+      </div>
     </div>
 
     <!-- 가꾸기 (VMV + 사람) -->
@@ -860,15 +916,18 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <div class="board-time-row">
         <div class="board-time-box box-start-t" style="flex:1;">
           <div class="board-time-label lbl-st">시작</div>
-          <input class="board-time-edit" id="b-start-time" type="time" oninput="overviewTimeChanged('start')" placeholder="--:--">
+          <div class="board-time-display" id="b-start-display">--:--</div>
+          <!-- 투명 time input: 탭하면 피커가 뜨고, 선택하면 표시값 업데이트 -->
+          <input class="board-time-edit" id="b-start-time" type="time" oninput="overviewTimeChanged('start')">
         </div>
-        <div class="board-dur-mid">
+        <div class="board-dur-mid" style="flex:0.8;">
           <div class="board-dur-text" id="b-duration">—</div>
           <div class="board-dur-bar"><div class="board-dur-fill" id="b-dur-fill" style="width:0%"></div></div>
         </div>
         <div class="board-time-box box-end-t" style="flex:1;">
           <div class="board-time-label lbl-et">종료</div>
-          <input class="board-time-edit" id="b-end-time" type="time" oninput="overviewTimeChanged('end')" placeholder="--:--">
+          <div class="board-time-display" id="b-end-display">--:--</div>
+          <input class="board-time-edit" id="b-end-time" type="time" oninput="overviewTimeChanged('end')">
         </div>
       </div>
     </div>
@@ -1139,7 +1198,7 @@ function showView(name,btn){
   document.getElementById('view-'+name).classList.add('active'); btn.classList.add('active');
   if(name==='today'){renderToday();renderTodayMemos();}
   if(name==='plan')renderPlan();
-  if(name==='stats')renderStats();
+  if(name==='stats'){renderStats();}
   if(name==='garden'){renderVmv();renderPeople();}
 }
 
@@ -1207,11 +1266,125 @@ async function deleteMemo(id){
 
 // ── 통계 탭 (슬릿 / 메모) ──
 let curStatsTab='slit';
+// ── 종합 탭 전환 ──
+let curSynthTab='stats';
+function switchSynthTab(tab,btn){
+  curSynthTab=tab;
+  ['synthTabStats','synthTabDates','synthTabReflect'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.remove('active');
+  });
+  btn.classList.add('active');
+  document.getElementById('synthStats').style.display=tab==='stats'?'block':'none';
+  document.getElementById('synthDates').style.display=tab==='dates'?'block':'none';
+  document.getElementById('synthReflect').style.display=tab==='reflect'?'block':'none';
+  if(tab==='dates')renderDateCalendar();
+  if(tab==='reflect')renderReflections();
+}
+
+// ── 날짜별 캘린더 ──
+let expandedDate=null;
+function renderDateCalendar(){
+  // 슬릿을 날짜별로 묶기
+  const byDate={};
+  slits.forEach(s=>{
+    const d=toDateStr(new Date(s.start_time));
+    if(!byDate[d])byDate[d]=[];
+    byDate[d].push(s);
+  });
+  // 날짜 목록 (최신순)
+  const dates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
+  if(!dates.length){
+    document.getElementById('dateCalendar').innerHTML=`<div class="empty"><div class="empty-icon">◻</div><div class="empty-text">기록된 슬릿이 없어요</div></div>`;
+    return;
+  }
+  // 월별로 묶기
+  const byMonth={};
+  dates.forEach(d=>{
+    const m=d.slice(0,7);
+    if(!byMonth[m])byMonth[m]=[];
+    byMonth[m].push(d);
+  });
+  const DOW=['일','월','화','수','목','금','토'];
+  const STATUS_COLOR={planned:['var(--ft-bg)','var(--ft)'],active:['var(--ing-bg)','var(--ing)'],done:['var(--surface2)','var(--text2)']};
+  let html='';
+  Object.entries(byMonth).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([month,monthDates])=>{
+    const [y,m]=month.split('-');
+    html+=`<div class="date-cal-month">
+      <div class="date-cal-month-label">${y}년 ${parseInt(m)}월</div>`;
+    monthDates.forEach(d=>{
+      const dateObj=new Date(d+'T00:00:00');
+      const dow=DOW[dateObj.getDay()];
+      const dayNum=dateObj.getDate();
+      const list=byDate[d]||[];
+      const isExpanded=expandedDate===d;
+      // 상태 뱃지
+      const badges=list.slice(0,3).map(s=>{
+        const title=s.title||(s.situation_label||'슬릿');
+        const [bg,color]=STATUS_COLOR[s.status]||STATUS_COLOR.planned;
+        return `<span class="date-cal-badge" style="background:${bg};color:${color};">${title.slice(0,6)}</span>`;
+      }).join('')+(list.length>3?`<span class="date-cal-badge" style="background:var(--surface2);color:var(--text3);">+${list.length-3}</span>`:'');
+      html+=`<div class="date-cal-day ${isExpanded?'expanded':''}" onclick="toggleDateExpand('${d}')">
+        <span class="date-cal-dow" style="${dow==='일'?'color:#c0392b':dow==='토'?'color:var(--ft)':''}">${dow}</span>
+        <span class="date-cal-daynum">${dayNum}</span>
+        <div class="date-cal-badges">${badges}</div>
+        <span class="date-cal-count">${list.length}개 ▾</span>
+      </div>`;
+      if(isExpanded){
+        html+=`<div class="date-cal-expand">`;
+        list.sort((a,b)=>new Date(a.start_time)-new Date(b.start_time)).forEach(s=>{
+          const st=new Date(s.start_time),en=new Date(s.end_time);
+          const title=s.title||(s.situation_label||'슬릿');
+          const dur=Math.round((en-st)/60000);
+          const [bg,color]=STATUS_COLOR[s.status]||STATUS_COLOR.planned;
+          html+=`<div class="date-slit-row" onclick="openDetail('${s.id}')">
+            <span class="date-slit-time">${fmtTime(st)} – ${fmtTime(en)}</span>
+            <span class="date-slit-title">${title}</span>
+            <span class="date-slit-status" style="background:${bg};color:${color};">${s.status==='done'?'완료':s.status==='active'?'진행':'예정'} ${dur<60?dur+'분':Math.floor(dur/60)+'h'+(dur%60?dur%60+'m':'')}</span>
+            ${s.reflection?'<span style="font-size:12px;">📝</span>':''}
+          </div>`;
+        });
+        html+=`</div>`;
+      }
+    });
+    html+=`</div>`;
+  });
+  document.getElementById('dateCalendar').innerHTML=html;
+}
+
+function toggleDateExpand(d){
+  expandedDate=expandedDate===d?null:d;
+  renderDateCalendar();
+}
+
+// ── 회고 목록 ──
+function renderReflections(){
+  const withReflect=slits
+    .filter(s=>s.reflection&&s.reflection.trim())
+    .sort((a,b)=>new Date(b.start_time)-new Date(a.start_time));
+  const el=document.getElementById('reflectList');
+  if(!withReflect.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">✍</div><div class="empty-text">아직 회고가 없어요<br><span style="font-size:12px;margin-top:4px;display:block;">슬릿을 완료하고 회고를 남겨보세요</span></div></div>`;
+    return;
+  }
+  el.innerHTML=withReflect.map(s=>{
+    const st=new Date(s.start_time);
+    const title=s.title||(s.situation_label||'슬릿');
+    const dateStr=`${st.getFullYear()}.${pad(st.getMonth()+1)}.${pad(st.getDate())} ${fmtTime(st)}`;
+    return `<div class="reflect-item">
+      <div class="reflect-item-header">
+        <span class="reflect-item-title">${title}</span>
+        <span class="reflect-item-date">${dateStr}</span>
+      </div>
+      ${s.situation_label?`<div class="reflect-item-sit">📍 ${s.situation_label}</div>`:''}
+      <div class="reflect-item-text">${s.reflection}</div>
+    </div>`;
+  }).join('');
+}
+
 function switchStatsTab(tab,btn){
   curStatsTab=tab;
-  document.querySelectorAll('.stats-tab').forEach(b=>{
-    if(b.id&&b.id.startsWith('statsTab'))b.classList.remove('active');
-  });
+  ['statsTabSlit','statsTabMemo'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
   btn.classList.add('active');
   document.getElementById('statsContent').style.display=tab==='slit'?'block':'none';
   document.getElementById('statsMemoContent').style.display=tab==='memo'?'block':'none';
@@ -1286,9 +1459,7 @@ function renderStatsMemos(){
 
 // ── 가꾸기 탭 ──
 function switchGardenTab(tab,btn){
-  document.querySelectorAll('.stats-tab').forEach(b=>{
-    if(b.id&&b.id.startsWith('gardenTab'))b.classList.remove('active');
-  });
+  ['gardenTabVmv','gardenTabPeople'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
   btn.classList.add('active');
   document.getElementById('gardenVmv').style.display=tab==='vmv'?'block':'none';
   document.getElementById('gardenPeople').style.display=tab==='people'?'block':'none';
@@ -1576,6 +1747,7 @@ function selSetFromHtl(s,e){
   selUpdateDur();
   selShowActions();
   updateBoard();
+  syncTimeDisplay();
 }
 
 function selTimeChanged(){
@@ -1601,6 +1773,7 @@ function selTimeChanged(){
     if(eh>sh){htlSelStart=sh;htlSelEnd=eh;htlUpdateSelRange(sh,eh);selShowActions();}
   }
   selUpdateDur();
+  syncTimeDisplay();
   updateBoard();
 }
 
@@ -1916,10 +2089,43 @@ function renderSlitCard(s){
 }
 function renderPlan(){
   const el=document.getElementById('allSlits');
+  const now=new Date();
+  const todayStr=toDateStr(now);
+
+  // 오늘 이후(오늘 포함) 슬릿만 표시
+  const upcoming=slits.filter(s=>toDateStr(new Date(s.start_time))>=todayStr);
+  const pastCount=slits.filter(s=>toDateStr(new Date(s.start_time))<todayStr).length;
+
   if(!slits.length){el.innerHTML=`<div class="empty"><div class="empty-icon">◻</div><div class="empty-text">슬릿이 없어요</div></div>`;return;}
+
   const g={};
-  slits.forEach(s=>{const d=new Date(s.start_time).toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});if(!g[d])g[d]=[];g[d].push(s);});
-  el.innerHTML=Object.entries(g).map(([date,list])=>`<div class="section-title">${date}</div>${list.map(renderSlitCard).join('')}`).join('');
+  upcoming.forEach(s=>{
+    const d=new Date(s.start_time).toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+    if(!g[d])g[d]=[];g[d].push(s);
+  });
+
+  let html=Object.entries(g).map(([date,list])=>`<div class="section-title">${date}</div>${list.map(renderSlitCard).join('')}`).join('');
+
+  if(!upcoming.length) html=`<div class="empty"><div class="empty-icon">◻</div><div class="empty-text">예정된 슬릿이 없어요</div></div>`;
+
+  // 지난 슬릿 안내
+  if(pastCount>0){
+    html+=`<div style="margin-top:16px;padding:12px 14px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:13px;color:var(--text2);">지난 슬릿 <strong>${pastCount}개</strong>는 종합에서 확인해요</span>
+      <button class="htl-hint-btn primary" onclick="goToSynthDates()" style="font-size:11px;padding:5px 12px;">날짜별 보기 →</button>
+    </div>`;
+  }
+
+  el.innerHTML=html;
+}
+
+function goToSynthDates(){
+  // 종합 탭 → 날짜별로 이동
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-stats').classList.add('active');
+  document.querySelectorAll('nav button')[2].classList.add('active');
+  switchSynthTab('dates',document.getElementById('synthTabDates'));
 }
 
 function openDetail(id){
@@ -2037,6 +2243,7 @@ function openNewSlit(preStart, preEnd){
   document.getElementById('b-end-time').value=e;
   if(s) document.getElementById('startTimeInput').value=s;
   if(e) document.getElementById('endTimeInput').value=e;
+  syncTimeDisplay();
   resetBoard();
   selectMode('between');
   goStep('situation');
@@ -2062,26 +2269,33 @@ function goStep(name){
   if(el) el.classList.add('active');
 }
 // Overview 시간 input 직접 수정 시
+// time input 값을 텍스트 표시로 동기화 (iOS Safari 대응)
+function syncTimeDisplay(){
+  const st=document.getElementById('b-start-time').value;
+  const et=document.getElementById('b-end-time').value;
+  const sd=document.getElementById('b-start-display');
+  const ed=document.getElementById('b-end-display');
+  if(sd){sd.textContent=st||'--:--';sd.className='board-time-display'+(st?' set-st':'');}
+  if(ed){ed.textContent=et||'--:--';ed.className='board-time-display'+(et?' set-et':'');}
+}
 function overviewTimeChanged(which){
   const st=document.getElementById('b-start-time').value;
   const et=document.getElementById('b-end-time').value;
   const today=toDateStr(new Date());
-  // 숨김 input 동기화
   document.getElementById('startDateInput').value=today;
   document.getElementById('endDateInput').value=today;
   if(st) document.getElementById('startTimeInput').value=st;
   if(et) document.getElementById('endTimeInput').value=et;
-  // 선택 시간 칸 동기화
   const selStart=document.getElementById('selStart');
   const selEnd=document.getElementById('selEnd');
   if(selStart&&st){selStart.value=st;selStart.classList.toggle('has-start',!!st);}
   if(selEnd&&et){selEnd.value=et;selEnd.classList.toggle('has-end',!!et);}
-  // 타임라인 선택 영역 동기화
   if(st&&et){
     const sh=parseInt(st.split(':')[0])+parseInt(st.split(':')[1])/60;
     const eh=parseInt(et.split(':')[0])+parseInt(et.split(':')[1])/60;
     if(eh>sh){htlSelStart=sh;htlSelEnd=eh;htlUpdateSelRange(sh,eh);}
   }
+  syncTimeDisplay();
   updateBoard();
 }
 function updateBoard(){
@@ -2097,6 +2311,7 @@ function updateBoard(){
       document.getElementById('b-duration').textContent='⚠';
     }
   }
+  syncTimeDisplay();
   updateTaskTimeBar();
 }
 function selectMode(m){
@@ -2211,20 +2426,6 @@ function applyStartQuick(date,time){
   document.getElementById('startDateInput').value=date;document.getElementById('startTimeInput').value=time;
   document.querySelectorAll('#startQuickBtns .date-btn').forEach(b=>b.classList.remove('active'));
   event.target.classList.add('active');updateBoard();
-}
-function updateBoard(){
-  const ed=document.getElementById('endDateInput').value,et=document.getElementById('endTimeInput').value;
-  const sd=document.getElementById('startDateInput').value,st=document.getElementById('startTimeInput').value;
-  if(et){const el=document.getElementById('b-end-time');el.textContent=et;el.className='board-time-val set-et';}
-  if(st){const el=document.getElementById('b-start-time');el.textContent=st;el.className='board-time-val set-st';}
-  if(ed&&et&&sd&&st){
-    const diff=Math.round((new Date(ed+'T'+et)-new Date(sd+'T'+st))/60000);
-    if(diff>0){
-      document.getElementById('b-duration').textContent=fmtDur(diff);
-      document.getElementById('b-dur-fill').style.width=Math.min(100,diff/180*100)+'%';
-    }
-  }
-  updateTaskTimeBar();
 }
 
 function addTask(){
@@ -2606,10 +2807,13 @@ async function saveInlineSlit(){
 }
 
 // ── 슬릿 수정 ──
+let editTasks=[]; // 수정 중인 할 일 목록
+
 async function openEditSlit(id){
   const s=slits.find(x=>x.id===id); if(!s) return;
   const start=new Date(s.start_time), end=new Date(s.end_time);
-  // 상세 모달을 수정 모드로 열기
+  editTasks=(tMap[id]||[]).map(t=>({...t})); // 복사본
+
   document.getElementById('detailTitle').textContent='슬릿 수정';
   document.getElementById('detailContent').innerHTML=`
     <div class="detail-section">
@@ -2620,21 +2824,88 @@ async function openEditSlit(id){
       <div class="detail-label">상황</div>
       <input class="form-input" id="editSlitSit" value="${s.situation_label||''}" placeholder="상황 레이블">
     </div>
-    <div class="detail-section">
-      <div class="detail-label" style="color:var(--start);">시작 시간</div>
-      <input class="form-input" type="time" id="editSlitStart" value="${toTimeStr(start)}" style="border-color:var(--start-border);">
+    <div class="detail-section" style="display:flex;gap:10px;">
+      <div style="flex:1;">
+        <div class="detail-label" style="color:var(--start);">시작</div>
+        <input class="form-input" type="time" id="editSlitStart" value="${toTimeStr(start)}" style="border-color:var(--start-border);">
+      </div>
+      <div style="flex:1;">
+        <div class="detail-label" style="color:var(--end);">종료</div>
+        <input class="form-input" type="time" id="editSlitEnd" value="${toTimeStr(end)}" style="border-color:var(--end-border);">
+      </div>
     </div>
     <div class="detail-section">
-      <div class="detail-label" style="color:var(--end);">종료 시간</div>
-      <input class="form-input" type="time" id="editSlitEnd" value="${toTimeStr(end)}" style="border-color:var(--end-border);">
+      <div class="detail-label" style="color:var(--accent);">✓ 할 일</div>
+      <div id="editTaskList"></div>
+      <div class="task-add-row" style="margin-top:8px;">
+        <input class="form-input" id="editNewTaskName" placeholder="할 일 추가" style="flex:1" onkeydown="if(event.key==='Enter')editAddTask()">
+        <input class="form-input" id="editNewTaskDur" type="number" placeholder="분" style="width:58px;flex-shrink:0;">
+        <button class="btn btn-ghost btn-sm" onclick="editAddTask()">+</button>
+      </div>
     </div>
   `;
+  renderEditTasks();
   document.getElementById('detailActions').innerHTML=`
     <button class="btn btn-ghost btn-sm" onclick="openDetail('${id}')">취소</button>
     <button class="btn btn-primary btn-sm" onclick="saveEditSlit('${id}')">저장</button>
   `;
   document.getElementById('detailModal').classList.add('open');
 }
+
+function renderEditTasks(){
+  const el=document.getElementById('editTaskList');
+  if(!el) return;
+  if(!editTasks.length){
+    el.innerHTML=`<div style="font-size:13px;color:var(--text3);padding:8px 0;">할 일이 없어요</div>`;
+    return;
+  }
+  el.innerHTML=editTasks.map((t,i)=>`
+    <div class="task-item" id="editTaskItem-${i}">
+      <div class="task-check ${t.done?'done':''}"></div>
+      <span class="task-name ${t.done?'done':''}" ondblclick="editTaskInline(${i})">${t.title}</span>
+      ${t.duration_minutes?`<span class="task-dur">${t.duration_minutes}분</span>`:''}
+      <button class="btn btn-ghost btn-sm" style="padding:3px 7px;font-size:11px;" onclick="editTaskInline(${i})">✎</button>
+      <button class="btn btn-ghost btn-sm" style="padding:3px 7px;color:#c0392b;" onclick="editRemoveTask(${i})">×</button>
+    </div>`).join('');
+}
+
+function editAddTask(){
+  const n=document.getElementById('editNewTaskName').value.trim();
+  if(!n) return;
+  const d=parseInt(document.getElementById('editNewTaskDur').value)||0;
+  editTasks.push({title:n,duration_minutes:d,order_index:editTasks.length,done:false,_new:true});
+  document.getElementById('editNewTaskName').value='';
+  document.getElementById('editNewTaskDur').value='';
+  renderEditTasks();
+}
+
+function editRemoveTask(i){
+  editTasks.splice(i,1);
+  renderEditTasks();
+}
+
+function editTaskInline(i){
+  const t=editTasks[i];
+  const item=document.getElementById('editTaskItem-'+i);
+  item.innerHTML=`
+    <div class="task-check"></div>
+    <input class="form-input" id="editTaskName-${i}" value="${t.title}" style="flex:1;padding:5px 8px;font-size:13px;"
+      onkeydown="if(event.key==='Enter')editSaveTaskInline(${i});if(event.key==='Escape')renderEditTasks();">
+    <input class="form-input" id="editTaskDurI-${i}" type="number" value="${t.duration_minutes||''}" placeholder="분" style="width:56px;padding:5px 8px;font-size:13px;">
+    <button class="btn btn-primary btn-sm" onclick="editSaveTaskInline(${i})">저장</button>
+    <button class="btn btn-ghost btn-sm" onclick="renderEditTasks()">취소</button>
+  `;
+  document.getElementById('editTaskName-'+i).focus();
+}
+
+function editSaveTaskInline(i){
+  const name=document.getElementById('editTaskName-'+i)?.value.trim();
+  if(!name){editRemoveTask(i);return;}
+  editTasks[i].title=name;
+  editTasks[i].duration_minutes=parseInt(document.getElementById('editTaskDurI-'+i)?.value)||0;
+  renderEditTasks();
+}
+
 async function saveEditSlit(id){
   const s=slits.find(x=>x.id===id); if(!s) return;
   const startDate=toDateStr(new Date(s.start_time));
@@ -2643,12 +2914,26 @@ async function saveEditSlit(id){
   const et=document.getElementById('editSlitEnd').value;
   const start=new Date(startDate+'T'+st), end=new Date(endDate+'T'+et);
   if(end<=start){showToast('종료가 시작보다 앞서 있어요');return;}
+
+  // 슬릿 기본 정보 업데이트
   const{error}=await sb.from('slit_slits').update({
     title:document.getElementById('editSlitTitle').value||null,
     situation_label:document.getElementById('editSlitSit').value||null,
     start_time:start.toISOString(), end_time:end.toISOString()
   }).eq('id',id);
   if(error){showToast('저장 실패: '+error.message);return;}
+
+  // 기존 할 일 전체 삭제 후 재삽입
+  await sb.from('slit_tasks').delete().eq('slit_id',id);
+  if(editTasks.length){
+    const rows=editTasks.map((t,i)=>({
+      slit_id:id, title:t.title,
+      duration_minutes:t.duration_minutes||0,
+      order_index:i, done:t.done||false
+    }));
+    await sb.from('slit_tasks').insert(rows);
+  }
+
   await loadAll(); closeModal('detailModal'); renderToday(); renderPlan();
   showToast('수정됐어요!');
 }
