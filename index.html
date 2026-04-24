@@ -2,8 +2,17 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Slit">
+<meta name="application-name" content="Slit">
+<meta name="theme-color" content="#f5f3ef">
+<meta name="description" content="시간의 틈을 기록하는 앱">
 <title>Slit</title>
+<!-- Apple Touch Icon (홈 화면 아이콘) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><defs><linearGradient id='sg' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%23e8e8ec'/><stop offset='100%25' stop-color='%23c4c4cc'/></linearGradient><linearGradient id='wl' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%23ffffff' stop-opacity='0.5'/><stop offset='20%25' stop-color='%23ffffff' stop-opacity='1'/><stop offset='80%25' stop-color='%23ffffff' stop-opacity='1'/><stop offset='100%25' stop-color='%23ffffff' stop-opacity='0.5'/></linearGradient></defs><rect width='180' height='180' rx='40' fill='url(%23sg)'/><rect x='18' y='40' width='14' height='100' rx='7' fill='%23a0a0b0' opacity='0.30'/><rect x='42' y='28' width='14' height='124' rx='7' fill='%23888898' opacity='0.48'/><rect x='66' y='16' width='14' height='148' rx='7' fill='%23707080' opacity='0.65'/><rect x='102' y='16' width='14' height='148' rx='7' fill='%23707080' opacity='0.65'/><rect x='126' y='28' width='14' height='124' rx='7' fill='%23888898' opacity='0.48'/><rect x='150' y='40' width='14' height='100' rx='7' fill='%23a0a0b0' opacity='0.30'/><rect x='80' y='4' width='22' height='172' rx='11' fill='%23ffffff' opacity='0.18'/><rect x='84' y='4' width='14' height='172' rx='7' fill='url(%23wl)'/><rect x='88' y='12' width='6' height='156' rx='3' fill='%23ffffff' opacity='0.85'/></svg>">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='sg' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%23e8e8ec'/><stop offset='100%25' stop-color='%23c4c4cc'/></linearGradient><linearGradient id='wl' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%23ffffff' stop-opacity='0.5'/><stop offset='20%25' stop-color='%23ffffff' stop-opacity='1'/><stop offset='80%25' stop-color='%23ffffff' stop-opacity='1'/><stop offset='100%25' stop-color='%23ffffff' stop-opacity='0.5'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='url(%23sg)'/><rect x='2' y='6' width='2' height='20' rx='1' fill='%23a0a0b0' opacity='0.30'/><rect x='6' y='4' width='2' height='24' rx='1' fill='%23888898' opacity='0.48'/><rect x='10' y='2' width='2' height='28' rx='1' fill='%23707080' opacity='0.65'/><rect x='18' y='2' width='2' height='28' rx='1' fill='%23707080' opacity='0.65'/><rect x='22' y='4' width='2' height='24' rx='1' fill='%23888898' opacity='0.48'/><rect x='26' y='6' width='2' height='20' rx='1' fill='%23a0a0b0' opacity='0.30'/><rect x='13' y='0' width='6' height='32' rx='3' fill='%23ffffff' opacity='0.15'/><rect x='14' y='0' width='4' height='32' rx='2' fill='url(%23wl)'/><rect x='15' y='2' width='2' height='28' rx='1' fill='%23ffffff' opacity='0.85'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Pretendard:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -1204,17 +1213,21 @@ async function init() {
 }
 async function loadAll() {
   try {
-    const [s,p,par,t,m]=await Promise.all([
+    const [s,p,par,t]=await Promise.all([
       sb.from('slit_slits').select('*').order('start_time'),
       sb.from('slit_people').select('*').order('name'),
       sb.from('slit_participants').select('*'),
       sb.from('slit_tasks').select('*').order('order_index'),
-      sb.from('slit_memos').select('*').order('created_at',{ascending:false}),
     ]);
-    slits=s.data||[]; people=p.data||[]; memos=m.data||[];
+    slits=s.data||[]; people=p.data||[];
     pMap={}; (par.data||[]).forEach(r=>{if(!pMap[r.slit_id])pMap[r.slit_id]=[];pMap[r.slit_id].push(r.person_id);});
     tMap={}; (t.data||[]).forEach(r=>{if(!tMap[r.slit_id])tMap[r.slit_id]=[];tMap[r.slit_id].push(r);});
-  } catch(e){showToast('DB 연결 중... SQL 테이블 생성이 필요해요');}
+  } catch(e){showToast('슬릿 DB 연결 실패: '+e.message);}
+  // 메모는 별도로 (테이블 없어도 슬릿은 정상 로드)
+  try {
+    const m=await sb.from('slit_memos').select('*').order('created_at',{ascending:false});
+    memos=m.data||[];
+  } catch(e){memos=[];} // slit_memos 테이블 없으면 조용히 처리
 }
 
 function pad(n){return String(n).padStart(2,'0');}
@@ -3182,7 +3195,50 @@ function selectPType(t){pType=t;document.getElementById('ptype-person').classLis
 async function savePerson(){const name=document.getElementById('personName').value.trim();if(!name){showToast('이름을 입력해주세요');return;}const{error}=await sb.from('slit_people').insert({name,type:pType});if(error){showToast('저장 실패: '+error.message);return;}await loadAll();closeModal('personModal');renderPeople();showToast(`${name} 추가됐어요!`);}
 async function confirmDelPerson(id,name){if(!confirm(`${name}을(를) 삭제할까요?`))return;await sb.from('slit_people').delete().eq('id',id);await loadAll();renderPeople();showToast('삭제됐어요');}
 
+function downloadSlit(){
+  const html=document.documentElement.outerHTML;
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='slit.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 init();
+</script>
+<!-- 설치 안내 배너 -->
+<div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--text);color:white;padding:14px 16px;padding-bottom:calc(14px + env(safe-area-inset-bottom));display:none;align-items:center;gap:12px;">
+  <div style="flex:1;">
+    <div style="font-size:13px;font-weight:700;margin-bottom:2px;">홈 화면에 추가하기</div>
+    <div id="installGuide" style="font-size:11px;color:rgba(255,255,255,0.7);line-height:1.5;"></div>
+  </div>
+  <button onclick="document.getElementById('installBanner').style.display='none';localStorage.setItem('slit_install_dismissed','1');" style="background:none;border:1px solid rgba(255,255,255,0.4);border-radius:var(--radius);padding:7px 12px;color:white;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;">닫기</button>
+</div>
+
+<script>
+// 설치 배너 표시 (이미 닫은 적 없고, 이미 설치된 앱이 아닐 때)
+(function(){
+  if(localStorage.getItem('slit_install_dismissed')) return;
+  if(window.navigator.standalone) return; // 이미 홈 화면 앱으로 실행 중
+  if(window.matchMedia('(display-mode: standalone)').matches) return;
+
+  const banner=document.getElementById('installBanner');
+  const guide=document.getElementById('installGuide');
+  const ua=navigator.userAgent;
+  const isIOS=/iPhone|iPad|iPod/.test(ua);
+  const isAndroid=/Android/.test(ua);
+
+  if(isIOS){
+    guide.innerHTML='Safari 하단의 <strong style="color:white;">공유 버튼(□↑)</strong>을 누른 후<br><strong style="color:white;">홈 화면에 추가</strong>를 선택하세요';
+    banner.style.display='flex';
+  } else if(isAndroid){
+    guide.innerHTML='브라우저 메뉴에서 <strong style="color:white;">홈 화면에 추가</strong>를 선택하세요';
+    banner.style.display='flex';
+  }
+})();
 </script>
 </body>
 </html>
