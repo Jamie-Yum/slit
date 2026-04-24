@@ -667,8 +667,8 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
   <header>
     <div class="logo">SLIT<span> · 시간의 틈</span></div>
     <nav>
-      <button class="active" onclick="showView('today',this)">오늘</button>
-      <button onclick="showView('plan',this)">슬릿</button>
+      <button class="active" onclick="showView('today',this)">홈</button>
+      <button onclick="showView('plan',this)">오늘의 슬릿</button>
       <button onclick="showView('stats',this)">종합</button>
       <button onclick="showView('garden',this)">가꾸기</button>
     </nav>
@@ -747,7 +747,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
     </div>
 
     <div id="view-plan" class="view">
-      <div class="section-title">슬릿 목록</div>
+      <div class="section-title">오늘의 슬릿</div>
       <div id="allSlits"></div>
       <button class="btn-add" onclick="openNewSlit()">+ 새 슬릿</button>
     </div>
