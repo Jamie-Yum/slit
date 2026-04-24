@@ -681,9 +681,17 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <div class="date-now" id="dateDisplay"></div>
       </div>
 
+      <!-- 날짜 선택 -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <button onclick="homeMoveDate(-1)" style="background:none;border:1.5px solid var(--border2);border-radius:var(--radius);width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--text2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">‹</button>
+        <input type="date" id="homeDatePicker" class="form-input" style="flex:1;font-family:var(--mono);font-size:14px;text-align:center;" oninput="homeSetDate()">
+        <button onclick="homeMoveDate(1)" style="background:none;border:1.5px solid var(--border2);border-radius:var(--radius);width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--text2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">›</button>
+        <button id="homeTodayBtn" onclick="homeGoToday()" style="display:none;background:none;border:1.5px solid var(--accent);border-radius:var(--radius);padding:0 10px;height:32px;cursor:pointer;font-family:var(--mono);font-size:10px;color:var(--accent);white-space:nowrap;flex-shrink:0;">오늘</button>
+      </div>
+
       <!-- 가로 타임라인 -->
       <div class="htl-wrap">
-        <div class="htl-label">오늘 타임라인</div>
+        <div class="htl-label" id="htlDateLabel">오늘 타임라인</div>
         <div class="htl-scroll-outer">
           <div class="htl-scroll-inner" id="htlInner">
             <div class="htl-hours" id="htlHours"></div>
@@ -747,9 +755,14 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
     </div>
 
     <div id="view-plan" class="view">
-      <div class="section-title">오늘의 슬릿</div>
+      <!-- 새 슬릿 + 날짜 선택 -->
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+        <input type="date" id="planDatePicker" class="form-input" style="flex:1;font-family:var(--mono);font-size:14px;" oninput="renderPlan()">
+        <button class="btn-quick" style="white-space:nowrap;" onclick="openNewSlitForDate()">
+          <span style="font-size:16px;">+</span> 새 슬릿
+        </button>
+      </div>
       <div id="allSlits"></div>
-      <button class="btn-add" onclick="openNewSlit()">+ 새 슬릿</button>
     </div>
 
     <div id="view-stats" class="view">
@@ -1254,13 +1267,14 @@ async function saveMemo(){
   showToast('메모가 기록됐어요!');
 }
 function renderTodayMemos(){
-  const now=new Date();
-  const today=toDateStr(now);
-  const todayMemos=memos.filter(m=>m.created_at.startsWith(today));
+  const selDate=homeGetDate();
+  const dayMemoList=memos.filter(m=>m.created_at.startsWith(selDate));
   const el=document.getElementById('todayMemos');
   if(!el)return;
-  if(!todayMemos.length){el.innerHTML='<div style="text-align:center;padding:16px 0;font-size:13px;color:var(--text3);">오늘 기록한 메모가 없어요</div>';return;}
-  el.innerHTML=todayMemos.map(m=>{
+  const isToday=selDate===toDateStr(new Date());
+  const emptyMsg=isToday?'오늘 기록한 메모가 없어요':'이 날 기록한 메모가 없어요';
+  if(!dayMemoList.length){el.innerHTML=`<div style="text-align:center;padding:16px 0;font-size:13px;color:var(--text3);">${emptyMsg}</div>`;return;}
+  el.innerHTML=dayMemoList.map(m=>{
     const [bg,color]=MEMO_COLORS[m.type]||MEMO_COLORS['기타'];
     const t=new Date(m.created_at);
     return `<div class="memo-item" style="border-left-color:${color};">
@@ -1549,10 +1563,53 @@ function saveVmv(k){
 
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 
+// ── 홈 날짜 선택 ──
+function homeInitDate(){
+  const picker=document.getElementById('homeDatePicker');
+  if(picker&&!picker.value) picker.value=toDateStr(new Date());
+  homeSetDate();
+}
+function homeSetDate(){
+  const picker=document.getElementById('homeDatePicker');
+  const todayStr=toDateStr(new Date());
+  const isToday=!picker||picker.value===todayStr;
+  const todayBtn=document.getElementById('homeTodayBtn');
+  if(todayBtn) todayBtn.style.display=isToday?'none':'flex';
+  // 타임라인 라벨 업데이트
+  const label=document.getElementById('htlDateLabel');
+  if(label){
+    if(isToday) label.textContent='오늘 타임라인';
+    else{
+      const d=new Date(picker.value+'T00:00:00');
+      const DOW=['일','월','화','수','목','금','토'];
+      label.textContent=`${d.getMonth()+1}월 ${d.getDate()}일 ${DOW[d.getDay()]}요일 타임라인`;
+    }
+  }
+  htlRenderBlocks();
+  renderTodayMemos();
+}
+function homeMoveDate(delta){
+  const picker=document.getElementById('homeDatePicker');
+  if(!picker) return;
+  const d=new Date((picker.value||toDateStr(new Date()))+'T00:00:00');
+  d.setDate(d.getDate()+delta);
+  picker.value=toDateStr(d);
+  homeSetDate();
+}
+function homeGoToday(){
+  const picker=document.getElementById('homeDatePicker');
+  if(picker) picker.value=toDateStr(new Date());
+  homeSetDate();
+}
+function homeGetDate(){
+  const picker=document.getElementById('homeDatePicker');
+  return picker?picker.value:toDateStr(new Date());
+}
+
 function renderToday(){
   htlInit();
   initMemo();
-  renderTodayMemos();
+  homeInitDate();
 }
 
 // ── 가로 타임라인 ──
@@ -1588,21 +1645,19 @@ function htlUpdateNow(){
   const now=new Date();
   const h=now.getHours()+now.getMinutes()/60;
   const line=document.getElementById('htlNow');
-  if(h>=HTL_MIN&&h<=HTL_MAX){ line.style.left=htlHourToPct(h)+'%'; line.style.display='block'; }
+  const selDate=homeGetDate();
+  const isToday=selDate===toDateStr(now);
+  if(isToday&&h>=HTL_MIN&&h<=HTL_MAX){ line.style.left=htlHourToPct(h)+'%'; line.style.display='block'; }
   else line.style.display='none';
 }
 
 function htlRenderBlocks(){
-  const now=new Date();
-  const todayStr=toDateStr(now);
-  const todaySlits=slits.filter(s=>{
-    const d=new Date(s.start_time);
-    return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();
-  });
-  const todayMemoList=memos.filter(m=>m.created_at.startsWith(todayStr));
+  const selDate=homeGetDate();
+  const daySlits=slits.filter(s=>toDateStr(new Date(s.start_time))===selDate);
+  const dayMemos=memos.filter(m=>m.created_at.startsWith(selDate));
 
   // 슬릿 블록
-  const slitHTML=todaySlits.map(s=>{
+  const slitHTML=daySlits.map(s=>{
     const st=new Date(s.start_time),en=new Date(s.end_time);
     const sh=st.getHours()+st.getMinutes()/60;
     const eh=en.getHours()+en.getMinutes()/60;
@@ -1615,12 +1670,11 @@ function htlRenderBlocks(){
   }).join('');
 
   // 메모 마커
-  const memoHTML=todayMemoList.map(m=>{
+  const memoHTML=dayMemos.map(m=>{
     const t=new Date(m.created_at);
     const h=t.getHours()+t.getMinutes()/60;
     const left=htlHourToPct(h);
     const [bg,color]=MEMO_COLORS[m.type]||MEMO_COLORS['기타'];
-    const short=m.content.length>10?m.content.slice(0,10)+'…':m.content;
     return `<div class="htl-memo-marker" style="left:${left}%;" title="${m.type}: ${m.content}">
       <div class="htl-memo-dot" style="background:${color};"></div>
       <div class="htl-memo-label" style="color:${color};background:${bg};">${m.type}</div>
@@ -2174,35 +2228,62 @@ function renderPlan(){
   const now=new Date();
   const todayStr=toDateStr(now);
 
-  // 오늘 이후(오늘 포함) 슬릿만 표시
-  const upcoming=slits.filter(s=>toDateStr(new Date(s.start_time))>=todayStr);
+  // 날짜 피커 초기값 설정
+  const picker=document.getElementById('planDatePicker');
+  if(picker&&!picker.value) picker.value=todayStr;
+  const selDate=picker?picker.value:todayStr;
+
+  // 선택 날짜의 슬릿
+  const daySlits=slits.filter(s=>toDateStr(new Date(s.start_time))===selDate);
   const pastCount=slits.filter(s=>toDateStr(new Date(s.start_time))<todayStr).length;
 
-  if(!slits.length){el.innerHTML=`<div class="empty"><div class="empty-icon">◻</div><div class="empty-text">슬릿이 없어요</div></div>`;return;}
-
-  const g={};
-  upcoming.forEach(s=>{
-    const d=new Date(s.start_time).toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
-    if(!g[d])g[d]=[];g[d].push(s);
-  });
-
-  let html=Object.entries(g).map(([date,list])=>`<div class="section-title">${date}</div>${list.map(renderSlitCard).join('')}`).join('');
-
-  if(!upcoming.length) html=`<div class="empty"><div class="empty-icon">◻</div><div class="empty-text">예정된 슬릿이 없어요</div></div>`;
-
-  // 지난 슬릿 안내
+  // 지난 슬릿 안내 (맨 위)
+  let html='';
   if(pastCount>0){
-    html+=`<div style="margin-top:16px;padding:12px 14px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-size:13px;color:var(--text2);">지난 슬릿 <strong>${pastCount}개</strong>는 종합에서 확인해요</span>
-      <button class="htl-hint-btn primary" onclick="goToSynthDates()" style="font-size:11px;padding:5px 12px;">날짜별 보기 →</button>
+    html+=`<div style="margin-bottom:12px;padding:10px 14px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:12px;color:var(--text2);">지난 슬릿 <strong>${pastCount}개</strong></span>
+      <button class="htl-hint-btn primary" onclick="goToSynthDates()" style="font-size:11px;padding:4px 10px;">날짜별 보기 →</button>
     </div>`;
+  }
+
+  // 날짜 라벨
+  const dateObj=new Date(selDate+'T00:00:00');
+  const DOW=['일','월','화','수','목','금','토'];
+  const isToday=selDate===todayStr;
+  const isTomorrow=selDate===toDateStr(new Date(now.getTime()+86400000));
+  const dayLabel=isToday?'오늘':isTomorrow?'내일':`${dateObj.getMonth()+1}월 ${dateObj.getDate()}일 ${DOW[dateObj.getDay()]}요일`;
+  html+=`<div class="section-title" style="margin-bottom:10px;">${dayLabel}</div>`;
+
+  if(!daySlits.length){
+    html+=`<div class="empty"><div class="empty-icon">◻</div><div class="empty-text">${dayLabel} 슬릿이 없어요</div></div>`;
+    el.innerHTML=html;
+    return;
+  }
+
+  // 카드 순서: 계획/진행(위) → 완료(아래)
+  const active=daySlits.filter(s=>s.status!=='done').sort((a,b)=>new Date(a.start_time)-new Date(b.start_time));
+  const done=daySlits.filter(s=>s.status==='done').sort((a,b)=>new Date(a.start_time)-new Date(b.start_time));
+
+  html+=active.map(renderSlitCard).join('');
+  if(done.length){
+    html+=`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.08em;margin:12px 0 6px;font-weight:600;">완료</div>`;
+    html+=done.map(renderSlitCard).join('');
   }
 
   el.innerHTML=html;
 }
 
+function openNewSlitForDate(){
+  const picker=document.getElementById('planDatePicker');
+  const date=picker?picker.value:toDateStr(new Date());
+  openNewSlit();
+  setTimeout(()=>{
+    document.getElementById('startDateInput').value=date;
+    document.getElementById('endDateInput').value=date;
+  },100);
+}
+
 function goToSynthDates(){
-  // 종합 탭 → 날짜별로 이동
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-stats').classList.add('active');
