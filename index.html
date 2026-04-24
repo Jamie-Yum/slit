@@ -281,12 +281,25 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 
 /* 할 일 드래그 */
 .task-drag-handle {
-  cursor:grab; color:var(--text3); font-size:14px;
-  padding:0 4px; flex-shrink:0; touch-action:none;
-  user-select:none;
+  cursor:grab; color:var(--text3); font-size:16px;
+  padding:0 6px; flex-shrink:0;
+  user-select:none; -webkit-user-select:none;
+  touch-action:none;
 }
-.task-drag-handle:active { cursor:grabbing; }
-.task-item.dragging { opacity:0.4; background:var(--surface2); border-radius:var(--radius); }
+.task-item.dragging {
+  opacity:0.4; background:var(--surface2);
+  border-radius:var(--radius);
+}
+.task-item.drag-over {
+  border-top:2px solid var(--accent);
+}
+.task-item.drag-floating {
+  position:fixed; z-index:9999; pointer-events:none;
+  background:white; border-radius:var(--radius);
+  box-shadow:0 8px 24px rgba(0,0,0,0.18);
+  opacity:0.95; left:0; width:calc(100% - 32px);
+  margin:0 16px;
+}
 .chip-list { display:flex; flex-wrap:wrap; gap:6px; }
 .chip { display:inline-flex; align-items:center; background:white; border:1.5px solid var(--border2); border-radius:20px; padding:6px 12px; font-size:13px; cursor:pointer; transition:all 0.12s; color:var(--text2); font-weight:500; }
 .chip:hover { border-color:var(--text2); color:var(--text); }
@@ -2641,12 +2654,8 @@ function addTask(){
 }
 function renderDraftTasks(){
   document.getElementById('taskList').innerHTML=draftTasks.map((t,i)=>`
-    <div class="task-item" id="taskItem-${i}" draggable="true"
-      ondragstart="taskDragStart(event,${i},'draft')"
-      ondragover="taskDragOver(event)"
-      ondrop="taskDrop(event,${i},'draft')"
-      ondragend="taskDragEnd(event)">
-      <span class="task-drag-handle" title="드래그로 순서 변경">⠿</span>
+    <div class="task-item" id="taskItem-${i}">
+      <span class="task-drag-handle" onmousedown="taskTouchStart(event,${i},'draft')" ontouchstart="taskTouchStart(event,${i},'draft')">⠿</span>
       <div class="task-check"></div>
       <span class="task-name" id="taskName-${i}" ondblclick="editTask(${i})">${t.title}</span>
       ${t.duration_minutes?`<span class="task-dur" id="taskDur-${i}">${t.duration_minutes}분</span>`:'<span class="task-dur" id="taskDur-${i}"></span>'}
@@ -3071,12 +3080,8 @@ function renderEditTasks(){
     return;
   }
   el.innerHTML=editTasks.map((t,i)=>`
-    <div class="task-item" id="editTaskItem-${i}" draggable="true"
-      ondragstart="taskDragStart(event,${i},'edit')"
-      ondragover="taskDragOver(event)"
-      ondrop="taskDrop(event,${i},'edit')"
-      ondragend="taskDragEnd(event)">
-      <span class="task-drag-handle" title="드래그로 순서 변경">⠿</span>
+    <div class="task-item" id="editTaskItem-${i}">
+      <span class="task-drag-handle" onmousedown="taskTouchStart(event,${i},'edit')" ontouchstart="taskTouchStart(event,${i},'edit')">⠿</span>
       <div class="task-check ${t.done?'done':''}"></div>
       <span class="task-name ${t.done?'done':''}" ondblclick="editTaskInline(${i})">${t.title}</span>
       ${t.duration_minutes?`<span class="task-dur">${t.duration_minutes}분</span>`:''}
@@ -3085,35 +3090,102 @@ function renderEditTasks(){
     </div>`).join('');
 }
 
-// ── 할 일 드래그 재정렬 ──
+// ── 할 일 터치/마우스 재정렬 ──
 let taskDragIdx=null, taskDragType=null;
+let taskFloatEl=null, taskPlaceholderEl=null;
+let taskStartY=0, taskListEl=null;
 
-function taskDragStart(e,i,type){
+function taskTouchStart(e, i, type){
+  e.preventDefault();
   taskDragIdx=i; taskDragType=type;
-  e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed='move';
+
+  const item=document.getElementById((type==='draft'?'taskItem-':'editTaskItem-')+i);
+  taskListEl=item.parentElement;
+  const rect=item.getBoundingClientRect();
+
+  // 플로팅 클론 생성
+  taskFloatEl=item.cloneNode(true);
+  taskFloatEl.classList.add('drag-floating');
+  taskFloatEl.style.top=rect.top+'px';
+  taskFloatEl.style.width=rect.width+'px';
+  taskFloatEl.style.margin='0';
+  taskFloatEl.style.left=rect.left+'px';
+  document.body.appendChild(taskFloatEl);
+
+  item.classList.add('dragging');
+
+  const clientY=e.touches?e.touches[0].clientY:e.clientY;
+  taskStartY=clientY-rect.top;
+
+  document.addEventListener('touchmove',taskTouchMove,{passive:false});
+  document.addEventListener('touchend',taskTouchEnd);
+  document.addEventListener('mousemove',taskTouchMove);
+  document.addEventListener('mouseup',taskTouchEnd);
 }
-function taskDragOver(e){
+
+function taskTouchMove(e){
+  if(taskDragIdx===null) return;
   e.preventDefault();
-  e.dataTransfer.dropEffect='move';
-}
-function taskDrop(e,targetIdx,type){
-  e.preventDefault();
-  if(taskDragIdx===null||taskDragIdx===targetIdx||taskDragType!==type) return;
-  if(type==='draft'){
-    const moved=draftTasks.splice(taskDragIdx,1)[0];
-    draftTasks.splice(targetIdx,0,moved);
-    renderDraftTasks();
-  } else {
-    const moved=editTasks.splice(taskDragIdx,1)[0];
-    editTasks.splice(targetIdx,0,moved);
-    renderEditTasks();
+  const clientY=e.touches?e.touches[0].clientY:e.clientY;
+
+  // 플로팅 엘리먼트 이동
+  if(taskFloatEl) taskFloatEl.style.top=(clientY-taskStartY)+'px';
+
+  // 어느 아이템 위에 있는지 계산
+  const items=[...taskListEl.querySelectorAll('.task-item:not(.dragging)')];
+  items.forEach(el=>el.classList.remove('drag-over'));
+
+  let targetIdx=null;
+  for(let i=0;i<items.length;i++){
+    const rect=items[i].getBoundingClientRect();
+    if(clientY < rect.top+rect.height/2){
+      items[i].classList.add('drag-over');
+      targetIdx=parseInt(items[i].id.split('-').pop());
+      break;
+    }
   }
-  taskDragIdx=null;
+  taskFloatEl._targetIdx=targetIdx;
 }
-function taskDragEnd(e){
-  e.currentTarget.classList.remove('dragging');
-  taskDragIdx=null;
+
+function taskTouchEnd(e){
+  document.removeEventListener('touchmove',taskTouchMove);
+  document.removeEventListener('touchend',taskTouchEnd);
+  document.removeEventListener('mousemove',taskTouchMove);
+  document.removeEventListener('mouseup',taskTouchEnd);
+
+  if(taskFloatEl){ taskFloatEl.remove(); taskFloatEl=null; }
+
+  // drag-over, dragging 클래스 제거
+  taskListEl&&taskListEl.querySelectorAll('.task-item').forEach(el=>{
+    el.classList.remove('drag-over','dragging');
+  });
+
+  const clientY=e.changedTouches?e.changedTouches[0].clientY:e.clientY;
+  const items=[...taskListEl.querySelectorAll('.task-item')];
+  let targetIdx=null;
+  for(let i=0;i<items.length;i++){
+    const rect=items[i].getBoundingClientRect();
+    if(clientY < rect.top+rect.height/2){
+      const idPart=items[i].id.split('-').pop();
+      targetIdx=parseInt(idPart);
+      break;
+    }
+  }
+  if(targetIdx===null) targetIdx=(taskDragType==='draft'?draftTasks:editTasks).length-1;
+  if(targetIdx!==taskDragIdx){
+    if(taskDragType==='draft'){
+      const moved=draftTasks.splice(taskDragIdx,1)[0];
+      const adj=targetIdx>taskDragIdx?targetIdx-1:targetIdx;
+      draftTasks.splice(adj,0,moved);
+      renderDraftTasks();
+    } else {
+      const moved=editTasks.splice(taskDragIdx,1)[0];
+      const adj=targetIdx>taskDragIdx?targetIdx-1:targetIdx;
+      editTasks.splice(adj,0,moved);
+      renderEditTasks();
+    }
+  }
+  taskDragIdx=null; taskDragType=null; taskListEl=null;
 }
 
 function editAddTask(){
