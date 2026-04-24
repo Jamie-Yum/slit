@@ -2110,6 +2110,7 @@ function renderStreak(container){
     </div>
     <div id="streakDayDetail" style="margin-top:12px;"></div>
   `;
+}
 function showStreakDay(dateKey){
   const data=slits.filter(s=>toDateStr(new Date(s.start_time))===dateKey);
   const el=document.getElementById('streakDayDetail');
@@ -3031,7 +3032,6 @@ async function savePerson(){const name=document.getElementById('personName').val
 async function confirmDelPerson(id,name){if(!confirm(`${name}을(를) 삭제할까요?`))return;await sb.from('slit_people').delete().eq('id',id);await loadAll();renderPeople();showToast('삭제됐어요');}
 
 init();
-}
 </script>
 </body>
 </html>
