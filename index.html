@@ -2615,7 +2615,7 @@ function pickAct(val){
     const g=document.getElementById('during-guide');
     if(g){g.textContent=picks.during?`${picks.during} ✓`:'행위를 선택하세요';g.style.color=picks.during?'var(--ing)':'var(--text3)';}
     renderActBtns(curCat);
-    if(picks.during)setTimeout(()=>goStep('end-time'),350);return;
+    if(picks.during)setTimeout(()=>goStep('extra'),350);return;
   }
   if(activeSlot==='start'){
     picks.start=picks.start===val?null:val;
@@ -2632,7 +2632,7 @@ function pickAct(val){
     bea.className=picks.end?'board-act-name set-end':'board-act-name';
   }
   updateSlotStyles();updateGuide();renderActBtns(curCat);
-  if(picks.start&&picks.end)setTimeout(()=>goStep('end-time'),350);
+  if(picks.start&&picks.end)setTimeout(()=>goStep('extra'),350);
 }
 
 function renderEndDateBtns(){
