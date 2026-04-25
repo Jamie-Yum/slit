@@ -744,31 +744,34 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         </div>
       </div>
 
-      <!-- 선택 시간 -->
+      <!-- 선택 시간 + 지금 바로 -->
       <div class="sel-time-wrap">
         <div class="sel-time-label">선택 시간</div>
-        <div class="sel-time-row">
-          <div class="sel-time-box">
-            <div class="sel-time-tag" style="color:var(--start);">시작</div>
-            <input class="sel-time-input" type="time" id="selStart" placeholder="--:--" oninput="selTimeChanged()">
+        <div style="display:flex;gap:8px;align-items:stretch;">
+          <!-- ⚡ 지금 바로 -->
+          <button class="btn-quick" onclick="openQuickSlit()" style="flex-shrink:0;flex-direction:column;gap:2px;padding:10px 12px;">
+            <span class="btn-quick-icon" style="font-size:20px;">⚡</span>
+            <span style="font-size:10px;font-weight:700;">지금 바로</span>
+          </button>
+          <!-- 시간 선택 -->
+          <div style="flex:1;">
+            <div class="sel-time-row">
+              <div class="sel-time-box">
+                <div class="sel-time-tag" style="color:var(--start);">시작</div>
+                <input class="sel-time-input" type="time" id="selStart" placeholder="--:--" oninput="selTimeChanged()">
+              </div>
+              <div class="sel-time-arrow">→</div>
+              <div class="sel-time-box">
+                <div class="sel-time-tag" style="color:var(--end);">종료</div>
+                <input class="sel-time-input" type="time" id="selEnd" placeholder="--:--" oninput="selTimeChanged()">
+              </div>
+              <div class="sel-time-dur" id="selDur"></div>
+            </div>
           </div>
-          <div class="sel-time-arrow">→</div>
-          <div class="sel-time-box">
-            <div class="sel-time-tag" style="color:var(--end);">종료</div>
-            <input class="sel-time-input" type="time" id="selEnd" placeholder="--:--" oninput="selTimeChanged()">
-          </div>
-          <div class="sel-time-dur" id="selDur"></div>
         </div>
-        <div id="selTimeActions" style="display:none;margin-top:10px;display:none;">
+        <div id="selTimeActions" style="display:none;margin-top:10px;">
           <button class="step-next-btn dark" style="margin-bottom:0;" onclick="selTimeConfirm()">슬릿 만들기</button>
         </div>
-      </div>
-
-      <!-- ⚡ 지금 바로 -->
-      <div class="quick-row" style="margin-top:8px;">
-        <button class="btn-quick" onclick="openQuickSlit()">
-          <span class="btn-quick-icon">⚡</span>지금 바로
-        </button>
       </div>
 
       <!-- 메모 -->
@@ -2456,7 +2459,16 @@ function openNewSlit(preStart, preEnd){
   syncTimeDisplay();
   resetBoard();
   selectMode('between');
-  goStep('situation');
+  // sticky 버튼 초기 상태 명시적 설정
+  const btn1=document.getElementById('stickyBtnStep1');
+  const btn2=document.getElementById('stickyBtnStep2');
+  if(btn1) btn1.style.display='block';
+  if(btn2) btn2.style.display='none';
+  // step 초기화
+  const modal=document.getElementById('slitModal');
+  modal.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  const sit=document.getElementById('step-situation');
+  if(sit) sit.classList.add('active');
   renderCatTabs();renderActBtns(0);renderParticipantChips();
   document.getElementById('slitModal').classList.add('open');
 }
@@ -2473,7 +2485,8 @@ function resetBoard(){
   updateBoard();
 }
 function goStep(name){
-  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  const modal=document.getElementById('slitModal');
+  modal.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
   if(name==='done'){updateBoard();return;}
   const el=document.getElementById('step-'+name);
   if(el) el.classList.add('active');
@@ -2483,7 +2496,7 @@ function goStep(name){
   if(btn1) btn1.style.display=name==='situation'?'block':'none';
   if(btn2) btn2.style.display=name==='extra'?'block':'none';
   // 스크롤 맨 위로
-  const scroll=document.querySelector('#slitModal .modal-scroll');
+  const scroll=modal.querySelector('.modal-scroll');
   if(scroll) scroll.scrollTop=0;
 }
 // Overview 시간 input 직접 수정 시
