@@ -124,9 +124,9 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.2); z-index:200; align-items:flex-end; justify-content:center; }
 .modal-overlay.open { display:flex; }
 .modal { background:var(--surface); border-radius:var(--radius-lg) var(--radius-lg) 0 0; padding:20px; width:100%; max-width:640px; max-height:92vh; overflow-y:auto; border-top:1px solid var(--border); display:flex; flex-direction:column; }
-.modal.slit-modal { padding:0; overflow:hidden; }
-.modal-scroll { overflow-y:auto; padding:20px 20px 0; flex:1; }
-.modal-sticky-btn { padding:12px 20px 20px; background:var(--surface); border-top:1px solid var(--border); flex-shrink:0; }
+.modal.slit-modal { padding:0; overflow:hidden; max-height:92dvh; height:92dvh; }
+.modal-scroll { overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px 20px 8px; flex:1; min-height:0; }
+.modal-sticky-btn { padding:12px 20px; padding-bottom:max(16px, env(safe-area-inset-bottom)); background:var(--surface); border-top:1.5px solid var(--border); flex-shrink:0; }
 .modal-handle { width:36px; height:4px; background:var(--border2); border-radius:2px; margin:0 auto 16px; }
 .modal-title { font-family:var(--mono); font-size:11px; color:var(--text3); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:18px; }
 .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
@@ -436,6 +436,8 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .sel-time-arrow { font-size:18px; color:var(--text3); font-weight:500; flex-shrink:0; }
 .sel-time-dur { font-family:var(--mono); font-size:13px; font-weight:700; color:var(--accent); min-width:50px; text-align:center; flex-shrink:0; }
 
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
 /* 빠른 슬릿 버튼 */
 .quick-row { display:flex; gap:8px; margin-bottom:16px; align-items:stretch; }
 .btn-quick {
@@ -704,6 +706,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <button onclick="showView('stats',this)">종합</button>
       <button onclick="showView('garden',this)">가꾸기</button>
     </nav>
+    <button onclick="refreshApp(this)" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:4px 6px;flex-shrink:0;line-height:1;" title="새로고침">↻</button>
   </header>
 
   <main>
@@ -3273,10 +3276,15 @@ function downloadSlit(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url; a.download='slit.html';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+async function refreshApp(btn){
+  if(btn){ btn.style.animation='spin 0.6s linear'; btn.textContent='↻'; }
+  await loadAll();
+  renderToday(); renderTodayMemos();
+  if(btn) setTimeout(()=>{btn.style.animation='';},600);
+  showToast('새로고침 완료!');
 }
 
 init();
