@@ -436,6 +436,42 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .sel-time-arrow { font-size:18px; color:var(--text3); font-weight:500; flex-shrink:0; }
 .sel-time-dur { font-family:var(--mono); font-size:13px; font-weight:700; color:var(--accent); min-width:50px; text-align:center; flex-shrink:0; }
 
+/* Wave */
+.wave-card { background:var(--surface); border-radius:var(--radius-lg); border:1.5px solid var(--border2); margin-bottom:14px; overflow:hidden; }
+.wave-card.color-blue { border-left:4px solid var(--ft); }
+.wave-card.color-green { border-left:4px solid var(--ing); }
+.wave-card.color-amber { border-left:4px solid var(--start); }
+.wave-card.color-purple { border-left:4px solid var(--end); }
+.wave-card.color-done { border-left:4px solid var(--border2); opacity:0.65; }
+.wave-card-top { padding:16px 16px 12px; }
+.wave-card-meta { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.wave-status { font-family:var(--mono); font-size:10px; font-weight:700; padding:3px 10px; border-radius:20px; }
+.wave-status.active { background:var(--ing-bg); color:var(--ing); }
+.wave-status.planned { background:var(--ft-bg); color:var(--ft); }
+.wave-status.done { background:var(--surface2); color:var(--text3); }
+.wave-dday { font-family:var(--mono); font-size:12px; font-weight:700; }
+.wave-card-title { font-size:19px; font-weight:700; color:var(--text); margin-bottom:4px; letter-spacing:-0.02em; }
+.wave-card-intent { font-size:13px; color:var(--text2); margin-bottom:12px; line-height:1.55; }
+.wave-period { display:flex; align-items:center; gap:7px; font-family:var(--mono); font-size:11px; color:var(--text3); margin-bottom:12px; }
+.wave-period-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.wave-progress-bar { height:5px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:4px; }
+.wave-progress-fill { height:100%; border-radius:3px; }
+.wave-progress-label { display:flex; justify-content:space-between; font-family:var(--mono); font-size:9px; color:var(--text3); }
+.wave-section { padding:10px 16px 14px; border-top:1px solid var(--border); }
+.wave-section-label { font-family:var(--mono); font-size:9px; color:var(--text3); letter-spacing:0.1em; text-transform:uppercase; font-weight:600; margin-bottom:8px; }
+.wave-item { display:flex; align-items:center; gap:9px; padding:5px 0; cursor:pointer; }
+.wave-check { width:17px; height:17px; border-radius:4px; border:1.5px solid var(--border2); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; transition:all 0.12s; }
+.wave-check.on { background:var(--ing); border-color:var(--ing); color:white; }
+.wave-item-text { font-size:13px; color:var(--text); flex:1; }
+.wave-item-text.done { color:var(--text3); text-decoration:line-through; }
+.wave-avoid-item { display:flex; align-items:center; gap:9px; padding:5px 0; }
+.wave-avoid-dot { width:8px; height:8px; border-radius:50%; background:#c0392b; flex-shrink:0; }
+.wave-avoid-text { font-size:13px; color:#c0392b; flex:1; }
+.wave-color-btn { font-size:12px; padding:5px 12px; border-radius:20px; border:1.5px solid var(--border2); background:white; cursor:pointer; font-weight:500; transition:all 0.12s; }
+.wave-color-btn.active { font-weight:700; }
+.wave-empty { text-align:center; padding:48px 0; color:var(--text3); }
+.wave-empty-icon { font-size:36px; margin-bottom:12px; }
+
 @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
 /* 빠른 슬릿 버튼 */
@@ -703,6 +739,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
     <nav>
       <button class="active" onclick="showView('today',this)">홈</button>
       <button onclick="showView('plan',this)">오늘의 슬릿</button>
+      <button onclick="showView('wave',this)">Wave</button>
       <button onclick="showView('stats',this)">종합</button>
       <button onclick="showView('garden',this)">가꾸기</button>
     </nav>
@@ -801,6 +838,15 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         </button>
       </div>
       <div id="allSlits"></div>
+    </div>
+
+    <!-- WAVE VIEW -->
+    <div id="view-wave" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:0.12em;text-transform:uppercase;font-weight:700;">〰 Wave</div>
+        <button class="btn-quick" style="padding:8px 14px;font-size:13px;" onclick="openWaveModal()">+ 새 Wave</button>
+      </div>
+      <div id="waveList"></div>
     </div>
 
     <div id="view-stats" class="view">
@@ -1228,7 +1274,7 @@ let slitMode='between',picks={start:null,end:null,during:null},activeSlot='start
 let draftTasks=[],selPeople=[],draftAvoids=[],curPeriod='day',pType='person';
 
 async function init() {
-  await loadAll(); startClock(); renderToday(); renderStats(); initMemo();
+  await loadAll(); await loadWaves(); startClock(); renderToday(); renderStats(); initMemo();
 }
 async function loadAll() {
   try {
@@ -1275,6 +1321,7 @@ function showView(name,btn){
   document.getElementById('view-'+name).classList.add('active'); btn.classList.add('active');
   if(name==='today'){renderToday();renderTodayMemos();}
   if(name==='plan')renderPlan();
+  if(name==='wave')renderWaves();
   if(name==='stats'){renderStats();}
   if(name==='garden'){renderVmv();renderPeople();}
 }
@@ -3272,6 +3319,230 @@ async function saveEditSlit(id){
   showToast('수정됐어요!');
 }
 
+// ── WAVE ──
+let waves=[], waveEditId=null, waveWants=[], waveAvoids=[], waveCurColor='blue';
+
+const WAVE_COLORS={
+  blue:{main:'var(--ft)',bg:'var(--ft-bg)',border:'var(--ft-border)'},
+  green:{main:'var(--ing)',bg:'var(--ing-bg)',border:'var(--ing-border)'},
+  amber:{main:'var(--start)',bg:'var(--start-bg)',border:'var(--start-border)'},
+  purple:{main:'var(--end)',bg:'var(--end-bg)',border:'var(--end-border)'},
+};
+
+async function loadWaves(){
+  try{const{data}=await sb.from('slit_waves').select('*').order('start_date');waves=data||[];}
+  catch(e){waves=[];}
+}
+
+function waveStatus(w){
+  const now=new Date(); const today=toDateStr(now);
+  if(w.end_date&&w.end_date<today) return 'done';
+  if(w.start_date&&w.start_date<=today) return 'active';
+  return 'planned';
+}
+
+function waveDday(w){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const status=waveStatus(w);
+  if(status==='done') return {label:'종료됨', color:'var(--text3)'};
+  if(status==='active'&&w.end_date){
+    const end=new Date(w.end_date); end.setHours(0,0,0,0);
+    const diff=Math.round((end-today)/86400000);
+    return {label:`D-${diff} 종료`, color:WAVE_COLORS[w.color||'blue'].main};
+  }
+  if(w.start_date){
+    const start=new Date(w.start_date); start.setHours(0,0,0,0);
+    const diff=Math.round((start-today)/86400000);
+    return {label:`D-${diff} 시작`, color:WAVE_COLORS[w.color||'blue'].main};
+  }
+  return {label:'', color:'var(--text3)'};
+}
+
+function waveProgress(w){
+  if(!w.start_date||!w.end_date) return null;
+  const now=new Date(); now.setHours(0,0,0,0);
+  const start=new Date(w.start_date); start.setHours(0,0,0,0);
+  const end=new Date(w.end_date); end.setHours(0,0,0,0);
+  const total=Math.round((end-start)/86400000)+1;
+  const passed=Math.max(0,Math.min(total,Math.round((now-start)/86400000)+1));
+  return {pct:Math.round(passed/total*100), passed, total, left:total-passed};
+}
+
+function renderWaves(){
+  const el=document.getElementById('waveList');
+  if(!waves.length){
+    el.innerHTML=`<div class="wave-empty"><div class="wave-empty-icon">〰</div><div>아직 Wave가 없어요<br><span style="font-size:12px;margin-top:4px;display:block;">큰 그림의 계획을 만들어보세요</span></div></div>`;
+    return;
+  }
+  // 진행 중 → 예정 → 완료 순
+  const sorted=[...waves].sort((a,b)=>{
+    const order={active:0,planned:1,done:2};
+    return (order[waveStatus(a)]||0)-(order[waveStatus(b)]||0);
+  });
+  el.innerHTML=sorted.map(w=>renderWaveCard(w)).join('');
+}
+
+function renderWaveCard(w){
+  const status=waveStatus(w);
+  const dday=waveDday(w);
+  const prog=waveProgress(w);
+  const col=WAVE_COLORS[w.color||'blue'];
+  const statusLabel={active:'진행 중',planned:'예정',done:'완료'}[status];
+  const wants=w.wants||[];
+  const avoids=w.avoids||[];
+  const DOW=['일','월','화','수','목','금','토'];
+  function fmtDate(d){
+    if(!d) return '—';
+    const dt=new Date(d+'T00:00:00');
+    return `${dt.getMonth()+1}월 ${dt.getDate()}일 (${DOW[dt.getDay()]})`;
+  }
+  return `<div class="wave-card color-${status==='done'?'done':w.color||'blue'}">
+    <div class="wave-card-top">
+      <div class="wave-card-meta">
+        <span class="wave-status ${status}">${statusLabel}</span>
+        <span class="wave-dday" style="color:${dday.color};">${dday.label}</span>
+      </div>
+      <div class="wave-card-title">${w.title}</div>
+      ${w.intent?`<div class="wave-card-intent">💬 ${w.intent}</div>`:''}
+      <div class="wave-period">
+        <div class="wave-period-dot" style="background:${col.main};"></div>
+        ${fmtDate(w.start_date)} → ${fmtDate(w.end_date)}
+      </div>
+      ${prog?`<div>
+        <div class="wave-progress-bar"><div class="wave-progress-fill" style="width:${prog.pct}%;background:${col.main};"></div></div>
+        <div class="wave-progress-label"><span>${prog.passed}일 지남</span><span>${prog.left}일 남음</span></div>
+      </div>`:''}
+    </div>
+    ${wants.length?`<div class="wave-section">
+      <div class="wave-section-label">✓ 하고 싶은 것</div>
+      ${wants.map((item,i)=>typeof item==='object'?item:{text:item,done:false}).map((item,i)=>{
+        const text=typeof item==='string'?item:item.text;
+        const done=typeof item==='object'&&item.done;
+        return `<div class="wave-item" onclick="toggleWaveWant('${w.id}',${i})">
+          <div class="wave-check ${done?'on':''}">${done?'✓':''}</div>
+          <span class="wave-item-text ${done?'done':''}">${text}</span>
+        </div>`;
+      }).join('')}
+    </div>`:''}
+    ${avoids.length?`<div class="wave-section" style="border-top:1px solid var(--border);">
+      <div class="wave-section-label" style="color:#c0392b;">✕ 하지 않을 것</div>
+      ${avoids.map(a=>`<div class="wave-avoid-item">
+        <div class="wave-avoid-dot"></div>
+        <span class="wave-avoid-text">${typeof a==='string'?a:a.text}</span>
+      </div>`).join('')}
+    </div>`:''}
+    <div style="display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--border);">
+      <button class="btn btn-ghost btn-sm" onclick="openWaveEdit('${w.id}')">✎ 수정</button>
+      <button class="btn btn-ghost btn-sm" style="color:#c0392b;" onclick="deleteWave('${w.id}')">삭제</button>
+    </div>
+  </div>`;
+}
+
+async function toggleWaveWant(waveId, idx){
+  const w=waves.find(x=>x.id===waveId); if(!w) return;
+  const wants=(w.wants||[]).map((item,i)=>{
+    const text=typeof item==='string'?item:item.text;
+    const done=typeof item==='object'?item.done:false;
+    return i===idx?{text,done:!done}:{text,done};
+  });
+  await sb.from('slit_waves').update({wants}).eq('id',waveId);
+  await loadWaves(); renderWaves();
+}
+
+function openWaveModal(){
+  waveEditId=null; waveWants=[]; waveAvoids=[]; waveCurColor='blue';
+  document.getElementById('waveModalTitle').textContent='새 Wave';
+  document.getElementById('waveTitle').value='';
+  document.getElementById('waveIntent').value='';
+  document.getElementById('waveStartDate').value='';
+  document.getElementById('waveEndDate').value='';
+  selectWaveColor('blue',document.querySelector('[data-color="blue"]'));
+  renderWaveWantList(); renderWaveAvoidList();
+  document.getElementById('waveModal').classList.add('open');
+}
+
+function openWaveEdit(id){
+  const w=waves.find(x=>x.id===id); if(!w) return;
+  waveEditId=id;
+  waveWants=(w.wants||[]).map(item=>typeof item==='string'?{text:item,done:false}:item);
+  waveAvoids=(w.avoids||[]).map(item=>typeof item==='string'?item:item.text);
+  waveCurColor=w.color||'blue';
+  document.getElementById('waveModalTitle').textContent='Wave 수정';
+  document.getElementById('waveTitle').value=w.title||'';
+  document.getElementById('waveIntent').value=w.intent||'';
+  document.getElementById('waveStartDate').value=w.start_date||'';
+  document.getElementById('waveEndDate').value=w.end_date||'';
+  document.querySelectorAll('.wave-color-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.color===waveCurColor);
+  });
+  renderWaveWantList(); renderWaveAvoidList();
+  document.getElementById('waveModal').classList.add('open');
+}
+
+function selectWaveColor(color, btn){
+  waveCurColor=color;
+  document.querySelectorAll('.wave-color-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+}
+
+function addWaveWant(){
+  const input=document.getElementById('newWaveWant');
+  const val=input.value.trim(); if(!val) return;
+  waveWants.push({text:val,done:false}); input.value='';
+  renderWaveWantList();
+}
+function removeWaveWant(i){ waveWants.splice(i,1); renderWaveWantList(); }
+function renderWaveWantList(){
+  document.getElementById('waveWantList').innerHTML=waveWants.map((item,i)=>`
+    <div class="task-item">
+      <div class="task-check ${item.done?'done':''}"></div>
+      <span class="task-name">${item.text}</span>
+      <button class="btn btn-ghost btn-sm" style="padding:3px 7px;" onclick="removeWaveWant(${i})">×</button>
+    </div>`).join('');
+}
+
+function addWaveAvoid(){
+  const input=document.getElementById('newWaveAvoid');
+  const val=input.value.trim(); if(!val) return;
+  waveAvoids.push(val); input.value='';
+  renderWaveAvoidList();
+}
+function removeWaveAvoid(i){ waveAvoids.splice(i,1); renderWaveAvoidList(); }
+function renderWaveAvoidList(){
+  document.getElementById('waveAvoidList').innerHTML=waveAvoids.map((a,i)=>`
+    <div class="task-item">
+      <div style="width:8px;height:8px;border-radius:50%;background:#c0392b;flex-shrink:0;"></div>
+      <span class="task-name" style="color:#c0392b;">${a}</span>
+      <button class="btn btn-ghost btn-sm" style="padding:3px 7px;" onclick="removeWaveAvoid(${i})">×</button>
+    </div>`).join('');
+}
+
+async function saveWave(){
+  const title=document.getElementById('waveTitle').value.trim();
+  if(!title){showToast('제목을 입력해주세요');return;}
+  const data={
+    title,
+    intent:document.getElementById('waveIntent').value.trim()||null,
+    start_date:document.getElementById('waveStartDate').value||null,
+    end_date:document.getElementById('waveEndDate').value||null,
+    color:waveCurColor,
+    wants:waveWants.length?waveWants:null,
+    avoids:waveAvoids.length?waveAvoids:null,
+  };
+  let error;
+  if(waveEditId){({error}=await sb.from('slit_waves').update(data).eq('id',waveEditId));}
+  else{({error}=await sb.from('slit_waves').insert(data));}
+  if(error){showToast('저장 실패: '+error.message);return;}
+  await loadWaves(); closeModal('waveModal'); renderWaves();
+  showToast(waveEditId?'수정됐어요!':'Wave가 만들어졌어요!');
+}
+
+async function deleteWave(id){
+  if(!confirm('이 Wave를 삭제할까요?')) return;
+  await sb.from('slit_waves').delete().eq('id',id);
+  await loadWaves(); renderWaves(); showToast('삭제됐어요');
+}
+
 function renderPeople(){
   const el=document.getElementById('peopleGrid');
   if(!people.length){el.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">👤</div><div class="empty-text">아직 없어요</div></div>`;return;}
@@ -3302,7 +3573,72 @@ async function refreshApp(btn){
 
 init();
 </script>
-<!-- 설치 안내 배너 -->
+<!-- WAVE MODAL -->
+<div class="modal-overlay" id="waveModal">
+  <div class="modal" style="max-height:92dvh;overflow-y:auto;">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="waveModalTitle">새 Wave</div>
+
+    <div class="form-group">
+      <label class="form-label">제목</label>
+      <input class="form-input" id="waveTitle" placeholder="예: 5월 연휴, 이번 주">
+    </div>
+    <div class="form-group">
+      <label class="form-label">한 줄 의도</label>
+      <input class="form-input" id="waveIntent" placeholder="예: 느긋하게 재충전하는 5일">
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="form-label" style="color:var(--start);">시작일</label>
+        <input class="form-input" type="date" id="waveStartDate" style="border-color:var(--start-border);">
+      </div>
+      <div>
+        <label class="form-label" style="color:var(--end);">종료일</label>
+        <input class="form-input" type="date" id="waveEndDate" style="border-color:var(--end-border);">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">색상</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="waveColorPicker">
+        <button class="wave-color-btn active" data-color="blue" onclick="selectWaveColor('blue',this)" style="background:var(--ft-bg);border-color:var(--ft);color:var(--ft);">파랑</button>
+        <button class="wave-color-btn" data-color="green" onclick="selectWaveColor('green',this)" style="background:var(--ing-bg);border-color:var(--ing);color:var(--ing);">초록</button>
+        <button class="wave-color-btn" data-color="amber" onclick="selectWaveColor('amber',this)" style="background:var(--start-bg);border-color:var(--start);color:var(--start);">앰버</button>
+        <button class="wave-color-btn" data-color="purple" onclick="selectWaveColor('purple',this)" style="background:var(--end-bg);border-color:var(--end);color:var(--end);">보라</button>
+      </div>
+    </div>
+
+    <!-- 하고 싶은 것 -->
+    <div class="form-group">
+      <div class="cat-section-label" style="margin-bottom:8px;">
+        <span class="lbl" style="color:var(--accent);">✓ 하고 싶은 것</span>
+        <div class="line"></div>
+      </div>
+      <div id="waveWantList"></div>
+      <div class="task-add-row">
+        <input class="form-input" id="newWaveWant" placeholder="추가..." style="flex:1" onkeydown="if(event.key==='Enter')addWaveWant()">
+        <button class="btn btn-ghost btn-sm" onclick="addWaveWant()">+</button>
+      </div>
+    </div>
+
+    <!-- 하지 않을 것 -->
+    <div class="form-group">
+      <div class="cat-section-label" style="margin-bottom:8px;">
+        <span class="lbl" style="color:#c0392b;">✕ 하지 않을 것</span>
+        <div class="line"></div>
+      </div>
+      <div id="waveAvoidList"></div>
+      <div class="task-add-row">
+        <input class="form-input" id="newWaveAvoid" placeholder="추가..." style="flex:1" onkeydown="if(event.key==='Enter')addWaveAvoid()">
+        <button class="btn btn-ghost btn-sm" onclick="addWaveAvoid()">+</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('waveModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveWave()">저장</button>
+    </div>
+  </div>
+</div>
 <div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--text);color:white;padding:14px 16px;padding-bottom:calc(14px + env(safe-area-inset-bottom));display:none;align-items:center;gap:12px;">
   <div style="flex:1;">
     <div style="font-size:13px;font-weight:700;margin-bottom:2px;">홈 화면에 추가하기</div>
