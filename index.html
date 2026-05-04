@@ -3492,11 +3492,30 @@ function addWaveWant(){
   renderWaveWantList();
 }
 function removeWaveWant(i){ waveWants.splice(i,1); renderWaveWantList(); }
+function editWaveWant(i){
+  const item=document.getElementById('waveWantItem-'+i);
+  item.innerHTML=`
+    <span class="task-drag-handle" onmousedown="waveTouchStart(event,${i},'want')" ontouchstart="waveTouchStart(event,${i},'want')">⠿</span>
+    <div class="task-check"></div>
+    <input class="form-input" id="editWaveWant-${i}" value="${waveWants[i].text}" style="flex:1;padding:5px 8px;font-size:13px;"
+      onkeydown="if(event.key==='Enter')saveWaveWantEdit(${i});if(event.key==='Escape')renderWaveWantList();">
+    <button class="btn btn-primary btn-sm" onclick="saveWaveWantEdit(${i})">저장</button>
+    <button class="btn btn-ghost btn-sm" onclick="renderWaveWantList()">취소</button>
+  `;
+  document.getElementById('editWaveWant-'+i).focus();
+}
+function saveWaveWantEdit(i){
+  const val=document.getElementById('editWaveWant-'+i)?.value.trim();
+  if(!val){removeWaveWant(i);return;}
+  waveWants[i].text=val; renderWaveWantList();
+}
 function renderWaveWantList(){
   document.getElementById('waveWantList').innerHTML=waveWants.map((item,i)=>`
-    <div class="task-item">
+    <div class="task-item" id="waveWantItem-${i}">
+      <span class="task-drag-handle" onmousedown="waveTouchStart(event,${i},'want')" ontouchstart="waveTouchStart(event,${i},'want')">⠿</span>
       <div class="task-check ${item.done?'done':''}"></div>
-      <span class="task-name">${item.text}</span>
+      <span class="task-name" ondblclick="editWaveWant(${i})">${item.text}</span>
+      <button class="btn btn-ghost btn-sm" style="padding:3px 7px;font-size:11px;" onclick="editWaveWant(${i})">✎</button>
       <button class="btn btn-ghost btn-sm" style="padding:3px 7px;" onclick="removeWaveWant(${i})">×</button>
     </div>`).join('');
 }
@@ -3508,13 +3527,89 @@ function addWaveAvoid(){
   renderWaveAvoidList();
 }
 function removeWaveAvoid(i){ waveAvoids.splice(i,1); renderWaveAvoidList(); }
+function editWaveAvoid(i){
+  const item=document.getElementById('waveAvoidItem-'+i);
+  item.innerHTML=`
+    <span class="task-drag-handle" onmousedown="waveTouchStart(event,${i},'avoid')" ontouchstart="waveTouchStart(event,${i},'avoid')">⠿</span>
+    <div style="width:8px;height:8px;border-radius:50%;background:#c0392b;flex-shrink:0;"></div>
+    <input class="form-input" id="editWaveAvoid-${i}" value="${waveAvoids[i]}" style="flex:1;padding:5px 8px;font-size:13px;color:#c0392b;"
+      onkeydown="if(event.key==='Enter')saveWaveAvoidEdit(${i});if(event.key==='Escape')renderWaveAvoidList();">
+    <button class="btn btn-primary btn-sm" onclick="saveWaveAvoidEdit(${i})">저장</button>
+    <button class="btn btn-ghost btn-sm" onclick="renderWaveAvoidList()">취소</button>
+  `;
+  document.getElementById('editWaveAvoid-'+i).focus();
+}
+function saveWaveAvoidEdit(i){
+  const val=document.getElementById('editWaveAvoid-'+i)?.value.trim();
+  if(!val){removeWaveAvoid(i);return;}
+  waveAvoids[i]=val; renderWaveAvoidList();
+}
 function renderWaveAvoidList(){
   document.getElementById('waveAvoidList').innerHTML=waveAvoids.map((a,i)=>`
-    <div class="task-item">
+    <div class="task-item" id="waveAvoidItem-${i}">
+      <span class="task-drag-handle" onmousedown="waveTouchStart(event,${i},'avoid')" ontouchstart="waveTouchStart(event,${i},'avoid')">⠿</span>
       <div style="width:8px;height:8px;border-radius:50%;background:#c0392b;flex-shrink:0;"></div>
-      <span class="task-name" style="color:#c0392b;">${a}</span>
+      <span class="task-name" style="color:#c0392b;" ondblclick="editWaveAvoid(${i})">${a}</span>
+      <button class="btn btn-ghost btn-sm" style="padding:3px 7px;font-size:11px;" onclick="editWaveAvoid(${i})">✎</button>
       <button class="btn btn-ghost btn-sm" style="padding:3px 7px;" onclick="removeWaveAvoid(${i})">×</button>
     </div>`).join('');
+}
+
+// Wave 항목 터치 드래그 재정렬
+let waveDragIdx=null, waveDragType=null, waveFloatEl=null, waveListEl=null, waveStartY=0;
+function waveTouchStart(e,i,type){
+  e.preventDefault();
+  waveDragIdx=i; waveDragType=type;
+  const listId=type==='want'?'waveWantList':'waveAvoidList';
+  const itemId=type==='want'?`waveWantItem-${i}`:`waveAvoidItem-${i}`;
+  const item=document.getElementById(itemId);
+  waveListEl=document.getElementById(listId);
+  const rect=item.getBoundingClientRect();
+  waveFloatEl=item.cloneNode(true);
+  waveFloatEl.classList.add('drag-floating');
+  waveFloatEl.style.top=rect.top+'px';
+  waveFloatEl.style.left=rect.left+'px';
+  waveFloatEl.style.width=rect.width+'px';
+  waveFloatEl.style.margin='0';
+  document.body.appendChild(waveFloatEl);
+  item.classList.add('dragging');
+  const clientY=e.touches?e.touches[0].clientY:e.clientY;
+  waveStartY=clientY-rect.top;
+  document.addEventListener('touchmove',waveOnMove,{passive:false});
+  document.addEventListener('touchend',waveOnEnd);
+  document.addEventListener('mousemove',waveOnMove);
+  document.addEventListener('mouseup',waveOnEnd);
+}
+function waveOnMove(e){
+  if(waveDragIdx===null) return;
+  e.preventDefault();
+  const clientY=e.touches?e.touches[0].clientY:e.clientY;
+  if(waveFloatEl) waveFloatEl.style.top=(clientY-waveStartY)+'px';
+}
+function waveOnEnd(e){
+  document.removeEventListener('touchmove',waveOnMove);
+  document.removeEventListener('touchend',waveOnEnd);
+  document.removeEventListener('mousemove',waveOnMove);
+  document.removeEventListener('mouseup',waveOnEnd);
+  if(waveFloatEl){waveFloatEl.remove();waveFloatEl=null;}
+  waveListEl&&waveListEl.querySelectorAll('.task-item').forEach(el=>el.classList.remove('dragging'));
+  const clientY=e.changedTouches?e.changedTouches[0].clientY:e.clientY;
+  const items=[...waveListEl.querySelectorAll('.task-item')];
+  let targetIdx=null;
+  for(let i=0;i<items.length;i++){
+    const rect=items[i].getBoundingClientRect();
+    if(clientY<rect.top+rect.height/2){targetIdx=i;break;}
+  }
+  if(targetIdx===null) targetIdx=items.length-1;
+  if(targetIdx!==waveDragIdx){
+    const arr=waveDragType==='want'?waveWants:waveAvoids;
+    const moved=arr.splice(waveDragIdx,1)[0];
+    const adj=targetIdx>waveDragIdx?targetIdx-1:targetIdx;
+    arr.splice(adj,0,moved);
+    if(waveDragType==='want') renderWaveWantList();
+    else renderWaveAvoidList();
+  }
+  waveDragIdx=null; waveDragType=null; waveListEl=null;
 }
 
 async function saveWave(){
