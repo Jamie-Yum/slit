@@ -856,6 +856,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <button class="stats-tab" id="synthTabDates" onclick="switchSynthTab('dates',this)">날짜별 슬릿</button>
         <button class="stats-tab" id="synthTabReflect" onclick="switchSynthTab('reflect',this)">회고 모음</button>
         <button class="stats-tab" id="synthTabMemo" onclick="switchSynthTab('memo',this)">메모 모음</button>
+        <button class="stats-tab" id="synthTabUnfinished" onclick="switchSynthTab('unfinished',this)">미완 항목</button>
       </div>
 
       <!-- 통계 -->
@@ -884,6 +885,10 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <!-- 메모 모음 -->
       <div id="synthMemo" style="display:none;">
         <div id="statsMemoContent"></div>
+      </div>
+      <!-- 미완 항목 -->
+      <div id="synthUnfinished" style="display:none;">
+        <div id="unfinishedContent"></div>
       </div>
     </div>
 
@@ -1327,13 +1332,14 @@ function showView(name,btn){
 }
 
 // ── 메모 ──
-const MEMO_TYPES=['인사이트','약속','필사','계획','영어','기타'];
+const MEMO_TYPES=['인사이트','약속','필사','계획','영어','운동','기타'];
 const MEMO_COLORS={
   '인사이트':['#fff3e0','#e65100'],
   '약속':['#e8f5e9','#2e7d32'],
   '필사':['#e3f2fd','#1565c0'],
   '계획':['#f3e5f5','#6a1b9a'],
   '영어':['#e0f7fa','#00695c'],
+  '운동':['#fce4ec','#c62828'],
   '기타':['var(--surface2)','var(--text2)'],
 };
 let curMemoType='인사이트';
@@ -1395,7 +1401,7 @@ let curStatsTab='slit';
 let curSynthTab='stats';
 function switchSynthTab(tab,btn){
   curSynthTab=tab;
-  ['synthTabStats','synthTabDates','synthTabReflect','synthTabMemo'].forEach(id=>{
+  ['synthTabStats','synthTabDates','synthTabReflect','synthTabMemo','synthTabUnfinished'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.classList.remove('active');
   });
@@ -1404,9 +1410,77 @@ function switchSynthTab(tab,btn){
   document.getElementById('synthDates').style.display=tab==='dates'?'block':'none';
   document.getElementById('synthReflect').style.display=tab==='reflect'?'block':'none';
   document.getElementById('synthMemo').style.display=tab==='memo'?'block':'none';
+  document.getElementById('synthUnfinished').style.display=tab==='unfinished'?'block':'none';
   if(tab==='dates')renderDateCalendar();
   if(tab==='reflect')renderReflections();
   if(tab==='memo')renderStatsMemos();
+  if(tab==='unfinished')renderUnfinished();
+}
+
+// ── 미완 항목 ──
+function renderUnfinished(){
+  const el=document.getElementById('unfinishedContent');
+  if(!waves.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">〰</div><div class="empty-text">Wave가 없어요</div></div>`;
+    return;
+  }
+
+  // 완료 or 진행 중인 Wave에서 체크 안 된 항목 수집
+  const items=[];
+  waves.forEach(w=>{
+    const wants=(w.wants||[]);
+    const unfinished=wants.filter(item=>{
+      const done=typeof item==='object'?item.done:false;
+      return !done;
+    });
+    if(!unfinished.length) return;
+    const status=waveStatus(w);
+    items.push({wave:w, status, unfinished});
+  });
+
+  if(!items.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">미완 항목이 없어요<br><span style="font-size:12px;margin-top:4px;display:block;">모든 Wave 항목이 완료됐어요!</span></div></div>`;
+    return;
+  }
+
+  // 완료된 Wave 먼저, 진행 중, 예정 순
+  const sorted=[...items].sort((a,b)=>{
+    const order={done:0,active:1,planned:2};
+    return (order[a.status]||0)-(order[b.status]||0);
+  });
+
+  const col={blue:'var(--ft)',green:'var(--ing)',amber:'var(--start)',purple:'var(--end)'};
+  const statusLabel={active:'진행 중',planned:'예정',done:'완료'};
+
+  el.innerHTML=sorted.map(({wave:w,status,unfinished})=>{
+    const color=col[w.color||'blue'];
+    const DOW=['일','월','화','수','목','금','토'];
+    const fmtDate=d=>{
+      if(!d) return '—';
+      const dt=new Date(d+'T00:00:00');
+      return `${dt.getMonth()+1}.${dt.getDate()}(${DOW[dt.getDay()]})`;
+    };
+    return `<div style="background:var(--surface);border-radius:var(--radius-lg);border:1.5px solid var(--border2);border-left:4px solid ${color};margin-bottom:14px;overflow:hidden;">
+      <div style="padding:14px 16px 10px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${status==='done'?'var(--surface2)':status==='active'?'var(--ing-bg)':'var(--ft-bg)'};color:${status==='done'?'var(--text3)':status==='active'?'var(--ing)':'var(--ft)'};">${statusLabel[status]}</span>
+          <span style="font-size:15px;font-weight:700;color:var(--text);">${w.title}</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:auto;">${fmtDate(w.start_date)} → ${fmtDate(w.end_date)}</span>
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.08em;margin-bottom:8px;">미완 ${unfinished.length}개</div>
+        ${unfinished.map((item,i)=>{
+          const text=typeof item==='string'?item:item.text;
+          return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+            <div style="width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;"></div>
+            <span style="font-size:13px;color:var(--text);">${text}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="padding:10px 16px;background:var(--surface2);">
+        <button class="btn btn-ghost btn-sm" onclick="openWaveEdit('${w.id}')">Wave 열기 →</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── 날짜별 캘린더 ──
