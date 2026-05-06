@@ -1380,16 +1380,64 @@ function renderTodayMemos(){
   el.innerHTML=dayMemoList.map(m=>{
     const [bg,color]=MEMO_COLORS[m.type]||MEMO_COLORS['기타'];
     const t=new Date(m.created_at);
-    return `<div class="memo-item" style="border-left-color:${color};">
+    return `<div class="memo-item" id="memoItem-${m.id}" style="border-left-color:${color};">
       <div class="memo-item-header">
         <span class="memo-item-type" style="background:${bg};color:${color};">${m.type}</span>
         <span class="memo-item-time">${fmtTime(t)}</span>
+        <button class="memo-item-del" onclick="editMemo('${m.id}')" style="color:var(--text2);">✎</button>
         <button class="memo-item-del" onclick="deleteMemo('${m.id}')">×</button>
       </div>
-      <div class="memo-item-content">${m.content}</div>
+      <div class="memo-item-content" id="memoContent-${m.id}">${m.content}</div>
     </div>`;
   }).join('');
 }
+
+function editMemo(id){
+  const m=memos.find(x=>x.id===id); if(!m) return;
+  const [bg,color]=MEMO_COLORS[m.type]||MEMO_COLORS['기타'];
+  const item=document.getElementById('memoItem-'+id);
+  // 타입 선택 버튼
+  const typeBtns=MEMO_TYPES.map(t=>
+    `<button onclick="memoEditType('${id}','${t}',this)" style="font-size:11px;padding:4px 10px;border-radius:20px;border:1.5px solid ${t===m.type?color:'var(--border2)'};background:${t===m.type?bg:'white'};color:${t===m.type?color:'var(--text2)'};cursor:pointer;font-weight:${t===m.type?'700':'400'};">${t}</button>`
+  ).join('');
+  item.innerHTML=`
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;" id="memoEditTypes-${id}">${typeBtns}</div>
+    <textarea class="form-textarea" id="memoEditText-${id}" style="min-height:72px;margin-bottom:8px;">${m.content}</textarea>
+    <div style="display:flex;gap:6px;justify-content:flex-end;">
+      <button class="btn btn-ghost btn-sm" onclick="renderTodayMemos()">취소</button>
+      <button class="btn btn-primary btn-sm" onclick="saveMemoEdit('${id}')">저장</button>
+    </div>
+  `;
+  item.style.borderLeftColor=color;
+  document.getElementById('memoEditText-'+id).focus();
+}
+
+let memoEditTypeMap={};
+function memoEditType(id, type, btn){
+  memoEditTypeMap[id]=type;
+  const [bg,color]=MEMO_COLORS[type]||MEMO_COLORS['기타'];
+  document.querySelectorAll(`#memoEditTypes-${id} button`).forEach(b=>{
+    const t=b.textContent;
+    const [tbg,tc]=MEMO_COLORS[t]||MEMO_COLORS['기타'];
+    b.style.border=t===type?`1.5px solid ${tc}`:'1.5px solid var(--border2)';
+    b.style.background=t===type?tbg:'white';
+    b.style.color=t===type?tc:'var(--text2)';
+    b.style.fontWeight=t===type?'700':'400';
+  });
+  document.getElementById('memoItem-'+id).style.borderLeftColor=color;
+}
+
+async function saveMemoEdit(id){
+  const m=memos.find(x=>x.id===id); if(!m) return;
+  const content=document.getElementById('memoEditText-'+id)?.value.trim();
+  if(!content){showToast('내용을 입력해주세요');return;}
+  const type=memoEditTypeMap[id]||m.type;
+  const{error}=await sb.from('slit_memos').update({type,content}).eq('id',id);
+  if(error){showToast('저장 실패: '+error.message);return;}
+  delete memoEditTypeMap[id];
+  await loadAll(); renderTodayMemos(); showToast('수정됐어요!');
+}
+
 async function deleteMemo(id){
   await sb.from('slit_memos').delete().eq('id',id);
   await loadAll();renderTodayMemos();showToast('삭제됐어요');
