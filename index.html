@@ -811,6 +811,16 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         </div>
       </div>
 
+      <!-- 루틴 -->
+      <div id="routineBar" style="display:none;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text2);letter-spacing:0.1em;font-weight:700;">루틴</span>
+          <button onclick="openRoutineModal(null)" style="background:none;border:none;font-size:12px;color:var(--accent);cursor:pointer;font-family:var(--mono);font-weight:600;">+ 추가</button>
+        </div>
+        <div id="routineList" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+      <button onclick="toggleRoutineBar()" id="routineToggleBtn" style="width:100%;background:none;border:1.5px solid var(--border2);border-radius:var(--radius);padding:8px;font-family:var(--mono);font-size:11px;color:var(--text2);cursor:pointer;margin-bottom:8px;font-weight:600;">📋 루틴</button>
+
       <!-- 메모 -->
       <div class="memo-wrap">
         <div class="memo-header">
@@ -1279,7 +1289,7 @@ let slitMode='between',picks={start:null,end:null,during:null},activeSlot='start
 let draftTasks=[],selPeople=[],draftAvoids=[],curPeriod='day',pType='person';
 
 async function init() {
-  await loadAll(); await loadWaves(); startClock(); renderToday(); renderStats(); initMemo();
+  await loadAll(); await loadWaves(); await loadRoutines(); startClock(); renderToday(); renderStats(); initMemo();
 }
 async function loadAll() {
   try {
@@ -1371,7 +1381,10 @@ async function saveMemo(){
 }
 function renderTodayMemos(){
   const selDate=homeGetDate();
-  const dayMemoList=memos.filter(m=>m.created_at.startsWith(selDate));
+  const dayMemoList=memos.filter(m=>{
+    // created_at을 로컬 날짜로 변환해서 비교
+    return toDateStr(new Date(m.created_at))===selDate;
+  });
   const el=document.getElementById('todayMemos');
   if(!el)return;
   const isToday=selDate===toDateStr(new Date());
@@ -1684,9 +1697,15 @@ function renderStatsMemos(){
           <div class="memo-timeline-dot" style="background:${color};box-shadow:0 0 0 3px ${bg};"></div>
           ${list.indexOf(m)<list.length-1?'<div class="memo-timeline-connector"></div>':''}
         </div>
-        <div class="memo-timeline-card" style="border-left-color:${color};">
-          <span class="memo-item-type" style="background:${bg};color:${color};font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">${m.type}</span>
-          <div class="memo-item-content" style="margin-top:6px;">${m.content}</div>
+        <div class="memo-timeline-card" id="statsMemoItem-${m.id}" style="border-left-color:${color};">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <span class="memo-item-type" style="background:${bg};color:${color};font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">${m.type}</span>
+            <div style="display:flex;gap:4px;">
+              <button class="memo-item-del" onclick="editStatsMemo('${m.id}')" style="color:var(--text2);">✎</button>
+              <button class="memo-item-del" onclick="deleteStatsMemo('${m.id}')">×</button>
+            </div>
+          </div>
+          <div class="memo-item-content">${m.content}</div>
         </div>
       </div>`;
     }).join('');
@@ -1704,6 +1723,52 @@ function renderStatsMemos(){
     </div>
     ${dateBlocks}
   `;
+}
+
+function editStatsMemo(id){
+  const m=memos.find(x=>x.id===id); if(!m) return;
+  const [bg,color]=MEMO_COLORS[m.type]||MEMO_COLORS['기타'];
+  const item=document.getElementById('statsMemoItem-'+id);
+  const typeBtns=MEMO_TYPES.map(t=>{
+    const [tbg,tc]=MEMO_COLORS[t]||MEMO_COLORS['기타'];
+    return `<button onclick="statsMemoEditType('${id}','${t}',this)" style="font-size:11px;padding:4px 10px;border-radius:20px;border:1.5px solid ${t===m.type?tc:'var(--border2)'};background:${t===m.type?tbg:'white'};color:${t===m.type?tc:'var(--text2)'};cursor:pointer;font-weight:${t===m.type?'700':'400'};">${t}</button>`;
+  }).join('');
+  item.innerHTML=`
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;" id="statsMemoEditTypes-${id}">${typeBtns}</div>
+    <textarea class="form-textarea" id="statsMemoEditText-${id}" style="min-height:72px;margin-bottom:8px;">${m.content}</textarea>
+    <div style="display:flex;gap:6px;justify-content:flex-end;">
+      <button class="btn btn-ghost btn-sm" onclick="renderStatsMemos()">취소</button>
+      <button class="btn btn-primary btn-sm" onclick="saveStatsMemoEdit('${id}')">저장</button>
+    </div>
+  `;
+  document.getElementById('statsMemoEditText-'+id).focus();
+}
+function statsMemoEditType(id, type, btn){
+  memoEditTypeMap[id]=type;
+  MEMO_TYPES.forEach((t,i)=>{
+    const b=document.querySelectorAll(`#statsMemoEditTypes-${id} button`)[i];
+    if(!b) return;
+    const [tbg,tc]=MEMO_COLORS[t]||MEMO_COLORS['기타'];
+    b.style.border=t===type?`1.5px solid ${tc}`:'1.5px solid var(--border2)';
+    b.style.background=t===type?tbg:'white';
+    b.style.color=t===type?tc:'var(--text2)';
+    b.style.fontWeight=t===type?'700':'400';
+  });
+}
+async function saveStatsMemoEdit(id){
+  const m=memos.find(x=>x.id===id); if(!m) return;
+  const content=document.getElementById('statsMemoEditText-'+id)?.value.trim();
+  if(!content){showToast('내용을 입력해주세요');return;}
+  const type=memoEditTypeMap[id]||m.type;
+  const{error}=await sb.from('slit_memos').update({type,content}).eq('id',id);
+  if(error){showToast('저장 실패: '+error.message);return;}
+  delete memoEditTypeMap[id];
+  await loadAll(); renderStatsMemos(); showToast('수정됐어요!');
+}
+async function deleteStatsMemo(id){
+  if(!confirm('이 메모를 삭제할까요?')) return;
+  await sb.from('slit_memos').delete().eq('id',id);
+  await loadAll(); renderStatsMemos(); showToast('삭제됐어요');
 }
 
 // ── 가꾸기 탭 ──
@@ -1873,7 +1938,7 @@ function htlUpdateNow(){
 function htlRenderBlocks(){
   const selDate=homeGetDate();
   const daySlits=slits.filter(s=>toDateStr(new Date(s.start_time))===selDate);
-  const dayMemos=memos.filter(m=>m.created_at.startsWith(selDate));
+  const dayMemos=memos.filter(m=>toDateStr(new Date(m.created_at))===selDate);
 
   // 슬릿 블록
   const slitHTML=daySlits.map(s=>{
@@ -2557,6 +2622,7 @@ function openDetail(id){
   document.getElementById('detailActions').innerHTML=`
     <button class="btn btn-ghost btn-sm" onclick="closeModal('detailModal')">닫기</button>
     <button class="btn btn-ghost btn-sm" onclick="openEditSlit('${id}')">✎ 수정</button>
+    <button class="btn btn-ghost btn-sm" onclick="saveSlitAsRoutine('${id}')">📋 루틴</button>
     <button class="btn btn-danger btn-sm" onclick="deleteSlit('${id}')">삭제</button>
     ${s.status!=='done'?`<button class="btn btn-ghost btn-sm" onclick="updateStatus('${id}','active')">시작</button>`:''}
     <button class="btn btn-primary btn-sm" onclick="${s.status==='done'?`saveReflection('${id}')`:`completeSlit('${id}')`}">${s.status==='done'?'저장':'완료'}</button>
@@ -3760,6 +3826,193 @@ async function deleteWave(id){
   await loadWaves(); renderWaves(); showToast('삭제됐어요');
 }
 
+async function saveSlitAsRoutine(id){
+  const s=slits.find(x=>x.id===id); if(!s) return;
+  const tasks=tMap[id]||[];
+  const start=new Date(s.start_time), end=new Date(s.end_time);
+  const title=s.title||(s.situation_label||'루틴');
+  // 루틴 모달 열어서 미리 채워주기
+  routineEditId=null;
+  routineTasks=tasks.map(t=>({title:t.title,duration_minutes:t.duration_minutes||0,order_index:t.order_index||0,done:false}));
+  routineAvoids=[...(s.avoids||[])];
+  routineCurColor='green';
+  document.getElementById('routineModalTitle').textContent='루틴으로 저장';
+  document.getElementById('routineTitle').value=title;
+  document.getElementById('routineEmoji').value='';
+  document.getElementById('routineStart').value=toTimeStr(start);
+  document.getElementById('routineEnd').value=toTimeStr(end);
+  document.getElementById('routineSit').value=s.situation_label||'';
+  document.querySelectorAll('[data-rcolor]').forEach(b=>{
+    b.classList.toggle('active',b.dataset.rcolor==='green');
+    b.style.fontWeight=b.dataset.rcolor==='green'?'700':'400';
+  });
+  renderRoutineTaskList(); renderRoutineAvoidList();
+  closeModal('detailModal');
+  document.getElementById('routineModal').classList.add('open');
+}
+let routines=[], routineEditId=null, routineTasks=[], routineAvoids=[], routineCurColor='green';
+const ROUTINE_COLORS={
+  green:{main:'var(--ing)',bg:'var(--ing-bg)',border:'var(--ing-border)'},
+  blue:{main:'var(--ft)',bg:'var(--ft-bg)',border:'var(--ft-border)'},
+  amber:{main:'var(--start)',bg:'var(--start-bg)',border:'var(--start-border)'},
+  purple:{main:'var(--end)',bg:'var(--end-bg)',border:'var(--end-border)'},
+};
+
+async function loadRoutines(){
+  try{const{data}=await sb.from('slit_routines').select('*').order('order_index');routines=data||[];}
+  catch(e){routines=[];}
+}
+
+function toggleRoutineBar(){
+  const bar=document.getElementById('routineBar');
+  const btn=document.getElementById('routineToggleBtn');
+  const isOpen=bar.style.display!=='none';
+  bar.style.display=isOpen?'none':'block';
+  btn.style.background=isOpen?'none':'var(--accent-bg)';
+  btn.style.borderColor=isOpen?'var(--border2)':'var(--accent)';
+  btn.style.color=isOpen?'var(--text2)':'var(--accent)';
+  if(!isOpen) renderRoutineBar();
+}
+
+function renderRoutineBar(){
+  const el=document.getElementById('routineList');
+  if(!routines.length){
+    el.innerHTML=`<button onclick="openRoutineModal(null)" style="padding:10px 14px;border-radius:var(--radius-lg);border:2px dashed var(--border2);background:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:var(--mono);">+ 첫 루틴 만들기</button>`;
+    return;
+  }
+  el.innerHTML=routines.map(r=>{
+    const col=ROUTINE_COLORS[r.color||'green'];
+    const emoji=r.emoji?`${r.emoji} `:'';
+    const time=r.start_time?`${r.start_time}${r.end_time?'~'+r.end_time:''}`:'';
+    return `<div style="position:relative;">
+      <button onclick="applyRoutine('${r.id}')" style="display:flex;flex-direction:column;align-items:flex-start;padding:10px 14px;border-radius:var(--radius-lg);border:2px solid ${col.border};background:${col.bg};cursor:pointer;min-width:100px;text-align:left;gap:2px;">
+        <span style="font-size:16px;font-weight:700;color:${col.main};">${emoji}${r.title}</span>
+        ${time?`<span style="font-family:var(--mono);font-size:10px;color:${col.main};opacity:0.8;">${time}</span>`:''}
+      </button>
+      <button onclick="openRoutineModal('${r.id}')" style="position:absolute;top:4px;right:4px;background:none;border:none;font-size:11px;color:${col.main};cursor:pointer;opacity:0.6;">✎</button>
+    </div>`;
+  }).join('');
+}
+
+async function applyRoutine(id){
+  const r=routines.find(x=>x.id===id); if(!r) return;
+  const today=toDateStr(new Date());
+  const start=r.start_time?new Date(today+'T'+r.start_time):new Date();
+  const end=r.end_time?new Date(today+'T'+r.end_time):new Date(start.getTime()+60*60000);
+  const{data,error}=await sb.from('slit_slits').insert({
+    title:r.title,
+    type:r.type||'during',
+    situation_label:r.situation_label||null,
+    start_time:start.toISOString(),
+    end_time:end.toISOString(),
+    status:'planned',
+    avoids:r.avoids||null,
+  }).select().single();
+  if(error){showToast('생성 실패: '+error.message);return;}
+  if(r.tasks&&r.tasks.length){
+    await sb.from('slit_tasks').insert(r.tasks.map((t,i)=>({
+      slit_id:data.id,title:t.title,
+      duration_minutes:t.duration_minutes||0,
+      order_index:i,done:false
+    })));
+  }
+  await loadAll();renderToday();
+  showToast(`"${r.title}" 슬릿이 만들어졌어요! 🎯`);
+}
+
+function openRoutineModal(id){
+  routineEditId=id;
+  routineTasks=[]; routineAvoids=[]; routineCurColor='green';
+  if(id){
+    const r=routines.find(x=>x.id===id); if(!r) return;
+    routineTasks=(r.tasks||[]).map(t=>({...t}));
+    routineAvoids=[...(r.avoids||[])];
+    routineCurColor=r.color||'green';
+    document.getElementById('routineModalTitle').textContent='루틴 수정';
+    document.getElementById('routineTitle').value=r.title||'';
+    document.getElementById('routineEmoji').value=r.emoji||'';
+    document.getElementById('routineStart').value=r.start_time||'';
+    document.getElementById('routineEnd').value=r.end_time||'';
+    document.getElementById('routineSit').value=r.situation_label||'';
+  } else {
+    document.getElementById('routineModalTitle').textContent='새 루틴';
+    ['routineTitle','routineEmoji','routineStart','routineEnd','routineSit'].forEach(id=>{document.getElementById(id).value='';});
+  }
+  document.querySelectorAll('[data-rcolor]').forEach(b=>{
+    const c=b.dataset.rcolor; const col=ROUTINE_COLORS[c];
+    b.classList.toggle('active',c===routineCurColor);
+    b.style.fontWeight=c===routineCurColor?'700':'400';
+  });
+  renderRoutineTaskList(); renderRoutineAvoidList();
+  document.getElementById('routineModal').classList.add('open');
+}
+
+function selectRoutineColor(color,btn){
+  routineCurColor=color;
+  document.querySelectorAll('[data-rcolor]').forEach(b=>{
+    b.classList.toggle('active',b.dataset.rcolor===color);
+    b.style.fontWeight=b.dataset.rcolor===color?'700':'400';
+  });
+}
+
+function addRoutineTask(){
+  const n=document.getElementById('newRoutineTask').value.trim(); if(!n) return;
+  const d=parseInt(document.getElementById('newRoutineTaskDur').value)||0;
+  routineTasks.push({title:n,duration_minutes:d,order_index:routineTasks.length,done:false});
+  document.getElementById('newRoutineTask').value='';
+  document.getElementById('newRoutineTaskDur').value='';
+  renderRoutineTaskList();
+}
+function removeRoutineTask(i){routineTasks.splice(i,1);renderRoutineTaskList();}
+function renderRoutineTaskList(){
+  document.getElementById('routineTaskList').innerHTML=routineTasks.map((t,i)=>`
+    <div class="task-item">
+      <div class="task-check"></div>
+      <span class="task-name">${t.title}</span>
+      ${t.duration_minutes?`<span class="task-dur">${t.duration_minutes}분</span>`:''}
+      <button class="btn btn-ghost btn-sm" style="padding:3px 7px;" onclick="removeRoutineTask(${i})">×</button>
+    </div>`).join('');
+}
+
+function addRoutineAvoid(){
+  const input=document.getElementById('newRoutineAvoid');
+  const val=input.value.trim(); if(!val) return;
+  routineAvoids.push(val); input.value='';
+  renderRoutineAvoidList();
+}
+function removeRoutineAvoid(i){routineAvoids.splice(i,1);renderRoutineAvoidList();}
+function renderRoutineAvoidList(){
+  document.getElementById('routineAvoidList').innerHTML=routineAvoids.map((a,i)=>`
+    <div class="task-item">
+      <div style="width:8px;height:8px;border-radius:50%;background:#c0392b;flex-shrink:0;"></div>
+      <span class="task-name" style="color:#c0392b;">${a}</span>
+      <button class="btn btn-ghost btn-sm" style="padding:3px 7px;" onclick="removeRoutineAvoid(${i})">×</button>
+    </div>`).join('');
+}
+
+async function saveRoutine(){
+  const title=document.getElementById('routineTitle').value.trim();
+  if(!title){showToast('루틴 이름을 입력해주세요');return;}
+  const data={
+    title,
+    emoji:document.getElementById('routineEmoji').value.trim()||null,
+    start_time:document.getElementById('routineStart').value||null,
+    end_time:document.getElementById('routineEnd').value||null,
+    situation_label:document.getElementById('routineSit').value.trim()||null,
+    color:routineCurColor,
+    tasks:routineTasks.length?routineTasks:null,
+    avoids:routineAvoids.length?routineAvoids:null,
+    order_index:routineEditId?routines.find(r=>r.id===routineEditId)?.order_index:routines.length,
+  };
+  let error;
+  if(routineEditId){({error}=await sb.from('slit_routines').update(data).eq('id',routineEditId));}
+  else{({error}=await sb.from('slit_routines').insert(data));}
+  if(error){showToast('저장 실패: '+error.message);return;}
+  await loadRoutines(); closeModal('routineModal');
+  renderRoutineBar();
+  showToast(routineEditId?'루틴이 수정됐어요!':'루틴이 만들어졌어요!');
+}
+
 function renderPeople(){
   const el=document.getElementById('peopleGrid');
   if(!people.length){el.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">👤</div><div class="empty-text">아직 없어요</div></div>`;return;}
@@ -3856,6 +4109,67 @@ init();
     </div>
   </div>
 </div>
+
+<!-- ROUTINE MODAL -->
+<div class="modal-overlay" id="routineModal">
+  <div class="modal" style="max-height:92dvh;overflow-y:auto;">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="routineModalTitle">새 루틴</div>
+    <div class="form-group">
+      <label class="form-label">루틴 이름</label>
+      <input class="form-input" id="routineTitle" placeholder="예: 아침 루틴, 칼퇴 루틴">
+    </div>
+    <div class="form-group">
+      <label class="form-label">이모지 (선택)</label>
+      <input class="form-input" id="routineEmoji" placeholder="🌅" style="font-size:20px;text-align:center;" maxlength="2">
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="form-label" style="color:var(--start);">시작 시간</label>
+        <input class="form-input" type="time" id="routineStart" style="border-color:var(--start-border);">
+      </div>
+      <div>
+        <label class="form-label" style="color:var(--end);">종료 시간</label>
+        <input class="form-input" type="time" id="routineEnd" style="border-color:var(--end-border);">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">상황 레이블</label>
+      <input class="form-input" id="routineSit" placeholder="예: 기상 후 → 출근 전, 독서 중">
+    </div>
+    <div class="form-group">
+      <div class="cat-section-label" style="margin-bottom:8px;"><span class="lbl" style="color:var(--accent);">✓ 할 일</span><div class="line"></div></div>
+      <div id="routineTaskList"></div>
+      <div class="task-add-row">
+        <input class="form-input" id="newRoutineTask" placeholder="할 일 추가" style="flex:1" onkeydown="if(event.key==='Enter')addRoutineTask()">
+        <input class="form-input" type="number" id="newRoutineTaskDur" placeholder="분" style="width:58px;flex-shrink:0;">
+        <button class="btn btn-ghost btn-sm" onclick="addRoutineTask()">+</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="cat-section-label" style="margin-bottom:8px;"><span class="lbl" style="color:#c0392b;">✕ 하지 말 것</span><div class="line"></div></div>
+      <div id="routineAvoidList"></div>
+      <div class="task-add-row">
+        <input class="form-input" id="newRoutineAvoid" placeholder="하지 말 것 추가" style="flex:1" onkeydown="if(event.key==='Enter')addRoutineAvoid()">
+        <button class="btn btn-ghost btn-sm" onclick="addRoutineAvoid()">+</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">색상</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="wave-color-btn active" data-rcolor="green" onclick="selectRoutineColor('green',this)" style="background:var(--ing-bg);border-color:var(--ing);color:var(--ing);">초록</button>
+        <button class="wave-color-btn" data-rcolor="blue" onclick="selectRoutineColor('blue',this)" style="background:var(--ft-bg);border-color:var(--ft);color:var(--ft);">파랑</button>
+        <button class="wave-color-btn" data-rcolor="amber" onclick="selectRoutineColor('amber',this)" style="background:var(--start-bg);border-color:var(--start);color:var(--start);">앰버</button>
+        <button class="wave-color-btn" data-rcolor="purple" onclick="selectRoutineColor('purple',this)" style="background:var(--end-bg);border-color:var(--end);color:var(--end);">보라</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('routineModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveRoutine()">저장</button>
+    </div>
+  </div>
+</div>
+
 <div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--text);color:white;padding:14px 16px;padding-bottom:calc(14px + env(safe-area-inset-bottom));display:none;align-items:center;gap:12px;">
   <div style="flex:1;">
     <div style="font-size:13px;font-weight:700;margin-bottom:2px;">홈 화면에 추가하기</div>
