@@ -2146,9 +2146,12 @@ function renderWorkGoalList(){
           ?`<span style="font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:10px;background:#e8f0fb;color:#1a56a0;flex-shrink:0;">↻ ${m.repeat_type==='monthly'?'매월':'매주'}</span>`:'';
         const repDetail=m.repeat_detail&&m.repeat_type!=='none'
           ?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);">${m.repeat_detail}</span>`:'';
+        const priMap={urgent:{icon:'🔴',label:'긴급'},normal:{icon:'🟡',label:'보통'},low:{icon:'🟢',label:'여유'}};
+        const pri=m.priority&&priMap[m.priority]?priMap[m.priority]:null;
         return `<div class="ms-row" draggable="true" ondragstart="wDragStart(event,'ms','${m.id}')" ondragover="wDragOver(event,'ms','${m.goal_id}')" ondrop="wDrop(event,'ms','${m.id}')">
           <div class="ms-row-left" style="flex:1;min-width:0;gap:6px;">
             <span style="color:var(--text3);cursor:grab;font-size:13px;flex-shrink:0;">⠿</span>
+            ${pri?`<span title="${pri.label}" style="font-size:11px;flex-shrink:0;">${pri.icon}</span>`:''}
             <span class="ms-row-title" style="${isDone?'text-decoration:line-through;color:var(--text3);':''}">${m.title}</span>
             ${repBadge}${repDetail}
           </div>
@@ -2204,9 +2207,11 @@ function renderWorkSteps(){
     const doneChecks=checks.filter(c=>c.done).length;
     const dur=s.start_time&&s.end_time?calcDur(s.start_time,s.end_time):'';
     return `<div class="step-card" style="border-left-color:${col.main};" draggable="true" data-step-id="${s.id}" ondragstart="wDragStart(event,'step','${s.id}')" ondragover="wDragOver(event,'step','${wStepDate}')" ondrop="wDrop(event,'step','${s.id}')">
-      <div class="step-time-row">
+      <div class="step-time-row" style="cursor:pointer;" onclick="openEditWorkStep('${s.id}')">
+        <span style="color:var(--text3);cursor:grab;font-size:14px;margin-right:4px;" onclick="event.stopPropagation();">⠿</span>
         <span class="step-time-txt">${s.start_time?s.start_time.slice(0,5):''} ${s.end_time?'– '+s.end_time.slice(0,5):''}</span>
         ${dur?`<span class="step-dur-txt">${dur}분</span>`:''}
+        <span style="margin-left:auto;font-size:11px;color:var(--text3);">✎</span>
       </div>
       <div class="step-tag-row">
         ${core?`<span class="step-tag t-core" style="background:${col.bg};color:${col.main};">${core.title}</span>`:''}
@@ -2215,14 +2220,10 @@ function renderWorkSteps(){
       </div>
       ${checks.length?`<div class="step-checklist">${checks.map((c,i)=>`
         <div class="step-check-item">
-          <button class="step-check-box ${c.done?'done':''}" onclick="toggleWorkCheck('${s.id}',${i})"></button>
+          <button class="step-check-box ${c.done?'done':''}" onclick="event.stopPropagation();toggleWorkCheck('${s.id}',${i})"></button>
           <span class="step-check-label ${c.done?'done':''}">${c.text}</span>
         </div>`).join('')}</div>`:''}
-      ${checks.length?`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:6px;">${doneChecks}/${checks.length} 완료</div>`:''}
-      <div class="step-bottom">
-        <button class="step-btn" onclick="openEditWorkStep('${s.id}')">✎ 수정</button>
-        <button class="step-btn danger" onclick="deleteWorkStep('${s.id}')">삭제</button>
-      </div>
+      ${checks.length?`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px;">${doneChecks}/${checks.length} 완료</div>`:''}
     </div>`;
   }).join('');
 }
@@ -2352,6 +2353,8 @@ function openWorkModal(type){
     document.getElementById('workStepDate').value=wStepDate;
     document.getElementById('workStepDeleteBtn').style.display='none';
     document.getElementById('workStepSaveTemplate').checked=false;
+    document.getElementById('workStepCoreTag').textContent='—';
+    document.getElementById('workStepCoreTag').style.cssText='font-size:13px;color:var(--text2);padding:8px 12px;background:var(--surface2);border-radius:var(--radius);';
     wStepChecklist=[];
     renderWorkStepChecklistEdit();
     populateWorkStepSelects(null,null);
@@ -2406,6 +2409,8 @@ function openEditWorkMs(id){
   sel.innerHTML=wGoals.map(g=>`<option value="${g.id}">${g.title}</option>`).join('');
   sel.value=m.goal_id;
   document.getElementById('workMsGoalIdFixed').value='';
+  wMsPriority=m.priority||'normal';
+  ['urgent','normal','low'].forEach(s=>document.getElementById('wms-pri-'+s)?.classList.toggle('active',s===wMsPriority));
   wMsRepeat=m.repeat_type||'none';
   ['none','weekly','monthly'].forEach(s=>document.getElementById('wms-rep-'+s)?.classList.toggle('active',s===wMsRepeat));
   document.getElementById('wmsRepDetail').value=m.repeat_detail||'';
@@ -2431,6 +2436,8 @@ function openAddMsForGoal(goalId){
   sel.innerHTML=wGoals.map(g=>`<option value="${g.id}">${g.title}</option>`).join('');
   sel.value=goalId;
   document.getElementById('workMsGoalIdFixed').value=goalId;
+  wMsPriority='normal';
+  ['urgent','normal','low'].forEach(s=>document.getElementById('wms-pri-'+s)?.classList.toggle('active',s==='normal'));
   wMsRepeat='none';
   ['none','weekly','monthly'].forEach(s=>document.getElementById('wms-rep-'+s)?.classList.toggle('active',s==='none'));
   document.getElementById('wmsRepDetail').value='';
@@ -2455,6 +2462,7 @@ function openEditWorkStep(id){
   document.getElementById('workStepDate').value=s.step_date;
   document.getElementById('workStepDeleteBtn').style.display='inline-flex';
   document.getElementById('workStepSaveTemplate').checked=false;
+  document.getElementById('workStepCoreTag').style.cssText='font-size:13px;color:var(--text2);padding:8px 12px;background:var(--surface2);border-radius:var(--radius);';
   wStepChecklist=[...(s.checklist||[])];
   renderWorkStepChecklistEdit();
   populateWorkStepSelects(s.milestone_id,s.goal_id,s.core_id);
@@ -2463,36 +2471,39 @@ function openEditWorkStep(id){
 
 // ── Step 셀렉트 자동 태깅 ──
 function populateWorkStepSelects(msId,goalId,coreId){
-  const msSel=document.getElementById('workStepMsSelect');
   const goalSel=document.getElementById('workStepGoalSelect');
-  msSel.innerHTML=`<option value="">-- 없음 --</option>`+wMilestones.map(m=>{
-    const g=wGoals.find(g=>g.id===m.goal_id);
-    return `<option value="${m.id}">${m.title}${g?' ('+g.title+')':''}`;
+  goalSel.innerHTML=`<option value="">-- 없음 --</option>`+wGoals.map(g=>{
+    const c=wCores.find(x=>x.id===g.core_id);
+    return `<option value="${g.id}">${g.title}${c?' ('+c.title+')':''}`;
   }).join('');
-  goalSel.innerHTML=`<option value="">-- 없음 --</option>`+wGoals.map(g=>`<option value="${g.id}">${g.title}</option>`).join('');
-  if(msId){msSel.value=msId;autoTagFromMs();}
-  else if(goalId){goalSel.value=goalId;autoTagFromGoal();}
-  else{document.getElementById('workStepCoreTag').textContent='—';}
+  if(goalId){goalSel.value=goalId;autoTagFromGoal(msId);}
+  else if(msId){
+    const ms=wMilestones.find(m=>m.id===msId);
+    if(ms){goalSel.value=ms.goal_id;autoTagFromGoal(msId);}
+  } else {
+    document.getElementById('workStepCoreTag').textContent='—';
+    document.getElementById('workStepMsSelect').innerHTML='<option value="">-- 없음 --</option>';
+  }
 }
 
 function autoTagFromMs(){
   const msId=document.getElementById('workStepMsSelect').value;
-  if(!msId){autoTagFromGoal();return;}
-  const ms=wMilestones.find(m=>m.id===msId);if(!ms)return;
-  const goal=wGoals.find(g=>g.id===ms.goal_id);
-  if(goal){
-    document.getElementById('workStepGoalSelect').value=goal.id;
-    const core=wCores.find(c=>c.id===goal.core_id);
-    document.getElementById('workStepCoreTag').textContent=core?core.title:'—';
-  }
+  if(!msId)return;
 }
 
-function autoTagFromGoal(){
+function autoTagFromGoal(preselectMsId){
   const goalId=document.getElementById('workStepGoalSelect').value;
-  if(!goalId){document.getElementById('workStepCoreTag').textContent='—';return;}
+  const coreTag=document.getElementById('workStepCoreTag');
+  const msSel=document.getElementById('workStepMsSelect');
+  if(!goalId){coreTag.textContent='—';msSel.innerHTML='<option value="">-- 없음 --</option>';return;}
   const goal=wGoals.find(g=>g.id===goalId);if(!goal)return;
   const core=wCores.find(c=>c.id===goal.core_id);
-  document.getElementById('workStepCoreTag').textContent=core?core.title:'—';
+  const col=core?WORK_COLORS[core.color||'green']:null;
+  coreTag.textContent=core?core.title:'—';
+  if(col) coreTag.style.cssText=`font-size:13px;color:${col.main};padding:8px 12px;background:${col.bg};border-radius:var(--radius);font-weight:500;`;
+  const msList=wMilestones.filter(m=>m.goal_id===goalId);
+  msSel.innerHTML=`<option value="">-- 없음 --</option>`+msList.map(m=>`<option value="${m.id}">${m.title}</option>`).join('');
+  if(preselectMsId) msSel.value=preselectMsId;
 }
 
 // ── 체크리스트 ──
@@ -2532,6 +2543,12 @@ function selectWmsStatus(status,btn){
 }
 
 let wMsRepeat='none';
+let wMsPriority='normal';
+function selectWmsPriority(p,btn){
+  wMsPriority=p;
+  ['urgent','normal','low'].forEach(s=>document.getElementById('wms-pri-'+s)?.classList.remove('active'));
+  btn.classList.add('active');
+}
 function selectWmsRepeat(type,btn){
   wMsRepeat=type;
   ['none','weekly','monthly'].forEach(s=>document.getElementById('wms-rep-'+s)?.classList.remove('active'));
@@ -2578,7 +2595,7 @@ async function saveWorkMs(){
   const goalId=document.getElementById('workMsGoalSelect').value;
   const due=document.getElementById('workMsDue').value||null;
   const repDetail=document.getElementById('wmsRepDetail').value.trim()||null;
-  const data={title,goal_id:goalId,due_date:due,status:wMsStatus,repeat_type:wMsRepeat,repeat_detail:wMsRepeat!=='none'?repDetail:null,order_index:wMilestones.length};
+  const data={title,goal_id:goalId,due_date:due,status:wMsStatus,priority:wMsPriority,repeat_type:wMsRepeat,repeat_detail:wMsRepeat!=='none'?repDetail:null,order_index:wMilestones.length};
   try{
     if(id) await sb.from('slit_work_milestones').update(data).eq('id',id);
     else await sb.from('slit_work_milestones').insert(data);
@@ -5049,6 +5066,14 @@ init();
       </div>
     </div>
     <div class="form-group">
+      <label class="form-label">시급도</label>
+      <div style="display:flex;gap:6px;">
+        <button class="date-btn" id="wms-pri-urgent" onclick="selectWmsPriority('urgent',this)">🔴 긴급</button>
+        <button class="date-btn active" id="wms-pri-normal" onclick="selectWmsPriority('normal',this)">🟡 보통</button>
+        <button class="date-btn" id="wms-pri-low" onclick="selectWmsPriority('low',this)">🟢 여유</button>
+      </div>
+    </div>
+    <div class="form-group">
       <label class="form-label">반복 유형</label>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="date-btn active" id="wms-rep-none" onclick="selectWmsRepeat('none',this)">없음</button>
@@ -5075,13 +5100,7 @@ init();
     <div class="modal-title" id="workStepModalTitle">Step 추가</div>
     <input type="hidden" id="workStepEditId">
     <div class="form-group">
-      <label class="form-label">Milestone 선택 (선택)</label>
-      <select class="form-select" id="workStepMsSelect" onchange="autoTagFromMs()">
-        <option value="">-- 없음 --</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Goal 선택 (선택)</label>
+      <label class="form-label">Goal 연결 (선택)</label>
       <select class="form-select" id="workStepGoalSelect" onchange="autoTagFromGoal()">
         <option value="">-- 없음 --</option>
       </select>
@@ -5089,6 +5108,12 @@ init();
     <div class="form-group">
       <label class="form-label" style="color:var(--accent);">Core (자동 태깅)</label>
       <div id="workStepCoreTag" style="font-size:13px;color:var(--text2);padding:8px 12px;background:var(--surface2);border-radius:var(--radius);">—</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Milestone 연결 (선택)</label>
+      <select class="form-select" id="workStepMsSelect" onchange="autoTagFromMs()">
+        <option value="">-- 없음 --</option>
+      </select>
     </div>
     <div class="form-row">
       <div>
