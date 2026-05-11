@@ -737,11 +737,11 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
   <header>
     <div class="logo">SLIT<span> · 시간의 틈</span></div>
     <nav>
-      <button class="active" onclick="showView('today',this)">홈</button>
-      <button onclick="showView('plan',this)">오늘의 슬릿</button>
+      <button class="active" onclick="showView('today',this)">Home</button>
+      <button onclick="showView('plan',this)">Slit</button>
       <button onclick="showView('wave',this)">Wave</button>
-      <button onclick="showView('stats',this)">종합</button>
-      <button onclick="showView('garden',this)">가꾸기</button>
+      <button onclick="showView('stats',this)">Total</button>
+      <button onclick="showView('garden',this)">Being</button>
     </nav>
     <button onclick="refreshApp(this)" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:4px 6px;flex-shrink:0;line-height:1;" title="새로고침">↻</button>
   </header>
@@ -1289,7 +1289,7 @@ let slitMode='between',picks={start:null,end:null,during:null},activeSlot='start
 let draftTasks=[],selPeople=[],draftAvoids=[],curPeriod='day',pType='person';
 
 async function init() {
-  await loadAll(); await loadWaves(); await loadRoutines(); startClock(); renderToday(); renderStats(); initMemo();
+  await loadAll(); await loadWaves(); await loadRoutines(); await loadVmv(); startClock(); renderToday(); renderStats(); initMemo();
 }
 async function loadAll() {
   try {
@@ -1338,7 +1338,7 @@ function showView(name,btn){
   if(name==='plan')renderPlan();
   if(name==='wave')renderWaves();
   if(name==='stats'){renderStats();}
-  if(name==='garden'){renderVmv();renderPeople();}
+  if(name==='garden'){loadVmv();renderPeople();}
 }
 
 // ── 메모 ──
@@ -1781,17 +1781,26 @@ function switchGardenTab(tab,btn){
 
 // ── VMV ──
 const VMV_KEYS=['vision','mission','value','today'];
+let vmvData={}; // { vision:'', mission:'', value:'', today:'' }
+
+async function loadVmv(){
+  try{
+    const{data,error}=await sb.from('slit_vmv').select('*');
+    if(error) throw error;
+    vmvData={};
+    (data||[]).forEach(row=>{ vmvData[row.key]=row.value||''; });
+  } catch(e){
+    VMV_KEYS.forEach(k=>{ vmvData[k]=localStorage.getItem('slit_vmv_'+k)||''; });
+  }
+  renderVmv();
+}
 
 function renderVmv(){
   const now=new Date();
   const days=['일','월','화','수','목','금','토'];
   const lbl=document.getElementById('todayDateLabel');
   if(lbl) lbl.textContent=`${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())} ${days[now.getDay()]}`;
-
-  VMV_KEYS.forEach(k=>{
-    const val=localStorage.getItem('slit_vmv_'+k)||'';
-    applyVmvValue(k,val);
-  });
+  VMV_KEYS.forEach(k=>applyVmvValue(k,vmvData[k]||''));
 }
 
 function applyVmvValue(k,val){
@@ -1821,10 +1830,8 @@ function toggleVmvEdit(k){
   const viewEl=document.getElementById('vmv'+cap(k)+'View');
   const isOpen=editEl.style.display!=='none';
   if(isOpen){cancelVmvEdit(k);return;}
-  // 현재 값 불러오기
-  const cur=localStorage.getItem('slit_vmv_'+k)||'';
   const input=document.getElementById('vmv'+cap(k)+'Input');
-  if(input) input.value=cur;
+  if(input) input.value=vmvData[k]||'';
   editEl.style.display='block';
   viewEl.style.display='none';
   if(input) input.focus();
@@ -1835,14 +1842,21 @@ function cancelVmvEdit(k){
   document.getElementById('vmv'+cap(k)+'View').style.display='block';
 }
 
-function saveVmv(k){
+async function saveVmv(k){
   const input=document.getElementById('vmv'+cap(k)+'Input');
   const val=input?input.value.trim():'';
-  if(val) localStorage.setItem('slit_vmv_'+k,val);
-  else localStorage.removeItem('slit_vmv_'+k);
+  vmvData[k]=val;
   cancelVmvEdit(k);
   applyVmvValue(k,val);
-  showToast('저장됐어요!');
+  try{
+    const{error}=await sb.from('slit_vmv').upsert({key:k,value:val,updated_at:new Date().toISOString()},{onConflict:'key'});
+    if(error) throw error;
+    showToast('저장됐어요!');
+  } catch(e){
+    if(val) localStorage.setItem('slit_vmv_'+k,val);
+    else localStorage.removeItem('slit_vmv_'+k);
+    showToast('저장됐어요! (로컬)');
+  }
 }
 
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
@@ -2583,10 +2597,19 @@ function openDetail(id){
   const avoids=s.avoids||[];
   const avoidChecks=s.avoid_checks||{};
   document.getElementById('detailTitle').textContent=s.title||s.situation_label||'슬릿';
+  // 남은 시간 계산
+  const now=new Date();
+  const remainMin=Math.round((end-now)/60000);
+  const isActive=s.status==='active';
+  const remainHtml=isActive&&remainMin>0
+    ? `<span id="detailRemain" style="font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600;margin-left:8px;background:var(--accent-bg);padding:2px 8px;border-radius:20px;">종료까지 ${remainMin}분</span>`
+    : isActive&&remainMin<=0
+    ? `<span style="font-family:var(--mono);font-size:12px;color:#c0392b;font-weight:600;margin-left:8px;background:#fdf0ef;padding:2px 8px;border-radius:20px;">시간 초과</span>`
+    : '';
   document.getElementById('detailContent').innerHTML=`
     <div class="detail-section">
       <div class="detail-label">시간</div>
-      <div style="font-size:16px;font-weight:500;">${fmtTime(start)} – ${fmtTime(end)} <span style="font-family:var(--mono);font-size:12px;color:var(--text3);font-weight:400;">${Math.round((end-start)/60000)}분</span></div>
+      <div style="font-size:16px;font-weight:500;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">${fmtTime(start)} – ${fmtTime(end)} <span style="font-family:var(--mono);font-size:12px;color:var(--text3);font-weight:400;">${Math.round((end-start)/60000)}분</span>${remainHtml}</div>
     </div>
     ${s.situation_label?`<div class="detail-section"><div class="detail-label">상황</div><div style="font-size:14px;">${s.situation_label}</div></div>`:''}
     ${pts.length?`<div class="detail-section"><div class="detail-label">함께</div><div class="chip-list">${pts.map(p=>`<span class="chip selected">${p.name}</span>`).join('')}</div></div>`:''}
@@ -2628,6 +2651,16 @@ function openDetail(id){
     <button class="btn btn-primary btn-sm" onclick="${s.status==='done'?`saveReflection('${id}')`:`completeSlit('${id}')`}">${s.status==='done'?'저장':'완료'}</button>
   `;
   document.getElementById('detailModal').classList.add('open');
+  // 남은 시간 실시간 업데이트
+  if(window._remainTimer) clearInterval(window._remainTimer);
+  if(s.status==='active'){
+    window._remainTimer=setInterval(()=>{
+      const el=document.getElementById('detailRemain');if(!el)return clearInterval(window._remainTimer);
+      const rm=Math.round((end-new Date())/60000);
+      if(rm>0) el.textContent=`종료까지 ${rm}분`;
+      else{el.textContent='시간 초과';el.style.color='#c0392b';el.style.background='#fdf0ef';clearInterval(window._remainTimer);}
+    },30000);
+  }
 }
 
 // 하지 말 것 체크 토글 (상세 화면 내)
