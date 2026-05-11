@@ -2069,7 +2069,7 @@ async function loadWork(){
     ]);
     wCores=c.data||[];wGoals=g.data||[];wMilestones=m.data||[];wSteps=s.data||[];
     // 템플릿: step에서 is_template=true인 것
-    try{const t=await sb.from('slit_work_templates').select('*').order('created_at');wTemplates=t.data||[];}catch(e){wTemplates=[];}
+    try{const t=await sb.from('slit_work_templates').select('*').order('created_at');wTemplates=t.data||[];}catch(e){wTemplates=[];} // templates optional
   }catch(e){showToast('Work 데이터 로드 실패: '+e.message);}
   if(!wStepDate)wStepDate=toDateStr(new Date());
   renderWork();
@@ -2216,7 +2216,10 @@ function renderWorkSteps(){
       <div class="step-tag-row">
         ${core?`<span class="step-tag t-core" style="background:${col.bg};color:${col.main};">${core.title}</span>`:''}
         ${goal?`<span class="step-tag t-goal">${goal.title}</span>`:''}
-        ${ms?`<span class="step-tag t-ms">${ms.title}</span>`:''}
+        ${[...new Set((s.checklist||[]).filter(c=>c.milestone_id).map(c=>c.milestone_id))].map(mid=>{
+          const m=wMilestones.find(x=>x.id===mid);
+          return m?`<span class="step-tag t-ms">${m.title}</span>`:'';
+        }).join('')}
       </div>
       ${checks.length?`<div class="step-checklist">${checks.map((c,i)=>`
         <div class="step-check-item">
@@ -2352,12 +2355,11 @@ function openWorkModal(type){
     document.getElementById('workStepEnd').value='';
     document.getElementById('workStepDate').value=wStepDate;
     document.getElementById('workStepDeleteBtn').style.display='none';
-    document.getElementById('workStepSaveTemplate').checked=false;
-    document.getElementById('workStepCoreTag').textContent='—';
-    document.getElementById('workStepCoreTag').style.cssText='font-size:13px;color:var(--text2);padding:8px 12px;background:var(--surface2);border-radius:var(--radius);';
+    document.getElementById('workStepStart').value='';
+    document.getElementById('workStepEnd').value='';
+    document.getElementById('workStepDate').value=wStepDate;
     wStepChecklist=[];
     renderWorkStepChecklistEdit();
-    populateWorkStepSelects(null,null);
     document.getElementById('workStepModal').classList.add('open');
   } else if(type==='template-pick'){
     renderWorkTplList();
@@ -2461,59 +2463,41 @@ function openEditWorkStep(id){
   document.getElementById('workStepEnd').value=s.end_time?s.end_time.slice(0,5):'';
   document.getElementById('workStepDate').value=s.step_date;
   document.getElementById('workStepDeleteBtn').style.display='inline-flex';
-  document.getElementById('workStepSaveTemplate').checked=false;
-  document.getElementById('workStepCoreTag').style.cssText='font-size:13px;color:var(--text2);padding:8px 12px;background:var(--surface2);border-radius:var(--radius);';
   wStepChecklist=[...(s.checklist||[])];
   renderWorkStepChecklistEdit();
-  populateWorkStepSelects(s.milestone_id,s.goal_id,s.core_id);
   document.getElementById('workStepModal').classList.add('open');
 }
 
 // ── Step 셀렉트 자동 태깅 ──
-function populateWorkStepSelects(msId,goalId,coreId){
-  const goalSel=document.getElementById('workStepGoalSelect');
-  goalSel.innerHTML=`<option value="">-- 없음 --</option>`+wGoals.map(g=>{
-    const c=wCores.find(x=>x.id===g.core_id);
-    return `<option value="${g.id}">${g.title}${c?' ('+c.title+')':''}`;
-  }).join('');
-  if(goalId){goalSel.value=goalId;autoTagFromGoal(msId);}
-  else if(msId){
-    const ms=wMilestones.find(m=>m.id===msId);
-    if(ms){goalSel.value=ms.goal_id;autoTagFromGoal(msId);}
-  } else {
-    document.getElementById('workStepCoreTag').textContent='—';
-    document.getElementById('workStepMsSelect').innerHTML='<option value="">-- 없음 --</option>';
-  }
-}
 
-function autoTagFromMs(){
-  const msId=document.getElementById('workStepMsSelect').value;
-  if(!msId)return;
-}
-
-function autoTagFromGoal(preselectMsId){
-  const goalId=document.getElementById('workStepGoalSelect').value;
-  const coreTag=document.getElementById('workStepCoreTag');
-  const msSel=document.getElementById('workStepMsSelect');
-  if(!goalId){coreTag.textContent='—';msSel.innerHTML='<option value="">-- 없음 --</option>';return;}
-  const goal=wGoals.find(g=>g.id===goalId);if(!goal)return;
-  const core=wCores.find(c=>c.id===goal.core_id);
-  const col=core?WORK_COLORS[core.color||'green']:null;
-  coreTag.textContent=core?core.title:'—';
-  if(col) coreTag.style.cssText=`font-size:13px;color:${col.main};padding:8px 12px;background:${col.bg};border-radius:var(--radius);font-weight:500;`;
-  const msList=wMilestones.filter(m=>m.goal_id===goalId);
-  msSel.innerHTML=`<option value="">-- 없음 --</option>`+msList.map(m=>`<option value="${m.id}">${m.title}</option>`).join('');
-  if(preselectMsId) msSel.value=preselectMsId;
-}
 
 // ── 체크리스트 ──
 function renderWorkStepChecklistEdit(){
   const el=document.getElementById('workStepChecklistEdit');if(!el)return;
+  const msOptions='<option value="">— MS 없음 —</option>'+wMilestones.map(m=>{
+    const g=wGoals.find(x=>x.id===m.goal_id);
+    const c=g?wCores.find(x=>x.id===g.core_id):null;
+    return `<option value="${m.id}">${m.title}${g?' · '+g.title:''}${c?' ('+c.title+')':''}`;
+  }).join('');
   el.innerHTML=wStepChecklist.map((c,i)=>`
-    <div class="task-item">
-      <span class="task-name">${c.text}</span>
-      <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;" onclick="removeWorkStepCheck(${i})">×</button>
+    <div class="task-item" style="flex-direction:column;align-items:flex-start;gap:4px;padding:8px 0;">
+      <div style="display:flex;align-items:center;gap:8px;width:100%;">
+        <span class="task-name" style="flex:1;">${c.text}</span>
+        <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;flex-shrink:0;" onclick="removeWorkStepCheck(${i})">×</button>
+      </div>
+      <select style="width:100%;font-family:var(--mono);font-size:11px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text2);" onchange="setCheckMs(${i},this.value)">
+        ${msOptions.replace(`value="${c.milestone_id||''}"`,`value="${c.milestone_id||''}" selected`)}
+      </select>
     </div>`).join('');
+}
+
+function setCheckMs(i,msId){
+  wStepChecklist[i].milestone_id=msId||null;
+  const ms=wMilestones.find(m=>m.id===msId);
+  const goal=ms?wGoals.find(g=>g.id===ms.goal_id):null;
+  const core=goal?wCores.find(c=>c.id===goal.core_id):null;
+  wStepChecklist[i].goal_id=goal?goal.id:null;
+  wStepChecklist[i].core_id=core?core.id:null;
 }
 
 function addWorkStepCheck(){
@@ -2605,29 +2589,24 @@ async function saveWorkMs(){
 
 async function saveWorkStep(){
   const id=document.getElementById('workStepEditId').value;
-  const msId=document.getElementById('workStepMsSelect').value||null;
-  const goalId=document.getElementById('workStepGoalSelect').value||null;
-  const coreTag=document.getElementById('workStepCoreTag').textContent;
-  const core=wCores.find(c=>c.title===coreTag);
   const start=document.getElementById('workStepStart').value||null;
   const end=document.getElementById('workStepEnd').value||null;
   const date=document.getElementById('workStepDate').value||wStepDate;
-  const saveAsTpl=document.getElementById('workStepSaveTemplate').checked;
+  // checklist에서 첫 번째 milestone_id를 step의 대표 태그로 사용
+  const firstMs=wStepChecklist.find(c=>c.milestone_id);
+  const repMs=firstMs?wMilestones.find(m=>m.id===firstMs.milestone_id):null;
+  const repGoal=repMs?wGoals.find(g=>g.id===repMs.goal_id):null;
+  const repCore=repGoal?wCores.find(c=>c.id===repGoal.core_id):null;
   const data={
-    milestone_id:msId, goal_id:goalId, core_id:core?core.id:null,
+    milestone_id:repMs?repMs.id:null,
+    goal_id:repGoal?repGoal.id:null,
+    core_id:repCore?repCore.id:null,
     start_time:start, end_time:end, step_date:date,
     checklist:wStepChecklist
   };
   try{
     if(id) await sb.from('slit_work_steps').update(data).eq('id',id);
     else await sb.from('slit_work_steps').insert(data);
-    if(saveAsTpl){
-      const tplData={
-        milestone_id:msId, goal_id:goalId, core_id:core?core.id:null,
-        start_time:start, end_time:end, checklist:wStepChecklist
-      };
-      await sb.from('slit_work_templates').insert(tplData).catch(()=>{});
-    }
     wStepDate=date;
     closeWorkModal('workStepModal');await loadWork();showToast('저장됐어요!');
   }catch(e){showToast('저장 실패: '+e.message);}
@@ -5099,22 +5078,6 @@ init();
     <div class="modal-handle"></div>
     <div class="modal-title" id="workStepModalTitle">Step 추가</div>
     <input type="hidden" id="workStepEditId">
-    <div class="form-group">
-      <label class="form-label">Goal 연결 (선택)</label>
-      <select class="form-select" id="workStepGoalSelect" onchange="autoTagFromGoal()">
-        <option value="">-- 없음 --</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label" style="color:var(--accent);">Core (자동 태깅)</label>
-      <div id="workStepCoreTag" style="font-size:13px;color:var(--text2);padding:8px 12px;background:var(--surface2);border-radius:var(--radius);">—</div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Milestone 연결 (선택)</label>
-      <select class="form-select" id="workStepMsSelect" onchange="autoTagFromMs()">
-        <option value="">-- 없음 --</option>
-      </select>
-    </div>
     <div class="form-row">
       <div>
         <label class="form-label" style="color:var(--start);">시작 시간</label>
@@ -5132,16 +5095,9 @@ init();
     <div class="form-group">
       <div class="cat-section-label" style="margin-bottom:8px;"><span class="lbl" style="color:var(--accent);">체크리스트</span><div class="line"></div></div>
       <div id="workStepChecklistEdit"></div>
-      <div class="task-add-row">
+      <div class="task-add-row" style="margin-top:8px;">
         <input class="form-input" id="newWorkStepCheck" placeholder="항목 추가..." style="flex:1" onkeydown="if(event.key==='Enter')addWorkStepCheck()">
         <button class="btn btn-ghost btn-sm" onclick="addWorkStepCheck()">+</button>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">템플릿으로 저장</label>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <input type="checkbox" id="workStepSaveTemplate" style="width:16px;height:16px;">
-        <label for="workStepSaveTemplate" style="font-size:13px;color:var(--text2);">이 Step을 템플릿으로 저장</label>
       </div>
     </div>
     <div class="modal-actions">
