@@ -730,6 +730,76 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
   .board { padding:12px; }
 }
 ::-webkit-scrollbar{width:4px;height:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── Work Tab ── */
+.work-mode-row{display:flex;gap:4px;margin-bottom:16px;}
+.work-mode-btn{flex:1;padding:7px 4px;border:1px solid var(--border2);border-radius:var(--radius);background:none;font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;letter-spacing:0.05em;transition:all 0.12s;text-align:center;}
+.work-mode-btn.active{background:var(--accent-bg);border-color:var(--ing-border);color:var(--accent);}
+.core-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.core-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;border:1px solid var(--border2);background:var(--surface);font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;transition:all 0.12s;white-space:nowrap;}
+.core-chip:hover{border-color:var(--text3);color:var(--text);}
+.core-chip.active{background:var(--accent-bg);border-color:var(--ing-border);color:var(--accent);}
+.core-chip .cc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.goal-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:8px;}
+.goal-block-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.goal-block-left{display:flex;align-items:center;gap:7px;flex:1;min-width:0;}
+.goal-core-badge{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:3px;flex-shrink:0;}
+.goal-block-title{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.goal-block-meta{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:8px;}
+.goal-edit-btn{background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;padding:2px 6px;flex-shrink:0;}
+.ms-row{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:var(--surface2);border-radius:6px;margin-bottom:4px;}
+.ms-row-left{display:flex;align-items:center;gap:7px;}
+.ms-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.ms-row-title{font-size:12px;color:var(--text);}
+.ms-row-due{font-family:var(--mono);font-size:10px;color:var(--text3);}
+.ms-row-edit{background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;padding:0 4px;}
+.work-add-inline{background:none;border:none;font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;padding:4px 0;display:block;}
+.work-add-inline:hover{color:var(--accent);}
+.step-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.step-nav-date{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text);}
+.step-nav-arrows{display:flex;align-items:center;gap:8px;}
+.step-nav-btn{background:none;border:1px solid var(--border2);border-radius:var(--radius);font-size:16px;color:var(--text2);cursor:pointer;padding:2px 10px;line-height:1.4;}
+.step-nav-today{font-family:var(--mono);font-size:10px;color:var(--accent);background:var(--accent-bg);border:none;border-radius:var(--radius);padding:4px 8px;cursor:pointer;}
+.step-actions{display:flex;gap:6px;margin-bottom:12px;}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:8px;border-left:3px solid var(--end);}
+.step-time-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.step-time-txt{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);}
+.step-dur-txt{font-family:var(--mono);font-size:10px;color:var(--text3);}
+.step-tag-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;}
+.step-tag{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;}
+.step-tag.t-core{background:var(--accent-bg);color:var(--accent);}
+.step-tag.t-goal{background:var(--blue-bg);color:var(--blue);}
+.step-tag.t-ms{background:var(--start-bg);color:var(--start);}
+.step-checklist{display:flex;flex-direction:column;gap:5px;margin-bottom:8px;}
+.step-check-item{display:flex;align-items:center;gap:8px;}
+.step-check-box{width:15px;height:15px;border-radius:3px;border:1.5px solid var(--border2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;background:none;transition:all 0.1s;}
+.step-check-box.done{background:var(--accent);border-color:var(--accent);}
+.step-check-box.done::after{content:✓;color:white;font-size:9px;}
+.step-check-label{font-size:12px;color:var(--text2);}
+.step-check-label.done{text-decoration:line-through;color:var(--text3);}
+.step-bottom{display:flex;justify-content:flex-end;gap:6px;padding-top:6px;border-top:1px solid var(--border);}
+.step-btn{background:none;border:none;font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;padding:2px 6px;}
+.step-btn:hover{color:var(--text);}
+.step-btn.danger{color:#c0392b;}
+.flow-core-block{margin-bottom:16px;}
+.flow-core-title{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.flow-core-line{flex:1;height:1px;background:var(--border);}
+.flow-goal-row{padding-left:14px;border-left:2px solid var(--border);margin-left:5px;margin-bottom:6px;}
+.flow-goal-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.flow-ms-item{display:flex;align-items:center;gap:7px;padding:4px 0 4px 14px;}
+.flow-ms-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.flow-ms-title{font-size:11px;color:var(--text2);}
+.flow-ms-due{font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:auto;}
+.gantt-wrap{overflow-x:auto;}
+.gantt-table{width:100%;border-collapse:collapse;min-width:500px;}
+.gantt-label{font-size:11px;color:var(--text2);padding:4px 8px 4px 0;white-space:nowrap;vertical-align:middle;max-width:130px;overflow:hidden;text-overflow:ellipsis;}
+.gantt-label small{font-family:var(--mono);font-size:9px;color:var(--text3);display:block;}
+.gantt-track{position:relative;height:22px;padding:0 2px;}
+.gantt-bar{position:absolute;top:4px;height:14px;border-radius:3px;opacity:0.85;min-width:4px;}
+.gantt-header-cell{font-family:var(--mono);font-size:9px;color:var(--text3);padding:2px 2px;text-align:center;border-bottom:1px solid var(--border);}
+.work-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:200;align-items:flex-end;justify-content:center;}
+.work-modal-overlay.open{display:flex;}
+.work-modal{background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:20px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;border-top:1px solid var(--border);}
 </style>
 </head>
 <body>
@@ -742,6 +812,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <button onclick="showView('wave',this)">Wave</button>
       <button onclick="showView('stats',this)">Total</button>
       <button onclick="showView('garden',this)">Being</button>
+      <button onclick="showView('work',this)">Work</button>
     </nav>
     <button onclick="refreshApp(this)" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:4px 6px;flex-shrink:0;line-height:1;" title="새로고침">↻</button>
   </header>
@@ -995,6 +1066,39 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <div id="peopleGrid" class="people-grid"></div>
         <button class="btn-add" style="margin-top:12px" onclick="openPersonModal()">+ 사람 / 그룹 추가</button>
       </div>
+    </div>
+
+    <!-- WORK VIEW -->
+    <div id="view-work" class="view">
+      <div class="work-mode-row">
+        <button class="work-mode-btn active" id="workModeOverview" onclick="switchWorkMode('overview',this)">Overview</button>
+        <button class="work-mode-btn" id="workModeFlow" onclick="switchWorkMode('flow',this)">흐름</button>
+        <button class="work-mode-btn" id="workModeGantt" onclick="switchWorkMode('gantt',this)">간트</button>
+      </div>
+      <div id="workOverview">
+        <div class="section-title">Core</div>
+        <div class="core-chips" id="workCoreChips"></div>
+        <div class="section-title">Goal &amp; Milestone</div>
+        <div id="workGoalList"></div>
+        <button class="btn-add" onclick="openWorkModal('goal')">+ Goal 추가</button>
+        <div style="height:20px;"></div>
+        <div class="section-title">Daily Step</div>
+        <div class="step-nav">
+          <div class="step-nav-arrows">
+            <button class="step-nav-btn" onclick="workStepDateMove(-1)">&#8249;</button>
+            <span class="step-nav-date" id="workStepDateLabel"></span>
+            <button class="step-nav-btn" onclick="workStepDateMove(1)">&#8250;</button>
+          </div>
+          <button class="step-nav-today" onclick="workStepDateToday()">오늘</button>
+        </div>
+        <div class="step-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openWorkModal('step')">+ Step 추가</button>
+          <button class="btn btn-ghost btn-sm" onclick="openWorkModal('template-pick')">템플릿 불러오기</button>
+        </div>
+        <div id="workStepList"></div>
+      </div>
+      <div id="workFlow" style="display:none;"><div id="workFlowContent"></div></div>
+      <div id="workGantt" style="display:none;"><div class="gantt-wrap"><div id="workGanttContent"></div></div></div>
     </div>
   </main>
 </div>
@@ -1289,7 +1393,7 @@ let slitMode='between',picks={start:null,end:null,during:null},activeSlot='start
 let draftTasks=[],selPeople=[],draftAvoids=[],curPeriod='day',pType='person';
 
 async function init() {
-  await loadAll(); await loadWaves(); await loadRoutines(); await loadVmv(); startClock(); renderToday(); renderStats(); initMemo();
+  await loadAll(); await loadWaves(); await loadRoutines(); await loadVmv(); await loadWork(); startClock(); renderToday(); renderStats(); initMemo();
 }
 async function loadAll() {
   try {
@@ -1339,6 +1443,7 @@ function showView(name,btn){
   if(name==='wave')renderWaves();
   if(name==='stats'){renderStats();}
   if(name==='garden'){loadVmv();renderPeople();}
+  if(name==='work'){loadWork();}
 }
 
 // ── 메모 ──
@@ -1860,6 +1965,613 @@ async function saveVmv(k){
 }
 
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+// ══════════════════════════════════════════
+// ── WORK TAB ──
+// ══════════════════════════════════════════
+const WORK_COLORS={
+  green:{main:'#2d6a4f',bg:'#eaf4ee',border:'#9dd0b4'},
+  blue:{main:'#1a56a0',bg:'#e8f0fb',border:'#9dbde8'},
+  amber:{main:'#b45309',bg:'#fef3e2',border:'#f0b849'},
+  purple:{main:'#6d28d9',bg:'#f0ebff',border:'#c4b5fd'},
+  teal:{main:'#0f6e56',bg:'#e1f5ee',border:'#5dcaa5'},
+  coral:{main:'#993c1d',bg:'#faece7',border:'#f0997b'},
+};
+let wCores=[],wGoals=[],wMilestones=[],wSteps=[],wTemplates=[];
+let wSelectedCore='all',wStepDate='',wWorkMode='overview';
+let wCoreColor='green',wMsStatus='active';
+let wStepChecklist=[]; // draft checklist for step modal
+
+// ── 초기화 ──
+async function loadWork(){
+  try{
+    const[c,g,m,s]=await Promise.all([
+      sb.from('slit_work_cores').select('*').order('order_index'),
+      sb.from('slit_work_goals').select('*').order('order_index'),
+      sb.from('slit_work_milestones').select('*').order('order_index'),
+      sb.from('slit_work_steps').select('*').order('step_date').order('start_time'),
+    ]);
+    wCores=c.data||[];wGoals=g.data||[];wMilestones=m.data||[];wSteps=s.data||[];
+    // 템플릿: step에서 is_template=true인 것
+    try{const t=await sb.from('slit_work_templates').select('*').order('created_at');wTemplates=t.data||[];}catch(e){wTemplates=[];}
+  }catch(e){showToast('Work 데이터 로드 실패: '+e.message);}
+  if(!wStepDate)wStepDate=toDateStr(new Date());
+  renderWork();
+}
+
+function renderWork(){
+  renderWorkCoreChips();
+  renderWorkGoalList();
+  renderWorkStepDate();
+  renderWorkSteps();
+  if(wWorkMode==='flow')renderWorkFlow();
+  if(wWorkMode==='gantt')renderWorkGantt();
+}
+
+// ── 보기 모드 전환 ──
+function switchWorkMode(mode,btn){
+  wWorkMode=mode;
+  ['workModeOverview','workModeFlow','workModeGantt'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.classList.remove('active');
+  });
+  btn.classList.add('active');
+  document.getElementById('workOverview').style.display=mode==='overview'?'block':'none';
+  document.getElementById('workFlow').style.display=mode==='flow'?'block':'none';
+  document.getElementById('workGantt').style.display=mode==='gantt'?'block':'none';
+  if(mode==='flow')renderWorkFlow();
+  if(mode==='gantt')renderWorkGantt();
+}
+
+// ── Core 칩 ──
+function renderWorkCoreChips(){
+  const el=document.getElementById('workCoreChips');if(!el)return;
+  let html=`<div class="core-chip ${wSelectedCore==='all'?'active':''}" onclick="selectWorkCore('all')">전체</div>`;
+  wCores.forEach(c=>{
+    const col=WORK_COLORS[c.color||'green'];
+    const isActive=wSelectedCore===c.id;
+    html+=`<div class="core-chip ${isActive?'active':''}" onclick="selectWorkCore('${c.id}')" style="${isActive?`background:${col.bg};border-color:${col.border};color:${col.main};`:''}">
+      <span class="cc-dot" style="background:${col.main};"></span>${c.title}
+      <span onclick="event.stopPropagation();openEditWorkCore('${c.id}')" style="font-size:11px;color:${isActive?col.main:'var(--text3)'};margin-left:2px;">✎</span>
+    </div>`;
+  });
+  html+=`<div class="core-chip" style="border-style:dashed;color:var(--text3);" onclick="openWorkModal('core')">+ 추가</div>`;
+  el.innerHTML=html;
+}
+
+function selectWorkCore(id){
+  wSelectedCore=id;
+  renderWorkCoreChips();
+  renderWorkGoalList();
+}
+
+// ── Goal & Milestone 목록 ──
+function renderWorkGoalList(){
+  const el=document.getElementById('workGoalList');if(!el)return;
+  const goals=wSelectedCore==='all'?wGoals:wGoals.filter(g=>g.core_id===wSelectedCore);
+  if(!goals.length){el.innerHTML=`<div class="empty"><div class="empty-text">Goal이 없어요. 추가해보세요!</div></div>`;return;}
+  el.innerHTML=goals.map(g=>{
+    const core=wCores.find(c=>c.id===g.core_id);
+    const col=core?WORK_COLORS[core.color||'green']:WORK_COLORS.green;
+    const msList=wMilestones.filter(m=>m.goal_id===g.id);
+    const doneCount=msList.filter(m=>m.status==='done').length;
+    return `<div class="goal-block">
+      <div class="goal-block-header">
+        <div class="goal-block-left">
+          <span class="goal-core-badge" style="background:${col.bg};color:${col.main};">${core?core.title:'—'}</span>
+          <span class="goal-block-title">${g.title}</span>
+        </div>
+        <button class="goal-edit-btn" onclick="openEditWorkGoal('${g.id}')">✎</button>
+      </div>
+      ${g.due_date?`<div class="goal-block-meta">마감 ${g.due_date} · MS ${msList.length}개 (${doneCount}완료)</div>`:`<div class="goal-block-meta">MS ${msList.length}개 (${doneCount}완료)</div>`}
+      <div>${msList.map(m=>{
+        const isDone=m.status==='done';
+        return `<div class="ms-row">
+          <div class="ms-row-left">
+            <span class="ms-dot" style="background:${isDone?'#2d6a4f':'#b45309'};"></span>
+            <span class="ms-row-title" style="${isDone?'text-decoration:line-through;color:var(--text3);':''}">${m.title}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            ${m.due_date?`<span class="ms-row-due">${m.due_date}</span>`:''}
+            <button class="ms-row-edit" onclick="openEditWorkMs('${m.id}')">✎</button>
+          </div>
+        </div>`;
+      }).join('')}</div>
+      <button class="work-add-inline" onclick="openAddMsForGoal('${g.id}')">+ Milestone 추가</button>
+    </div>`;
+  }).join('');
+}
+
+// ── Step 날짜 ──
+function renderWorkStepDate(){
+  const el=document.getElementById('workStepDateLabel');if(!el)return;
+  const d=new Date(wStepDate+'T00:00:00');
+  const days=['일','월','화','수','목','금','토'];
+  const today=toDateStr(new Date());
+  const label=wStepDate===today?'오늘':wStepDate;
+  el.textContent=`${d.getMonth()+1}/${d.getDate()} ${days[d.getDay()]} ${wStepDate===today?'(오늘)':''}`;
+}
+
+function workStepDateMove(delta){
+  const d=new Date(wStepDate+'T00:00:00');
+  d.setDate(d.getDate()+delta);
+  wStepDate=toDateStr(d);
+  renderWorkStepDate();
+  renderWorkSteps();
+}
+
+function workStepDateToday(){
+  wStepDate=toDateStr(new Date());
+  renderWorkStepDate();
+  renderWorkSteps();
+}
+
+// ── Step 목록 ──
+function renderWorkSteps(){
+  const el=document.getElementById('workStepList');if(!el)return;
+  const steps=wSteps.filter(s=>s.step_date===wStepDate);
+  if(!steps.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">◻</div><div class="empty-text">이 날의 Step이 없어요</div></div>`;
+    return;
+  }
+  el.innerHTML=steps.map(s=>{
+    const ms=wMilestones.find(m=>m.id===s.milestone_id);
+    const goal=wGoals.find(g=>g.id===(ms?ms.goal_id:s.goal_id));
+    const core=wCores.find(c=>c.id===(goal?goal.core_id:s.core_id));
+    const col=core?WORK_COLORS[core.color||'green']:WORK_COLORS.purple;
+    const checks=s.checklist||[];
+    const doneChecks=checks.filter(c=>c.done).length;
+    const dur=s.start_time&&s.end_time?calcDur(s.start_time,s.end_time):'';
+    return `<div class="step-card" style="border-left-color:${col.main};">
+      <div class="step-time-row">
+        <span class="step-time-txt">${s.start_time?s.start_time.slice(0,5):''} ${s.end_time?'– '+s.end_time.slice(0,5):''}</span>
+        ${dur?`<span class="step-dur-txt">${dur}분</span>`:''}
+      </div>
+      <div class="step-tag-row">
+        ${core?`<span class="step-tag t-core" style="background:${col.bg};color:${col.main};">${core.title}</span>`:''}
+        ${goal?`<span class="step-tag t-goal">${goal.title}</span>`:''}
+        ${ms?`<span class="step-tag t-ms">${ms.title}</span>`:''}
+      </div>
+      ${checks.length?`<div class="step-checklist">${checks.map((c,i)=>`
+        <div class="step-check-item">
+          <button class="step-check-box ${c.done?'done':''}" onclick="toggleWorkCheck('${s.id}',${i})"></button>
+          <span class="step-check-label ${c.done?'done':''}">${c.text}</span>
+        </div>`).join('')}</div>`:''}
+      ${checks.length?`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:6px;">${doneChecks}/${checks.length} 완료</div>`:''}
+      <div class="step-bottom">
+        <button class="step-btn" onclick="openEditWorkStep('${s.id}')">✎ 수정</button>
+        <button class="step-btn danger" onclick="deleteWorkStep('${s.id}')">삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function calcDur(st,et){
+  const[sh,sm]=st.split(':').map(Number);
+  const[eh,em]=et.split(':').map(Number);
+  return Math.round((eh*60+em)-(sh*60+sm));
+}
+
+async function toggleWorkCheck(stepId,idx){
+  const s=wSteps.find(x=>x.id===stepId);if(!s)return;
+  const checks=[...(s.checklist||[])];
+  checks[idx]={...checks[idx],done:!checks[idx].done};
+  s.checklist=checks;
+  await sb.from('slit_work_steps').update({checklist:checks}).eq('id',stepId);
+  renderWorkSteps();
+}
+
+// ── 흐름 보기 ──
+function renderWorkFlow(){
+  const el=document.getElementById('workFlowContent');if(!el)return;
+  const cores=wSelectedCore==='all'?wCores:wCores.filter(c=>c.id===wSelectedCore);
+  if(!cores.length){el.innerHTML=`<div class="empty"><div class="empty-text">Core가 없어요</div></div>`;return;}
+  el.innerHTML=cores.map(c=>{
+    const col=WORK_COLORS[c.color||'green'];
+    const goals=wGoals.filter(g=>g.core_id===c.id);
+    return `<div class="flow-core-block">
+      <div class="flow-core-title">
+        <span style="width:8px;height:8px;border-radius:50%;background:${col.main};flex-shrink:0;display:inline-block;"></span>
+        <span style="color:${col.main};">${c.title}</span>
+        ${c.due_date?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);">~ ${c.due_date}</span>`:''}
+        <span class="flow-core-line"></span>
+      </div>
+      ${goals.length?goals.map(g=>{
+        const msList=wMilestones.filter(m=>m.goal_id===g.id);
+        return `<div class="flow-goal-row">
+          <div class="flow-goal-title">
+            <span style="font-size:12px;">▸</span> ${g.title}
+            ${g.due_date?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);">~ ${g.due_date}</span>`:''}
+            <button class="goal-edit-btn" onclick="openEditWorkGoal('${g.id}')">✎</button>
+          </div>
+          ${msList.map(m=>`<div class="flow-ms-item">
+            <span class="flow-ms-dot" style="background:${m.status==='done'?'#2d6a4f':'#b45309'};"></span>
+            <span class="flow-ms-title" style="${m.status==='done'?'text-decoration:line-through;color:var(--text3);':''}">${m.title}</span>
+            ${m.due_date?`<span class="flow-ms-due">${m.due_date}</span>`:''}
+            <button class="ms-row-edit" onclick="openEditWorkMs('${m.id}')">✎</button>
+          </div>`).join('')}
+          <button class="work-add-inline" style="padding-left:14px;" onclick="openAddMsForGoal('${g.id}')">+ Milestone</button>
+        </div>`;
+      }).join(''):`<div style="padding-left:14px;font-size:12px;color:var(--text3);margin-bottom:4px;">Goal 없음</div>`}
+      <button class="work-add-inline" style="margin-left:5px;" onclick="openAddGoalForCore('${c.id}')">+ Goal</button>
+    </div>`;
+  }).join('');
+}
+
+// ── 간트 보기 ──
+function renderWorkGantt(){
+  const el=document.getElementById('workGanttContent');if(!el)return;
+  const items=[...wGoals.filter(g=>g.due_date),...wMilestones.filter(m=>m.due_date)];
+  if(!items.length){el.innerHTML=`<div class="empty"><div class="empty-text">마감일이 있는 항목이 없어요</div></div>`;return;}
+  const allDates=items.map(i=>i.due_date).filter(Boolean).sort();
+  const minDate=new Date(allDates[0]+'T00:00:00');
+  const maxDate=new Date(allDates[allDates.length-1]+'T00:00:00');
+  const totalDays=Math.max(Math.round((maxDate-minDate)/86400000)+1,30);
+  const cols=Math.min(totalDays,60);
+  const step=Math.ceil(cols/6);
+  const today=new Date();
+
+  // 헤더 날짜 라벨
+  let headerHtml='<tr><th style="width:130px;"></th>';
+  for(let i=0;i<cols;i+=step){
+    const d=new Date(minDate);d.setDate(d.getDate()+i);
+    headerHtml+=`<th class="gantt-header-cell" colspan="${step}">${d.getMonth()+1}/${d.getDate()}</th>`;
+  }
+  headerHtml+='</tr>';
+
+  const rows=items.map(item=>{
+    const isGoal=!!item.core_id;
+    const core=isGoal?wCores.find(c=>c.id===item.core_id):wCores.find(c=>{const g=wGoals.find(g=>g.id===item.goal_id);return g&&g.core_id===c.id;});
+    const col=core?WORK_COLORS[core.color||'green']:WORK_COLORS.green;
+    const dueDate=new Date(item.due_date+'T00:00:00');
+    const startDate=item.start_date?new Date(item.start_date+'T00:00:00'):new Date(minDate);
+    const startPct=Math.max(0,Math.round((startDate-minDate)/86400000/cols*100));
+    const endPct=Math.min(100,Math.round((dueDate-minDate)/86400000/cols*100));
+    const width=Math.max(endPct-startPct,2);
+    return `<tr>
+      <td class="gantt-label">${item.title}<small>${isGoal?'Goal':'MS'} · ${core?core.title:''}</small></td>
+      <td colspan="${cols}" style="padding:0;">
+        <div class="gantt-track">
+          <div class="gantt-bar" style="left:${startPct}%;width:${width}%;background:${col.main};"></div>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  el.innerHTML=`<table class="gantt-table"><thead>${headerHtml}</thead><tbody>${rows.join('')}</tbody></table>`;
+}
+
+// ── 모달 열기/닫기 ──
+function openWorkModal(type){
+  if(type==='core'){
+    document.getElementById('workCoreModalTitle').textContent='Core 추가';
+    document.getElementById('workCoreEditId').value='';
+    document.getElementById('workCoreTitle').value='';
+    document.getElementById('workCoreDue').value='';
+    document.getElementById('workCoreDeleteBtn').style.display='none';
+    wCoreColor='green';
+    document.querySelectorAll('#workCoreColorBtns .wave-color-btn').forEach(b=>{
+      b.classList.toggle('active',b.dataset.wcolor==='green');
+    });
+    document.getElementById('workCoreModal').classList.add('open');
+  } else if(type==='goal'){
+    document.getElementById('workGoalModalTitle').textContent='Goal 추가';
+    document.getElementById('workGoalEditId').value='';
+    document.getElementById('workGoalTitle').value='';
+    document.getElementById('workGoalDue').value='';
+    document.getElementById('workGoalDeleteBtn').style.display='none';
+    const sel=document.getElementById('workGoalCoreSelect');
+    sel.innerHTML=wCores.map(c=>`<option value="${c.id}">${c.title}</option>`).join('');
+    if(wSelectedCore!=='all') sel.value=wSelectedCore;
+    document.getElementById('workGoalModal').classList.add('open');
+  } else if(type==='step'){
+    document.getElementById('workStepModalTitle').textContent='Step 추가';
+    document.getElementById('workStepEditId').value='';
+    document.getElementById('workStepStart').value='';
+    document.getElementById('workStepEnd').value='';
+    document.getElementById('workStepDate').value=wStepDate;
+    document.getElementById('workStepDeleteBtn').style.display='none';
+    document.getElementById('workStepSaveTemplate').checked=false;
+    wStepChecklist=[];
+    renderWorkStepChecklistEdit();
+    populateWorkStepSelects(null,null);
+    document.getElementById('workStepModal').classList.add('open');
+  } else if(type==='template-pick'){
+    renderWorkTplList();
+    document.getElementById('workTplModal').classList.add('open');
+  }
+}
+
+function closeWorkModal(id){document.getElementById(id).classList.remove('open');}
+
+function openEditWorkCore(id){
+  const c=wCores.find(x=>x.id===id);if(!c)return;
+  document.getElementById('workCoreModalTitle').textContent='Core 수정';
+  document.getElementById('workCoreEditId').value=id;
+  document.getElementById('workCoreTitle').value=c.title;
+  document.getElementById('workCoreDue').value=c.due_date||'';
+  document.getElementById('workCoreDeleteBtn').style.display='inline-flex';
+  wCoreColor=c.color||'green';
+  document.querySelectorAll('#workCoreColorBtns .wave-color-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.wcolor===wCoreColor);
+  });
+  document.getElementById('workCoreModal').classList.add('open');
+}
+
+function openEditWorkGoal(id){
+  const g=wGoals.find(x=>x.id===id);if(!g)return;
+  document.getElementById('workGoalModalTitle').textContent='Goal 수정';
+  document.getElementById('workGoalEditId').value=id;
+  document.getElementById('workGoalTitle').value=g.title;
+  document.getElementById('workGoalDue').value=g.due_date||'';
+  document.getElementById('workGoalDeleteBtn').style.display='inline-flex';
+  const sel=document.getElementById('workGoalCoreSelect');
+  sel.innerHTML=wCores.map(c=>`<option value="${c.id}">${c.title}</option>`).join('');
+  sel.value=g.core_id;
+  document.getElementById('workGoalModal').classList.add('open');
+}
+
+function openEditWorkMs(id){
+  const m=wMilestones.find(x=>x.id===id);if(!m)return;
+  document.getElementById('workMsModalTitle').textContent='Milestone 수정';
+  document.getElementById('workMsEditId').value=id;
+  document.getElementById('workMsTitle').value=m.title;
+  document.getElementById('workMsDue').value=m.due_date||'';
+  document.getElementById('workMsDeleteBtn').style.display='inline-flex';
+  wMsStatus=m.status||'active';
+  ['active','done','hold'].forEach(s=>{
+    document.getElementById('wms-'+s)?.classList.toggle('active',s===wMsStatus);
+  });
+  const sel=document.getElementById('workMsGoalSelect');
+  sel.innerHTML=wGoals.map(g=>`<option value="${g.id}">${g.title}</option>`).join('');
+  sel.value=m.goal_id;
+  document.getElementById('workMsGoalIdFixed').value='';
+  document.getElementById('workMsModal').classList.add('open');
+}
+
+function openAddMsForGoal(goalId){
+  document.getElementById('workMsModalTitle').textContent='Milestone 추가';
+  document.getElementById('workMsEditId').value='';
+  document.getElementById('workMsTitle').value='';
+  document.getElementById('workMsDue').value='';
+  document.getElementById('workMsDeleteBtn').style.display='none';
+  wMsStatus='active';
+  ['active','done','hold'].forEach(s=>{
+    document.getElementById('wms-'+s)?.classList.toggle('active',s==='active');
+  });
+  const sel=document.getElementById('workMsGoalSelect');
+  sel.innerHTML=wGoals.map(g=>`<option value="${g.id}">${g.title}</option>`).join('');
+  sel.value=goalId;
+  document.getElementById('workMsGoalIdFixed').value=goalId;
+  document.getElementById('workMsModal').classList.add('open');
+}
+
+function openAddGoalForCore(coreId){
+  openWorkModal('goal');
+  setTimeout(()=>{
+    const sel=document.getElementById('workGoalCoreSelect');
+    if(sel)sel.value=coreId;
+  },50);
+}
+
+function openEditWorkStep(id){
+  const s=wSteps.find(x=>x.id===id);if(!s)return;
+  document.getElementById('workStepModalTitle').textContent='Step 수정';
+  document.getElementById('workStepEditId').value=id;
+  document.getElementById('workStepStart').value=s.start_time?s.start_time.slice(0,5):'';
+  document.getElementById('workStepEnd').value=s.end_time?s.end_time.slice(0,5):'';
+  document.getElementById('workStepDate').value=s.step_date;
+  document.getElementById('workStepDeleteBtn').style.display='inline-flex';
+  document.getElementById('workStepSaveTemplate').checked=false;
+  wStepChecklist=[...(s.checklist||[])];
+  renderWorkStepChecklistEdit();
+  populateWorkStepSelects(s.milestone_id,s.goal_id,s.core_id);
+  document.getElementById('workStepModal').classList.add('open');
+}
+
+// ── Step 셀렉트 자동 태깅 ──
+function populateWorkStepSelects(msId,goalId,coreId){
+  const msSel=document.getElementById('workStepMsSelect');
+  const goalSel=document.getElementById('workStepGoalSelect');
+  msSel.innerHTML=`<option value="">-- 없음 --</option>`+wMilestones.map(m=>{
+    const g=wGoals.find(g=>g.id===m.goal_id);
+    return `<option value="${m.id}">${m.title}${g?' ('+g.title+')':''}`;
+  }).join('');
+  goalSel.innerHTML=`<option value="">-- 없음 --</option>`+wGoals.map(g=>`<option value="${g.id}">${g.title}</option>`).join('');
+  if(msId){msSel.value=msId;autoTagFromMs();}
+  else if(goalId){goalSel.value=goalId;autoTagFromGoal();}
+  else{document.getElementById('workStepCoreTag').textContent='—';}
+}
+
+function autoTagFromMs(){
+  const msId=document.getElementById('workStepMsSelect').value;
+  if(!msId){autoTagFromGoal();return;}
+  const ms=wMilestones.find(m=>m.id===msId);if(!ms)return;
+  const goal=wGoals.find(g=>g.id===ms.goal_id);
+  if(goal){
+    document.getElementById('workStepGoalSelect').value=goal.id;
+    const core=wCores.find(c=>c.id===goal.core_id);
+    document.getElementById('workStepCoreTag').textContent=core?core.title:'—';
+  }
+}
+
+function autoTagFromGoal(){
+  const goalId=document.getElementById('workStepGoalSelect').value;
+  if(!goalId){document.getElementById('workStepCoreTag').textContent='—';return;}
+  const goal=wGoals.find(g=>g.id===goalId);if(!goal)return;
+  const core=wCores.find(c=>c.id===goal.core_id);
+  document.getElementById('workStepCoreTag').textContent=core?core.title:'—';
+}
+
+// ── 체크리스트 ──
+function renderWorkStepChecklistEdit(){
+  const el=document.getElementById('workStepChecklistEdit');if(!el)return;
+  el.innerHTML=wStepChecklist.map((c,i)=>`
+    <div class="task-item">
+      <span class="task-name">${c.text}</span>
+      <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;" onclick="removeWorkStepCheck(${i})">×</button>
+    </div>`).join('');
+}
+
+function addWorkStepCheck(){
+  const inp=document.getElementById('newWorkStepCheck');
+  const val=inp.value.trim();if(!val)return;
+  wStepChecklist.push({text:val,done:false});
+  inp.value='';
+  renderWorkStepChecklistEdit();
+}
+
+function removeWorkStepCheck(i){
+  wStepChecklist.splice(i,1);
+  renderWorkStepChecklistEdit();
+}
+
+// ── 색상/상태 선택 ──
+function selectWorkCoreColor(color,btn){
+  wCoreColor=color;
+  document.querySelectorAll('#workCoreColorBtns .wave-color-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function selectWmsStatus(status,btn){
+  wMsStatus=status;
+  ['active','done','hold'].forEach(s=>document.getElementById('wms-'+s)?.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── 저장 ──
+async function saveWorkCore(){
+  const id=document.getElementById('workCoreEditId').value;
+  const title=document.getElementById('workCoreTitle').value.trim();
+  if(!title){showToast('이름을 입력해주세요');return;}
+  const due=document.getElementById('workCoreDue').value||null;
+  const data={title,color:wCoreColor,due_date:due,order_index:wCores.length};
+  try{
+    if(id) await sb.from('slit_work_cores').update(data).eq('id',id);
+    else await sb.from('slit_work_cores').insert(data);
+    closeWorkModal('workCoreModal');await loadWork();showToast('저장됐어요!');
+  }catch(e){showToast('저장 실패: '+e.message);}
+}
+
+async function saveWorkGoal(){
+  const id=document.getElementById('workGoalEditId').value;
+  const title=document.getElementById('workGoalTitle').value.trim();
+  if(!title){showToast('이름을 입력해주세요');return;}
+  const coreId=document.getElementById('workGoalCoreSelect').value;
+  const due=document.getElementById('workGoalDue').value||null;
+  const data={title,core_id:coreId,due_date:due,order_index:wGoals.length};
+  try{
+    if(id) await sb.from('slit_work_goals').update(data).eq('id',id);
+    else await sb.from('slit_work_goals').insert(data);
+    closeWorkModal('workGoalModal');await loadWork();showToast('저장됐어요!');
+  }catch(e){showToast('저장 실패: '+e.message);}
+}
+
+async function saveWorkMs(){
+  const id=document.getElementById('workMsEditId').value;
+  const title=document.getElementById('workMsTitle').value.trim();
+  if(!title){showToast('이름을 입력해주세요');return;}
+  const goalId=document.getElementById('workMsGoalSelect').value;
+  const due=document.getElementById('workMsDue').value||null;
+  const data={title,goal_id:goalId,due_date:due,status:wMsStatus,order_index:wMilestones.length};
+  try{
+    if(id) await sb.from('slit_work_milestones').update(data).eq('id',id);
+    else await sb.from('slit_work_milestones').insert(data);
+    closeWorkModal('workMsModal');await loadWork();showToast('저장됐어요!');
+  }catch(e){showToast('저장 실패: '+e.message);}
+}
+
+async function saveWorkStep(){
+  const id=document.getElementById('workStepEditId').value;
+  const msId=document.getElementById('workStepMsSelect').value||null;
+  const goalId=document.getElementById('workStepGoalSelect').value||null;
+  const coreTag=document.getElementById('workStepCoreTag').textContent;
+  const core=wCores.find(c=>c.title===coreTag);
+  const start=document.getElementById('workStepStart').value||null;
+  const end=document.getElementById('workStepEnd').value||null;
+  const date=document.getElementById('workStepDate').value||wStepDate;
+  const saveAsTpl=document.getElementById('workStepSaveTemplate').checked;
+  const data={
+    milestone_id:msId, goal_id:goalId, core_id:core?core.id:null,
+    start_time:start, end_time:end, step_date:date,
+    checklist:wStepChecklist
+  };
+  try{
+    if(id) await sb.from('slit_work_steps').update(data).eq('id',id);
+    else await sb.from('slit_work_steps').insert(data);
+    if(saveAsTpl){
+      const tplData={
+        milestone_id:msId, goal_id:goalId, core_id:core?core.id:null,
+        start_time:start, end_time:end, checklist:wStepChecklist
+      };
+      await sb.from('slit_work_templates').insert(tplData).catch(()=>{});
+    }
+    wStepDate=date;
+    closeWorkModal('workStepModal');await loadWork();showToast('저장됐어요!');
+  }catch(e){showToast('저장 실패: '+e.message);}
+}
+
+// ── 삭제 ──
+async function deleteWorkCore(){
+  const id=document.getElementById('workCoreEditId').value;if(!id)return;
+  if(!confirm('Core를 삭제하면 하위 Goal/Milestone도 삭제됩니다. 계속할까요?'))return;
+  await sb.from('slit_work_cores').delete().eq('id',id);
+  closeWorkModal('workCoreModal');await loadWork();showToast('삭제됐어요');
+}
+
+async function deleteWorkGoal(){
+  const id=document.getElementById('workGoalEditId').value;if(!id)return;
+  if(!confirm('Goal을 삭제할까요?'))return;
+  await sb.from('slit_work_goals').delete().eq('id',id);
+  closeWorkModal('workGoalModal');await loadWork();showToast('삭제됐어요');
+}
+
+async function deleteWorkMs(){
+  const id=document.getElementById('workMsEditId').value;if(!id)return;
+  if(!confirm('Milestone을 삭제할까요?'))return;
+  await sb.from('slit_work_milestones').delete().eq('id',id);
+  closeWorkModal('workMsModal');await loadWork();showToast('삭제됐어요');
+}
+
+async function deleteWorkStep(id){
+  const eid=id||document.getElementById('workStepEditId').value;if(!eid)return;
+  if(!confirm('Step을 삭제할까요?'))return;
+  await sb.from('slit_work_steps').delete().eq('id',eid);
+  closeWorkModal('workStepModal');await loadWork();showToast('삭제됐어요');
+}
+
+// ── 템플릿 불러오기 ──
+function renderWorkTplList(){
+  const el=document.getElementById('workTplList');if(!el)return;
+  if(!wTemplates.length){el.innerHTML=`<div class="empty"><div class="empty-text">저장된 템플릿이 없어요</div></div>`;return;}
+  el.innerHTML=wTemplates.map(t=>{
+    const ms=wMilestones.find(m=>m.id===t.milestone_id);
+    const goal=wGoals.find(g=>g.id===(ms?ms.goal_id:t.goal_id));
+    const core=wCores.find(c=>c.id===(goal?goal.core_id:t.core_id));
+    const checks=t.checklist||[];
+    return `<div class="goal-block" style="cursor:pointer;" onclick="applyWorkTemplate('${t.id}')">
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px;">${ms?ms.title:goal?goal.title:'Step 템플릿'}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">
+        ${core?`<span class="step-tag t-core">${core.title}</span>`:''}
+        ${goal?`<span class="step-tag t-goal">${goal.title}</span>`:''}
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);">${t.start_time?t.start_time.slice(0,5):''} ${t.end_time?'~ '+t.end_time.slice(0,5):''} · 체크리스트 ${checks.length}개</div>
+    </div>`;
+  }).join('');
+}
+
+async function applyWorkTemplate(tplId){
+  const t=wTemplates.find(x=>x.id===tplId);if(!t)return;
+  const data={
+    milestone_id:t.milestone_id, goal_id:t.goal_id, core_id:t.core_id,
+    start_time:t.start_time, end_time:t.end_time,
+    step_date:wStepDate, checklist:t.checklist||[]
+  };
+  try{
+    await sb.from('slit_work_steps').insert(data);
+    closeWorkModal('workTplModal');await loadWork();showToast('템플릿 적용됐어요!');
+  }catch(e){showToast('적용 실패: '+e.message);}
+}
+
 
 // ── 홈 날짜 선택 ──
 function homeInitDate(){
@@ -4139,6 +4851,172 @@ init();
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('waveModal')">취소</button>
       <button class="btn btn-primary" onclick="saveWave()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- WORK MODALS -->
+<!-- Core 모달 -->
+<div class="work-modal-overlay" id="workCoreModal">
+  <div class="work-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="workCoreModalTitle">Core 추가</div>
+    <input type="hidden" id="workCoreEditId">
+    <div class="form-group">
+      <label class="form-label">Core 이름</label>
+      <input class="form-input" id="workCoreTitle" placeholder="예: SIT FOREST, SE 교육">
+    </div>
+    <div class="form-group">
+      <label class="form-label">색상</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="workCoreColorBtns">
+        <button class="wave-color-btn active" data-wcolor="green" onclick="selectWorkCoreColor('green',this)" style="background:var(--ing-bg);border-color:var(--ing);color:var(--ing);">초록</button>
+        <button class="wave-color-btn" data-wcolor="blue" onclick="selectWorkCoreColor('blue',this)" style="background:var(--ft-bg);border-color:var(--ft);color:var(--ft);">파랑</button>
+        <button class="wave-color-btn" data-wcolor="amber" onclick="selectWorkCoreColor('amber',this)" style="background:var(--start-bg);border-color:var(--start);color:var(--start);">앰버</button>
+        <button class="wave-color-btn" data-wcolor="purple" onclick="selectWorkCoreColor('purple',this)" style="background:var(--end-bg);border-color:var(--end);color:var(--end);">보라</button>
+        <button class="wave-color-btn" data-wcolor="teal" onclick="selectWorkCoreColor('teal',this)" style="background:#e1f5ee;border-color:#0f6e56;color:#0f6e56;">틸</button>
+        <button class="wave-color-btn" data-wcolor="coral" onclick="selectWorkCoreColor('coral',this)" style="background:#faece7;border-color:#993c1d;color:#993c1d;">코랄</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">마감일 (선택)</label>
+      <input class="form-input" type="date" id="workCoreDue">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeWorkModal('workCoreModal')">취소</button>
+      <button class="btn btn-danger btn-sm" id="workCoreDeleteBtn" onclick="deleteWorkCore()" style="display:none;">삭제</button>
+      <button class="btn btn-primary" onclick="saveWorkCore()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Goal 모달 -->
+<div class="work-modal-overlay" id="workGoalModal">
+  <div class="work-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="workGoalModalTitle">Goal 추가</div>
+    <input type="hidden" id="workGoalEditId">
+    <div class="form-group">
+      <label class="form-label">Core 선택</label>
+      <select class="form-select" id="workGoalCoreSelect"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Goal 이름</label>
+      <input class="form-input" id="workGoalTitle" placeholder="예: LMS 고도화, 응대회고 안정화">
+    </div>
+    <div class="form-group">
+      <label class="form-label">마감일 (선택)</label>
+      <input class="form-input" type="date" id="workGoalDue">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeWorkModal('workGoalModal')">취소</button>
+      <button class="btn btn-danger btn-sm" id="workGoalDeleteBtn" onclick="deleteWorkGoal()" style="display:none;">삭제</button>
+      <button class="btn btn-primary" onclick="saveWorkGoal()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Milestone 모달 -->
+<div class="work-modal-overlay" id="workMsModal">
+  <div class="work-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="workMsModalTitle">Milestone 추가</div>
+    <input type="hidden" id="workMsEditId">
+    <input type="hidden" id="workMsGoalIdFixed">
+    <div class="form-group">
+      <label class="form-label">Goal 선택</label>
+      <select class="form-select" id="workMsGoalSelect"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Milestone 이름</label>
+      <input class="form-input" id="workMsTitle" placeholder="예: SE 명단 관리 체계 구축">
+    </div>
+    <div class="form-group">
+      <label class="form-label">마감일 (선택)</label>
+      <input class="form-input" type="date" id="workMsDue">
+    </div>
+    <div class="form-group">
+      <label class="form-label">상태</label>
+      <div style="display:flex;gap:6px;">
+        <button class="date-btn active" id="wms-active" onclick="selectWmsStatus('active',this)">진행중</button>
+        <button class="date-btn" id="wms-done" onclick="selectWmsStatus('done',this)">완료</button>
+        <button class="date-btn" id="wms-hold" onclick="selectWmsStatus('hold',this)">보류</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeWorkModal('workMsModal')">취소</button>
+      <button class="btn btn-danger btn-sm" id="workMsDeleteBtn" onclick="deleteWorkMs()" style="display:none;">삭제</button>
+      <button class="btn btn-primary" onclick="saveWorkMs()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Step 모달 -->
+<div class="work-modal-overlay" id="workStepModal">
+  <div class="work-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="workStepModalTitle">Step 추가</div>
+    <input type="hidden" id="workStepEditId">
+    <div class="form-group">
+      <label class="form-label">Milestone 선택 (선택)</label>
+      <select class="form-select" id="workStepMsSelect" onchange="autoTagFromMs()">
+        <option value="">-- 없음 --</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Goal 선택 (선택)</label>
+      <select class="form-select" id="workStepGoalSelect" onchange="autoTagFromGoal()">
+        <option value="">-- 없음 --</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label" style="color:var(--accent);">Core (자동 태깅)</label>
+      <div id="workStepCoreTag" style="font-size:13px;color:var(--text2);padding:8px 12px;background:var(--surface2);border-radius:var(--radius);">—</div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="form-label" style="color:var(--start);">시작 시간</label>
+        <input class="form-input" type="time" id="workStepStart" style="border-color:var(--start-border);">
+      </div>
+      <div>
+        <label class="form-label" style="color:var(--end);">종료 시간</label>
+        <input class="form-input" type="time" id="workStepEnd" style="border-color:var(--end-border);">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">날짜</label>
+      <input class="form-input" type="date" id="workStepDate">
+    </div>
+    <div class="form-group">
+      <div class="cat-section-label" style="margin-bottom:8px;"><span class="lbl" style="color:var(--accent);">체크리스트</span><div class="line"></div></div>
+      <div id="workStepChecklistEdit"></div>
+      <div class="task-add-row">
+        <input class="form-input" id="newWorkStepCheck" placeholder="항목 추가..." style="flex:1" onkeydown="if(event.key==='Enter')addWorkStepCheck()">
+        <button class="btn btn-ghost btn-sm" onclick="addWorkStepCheck()">+</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">템플릿으로 저장</label>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="workStepSaveTemplate" style="width:16px;height:16px;">
+        <label for="workStepSaveTemplate" style="font-size:13px;color:var(--text2);">이 Step을 템플릿으로 저장</label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeWorkModal('workStepModal')">취소</button>
+      <button class="btn btn-danger btn-sm" id="workStepDeleteBtn" onclick="deleteWorkStep()" style="display:none;">삭제</button>
+      <button class="btn btn-primary" onclick="saveWorkStep()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 템플릿 선택 모달 -->
+<div class="work-modal-overlay" id="workTplModal">
+  <div class="work-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">템플릿 불러오기</div>
+    <div id="workTplList"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeWorkModal('workTplModal')">닫기</button>
     </div>
   </div>
 </div>
