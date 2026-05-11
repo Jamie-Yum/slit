@@ -2206,11 +2206,23 @@ function renderWorkSteps(){
     const checks=s.checklist||[];
     const doneChecks=checks.filter(c=>c.done).length;
     const dur=s.start_time&&s.end_time?calcDur(s.start_time,s.end_time):'';
+    // 남은 시간 계산
+    const now=new Date();
+    const todayStr=toDateStr(now);
+    let remainHtml='';
+    if(s.end_time&&s.step_date===todayStr){
+      const[eh,em]=s.end_time.slice(0,5).split(':').map(Number);
+      const endMs=new Date();endMs.setHours(eh,em,0,0);
+      const rem=Math.round((endMs-now)/60000);
+      if(rem>0) remainHtml=`<span style="font-family:var(--mono);font-size:10px;color:var(--accent);background:var(--accent-bg);padding:2px 7px;border-radius:10px;flex-shrink:0;">종료까지 ${rem}분</span>`;
+      else if(rem>-30) remainHtml=`<span style="font-family:var(--mono);font-size:10px;color:#c0392b;background:#fdf0ef;padding:2px 7px;border-radius:10px;flex-shrink:0;">시간 초과</span>`;
+    }
     return `<div class="step-card" style="border-left-color:${col.main};" draggable="true" data-step-id="${s.id}" ondragstart="wDragStart(event,'step','${s.id}')" ondragover="wDragOver(event,'step','${wStepDate}')" ondrop="wDrop(event,'step','${s.id}')">
       <div class="step-time-row" style="cursor:pointer;" onclick="openEditWorkStep('${s.id}')">
         <span style="color:var(--text3);cursor:grab;font-size:14px;margin-right:4px;" onclick="event.stopPropagation();">⠿</span>
         <span class="step-time-txt">${s.start_time?s.start_time.slice(0,5):''} ${s.end_time?'– '+s.end_time.slice(0,5):''}</span>
         ${dur?`<span class="step-dur-txt">${dur}분</span>`:''}
+        ${remainHtml}
         <span style="margin-left:auto;font-size:11px;color:var(--text3);">✎</span>
       </div>
       <div class="step-tag-row">
@@ -2225,10 +2237,19 @@ function renderWorkSteps(){
         <div class="step-check-item">
           <button class="step-check-box ${c.done?'done':''}" onclick="event.stopPropagation();toggleWorkCheck('${s.id}',${i})"></button>
           <span class="step-check-label ${c.done?'done':''}">${c.text}</span>
+          ${c.duration_minutes?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:auto;">${c.duration_minutes}분</span>`:''}
         </div>`).join('')}</div>`:''}
-      ${checks.length?`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px;">${doneChecks}/${checks.length} 완료</div>`:''}
+      ${checks.length?`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;">${doneChecks}/${checks.length} 완료${checks.some(c=>c.duration_minutes)?` · 총 ${checks.reduce((a,c)=>a+(c.duration_minutes||0),0)}분`:''}</div>`:''}
     </div>`;
   }).join('');
+  // 남은 시간 실시간 업데이트
+  if(window._workStepTimer) clearInterval(window._workStepTimer);
+  if(steps.some(s=>s.end_time&&s.step_date===toDateStr(new Date()))){
+    window._workStepTimer=setInterval(()=>{
+      if(document.getElementById('view-work')?.classList.contains('active')) renderWorkSteps();
+      else clearInterval(window._workStepTimer);
+    },30000);
+  }
 }
 
 function calcDur(st,et){
@@ -2479,16 +2500,55 @@ function renderWorkStepChecklistEdit(){
     const c=g?wCores.find(x=>x.id===g.core_id):null;
     return `<option value="${m.id}">${m.title}${g?' · '+g.title:''}${c?' ('+c.title+')':''}`;
   }).join('');
-  el.innerHTML=wStepChecklist.map((c,i)=>`
-    <div class="task-item" style="flex-direction:column;align-items:flex-start;gap:4px;padding:8px 0;">
+  if(!wStepChecklist.length){el.innerHTML='';return;}
+  el.innerHTML=wStepChecklist.map((c,i)=>{
+    const msOpts=msOptions.replace(`value="${c.milestone_id||''}"`,`value="${c.milestone_id||''}" selected`);
+    const isEditing=c._editing;
+    return `<div class="task-item" style="flex-direction:column;align-items:flex-start;gap:4px;padding:8px 0;border-bottom:1px solid var(--border);" draggable="true" ondragstart="checkDragStart(event,${i})" ondragover="checkDragOver(event,${i})" ondrop="checkDrop(event,${i})">
       <div style="display:flex;align-items:center;gap:8px;width:100%;">
-        <span class="task-name" style="flex:1;">${c.text}</span>
+        <span style="color:var(--text3);cursor:grab;font-size:14px;flex-shrink:0;">⠿</span>
+        <button class="step-check-box ${c.done?'done':''}" onclick="toggleDraftCheck(${i})" style="flex-shrink:0;"></button>
+        ${isEditing
+          ?`<input class="form-input" value="${c.text}" style="flex:1;padding:4px 8px;font-size:13px;" onblur="finishEditCheck(${i},this.value)" onkeydown="if(event.key==='Enter')this.blur()">`
+          :`<span class="task-name ${c.done?'done':''}" style="flex:1;cursor:text;" ondblclick="startEditCheck(${i})">${c.text}</span>`
+        }
+        ${c.duration_minutes?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;">${c.duration_minutes}분</span>`:''}
         <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;flex-shrink:0;" onclick="removeWorkStepCheck(${i})">×</button>
       </div>
-      <select style="width:100%;font-family:var(--mono);font-size:11px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text2);" onchange="setCheckMs(${i},this.value)">
-        ${msOptions.replace(`value="${c.milestone_id||''}"`,`value="${c.milestone_id||''}" selected`)}
-      </select>
-    </div>`).join('');
+      <div style="display:flex;gap:6px;padding-left:40px;width:100%;align-items:center;flex-wrap:wrap;">
+        <select style="flex:1;min-width:0;font-family:var(--mono);font-size:11px;padding:3px 6px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text2);" onchange="setCheckMs(${i},this.value)">${msOpts}</select>
+        <input type="number" placeholder="분" min="1" max="480" value="${c.duration_minutes||''}" style="width:52px;flex-shrink:0;font-family:var(--mono);font-size:11px;padding:3px 6px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text2);" onchange="setCheckDur(${i},this.value)" title="소요 시간(분)">
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDraftCheck(i){
+  wStepChecklist[i].done=!wStepChecklist[i].done;
+  renderWorkStepChecklistEdit();
+}
+function startEditCheck(i){
+  wStepChecklist[i]._editing=true;
+  renderWorkStepChecklistEdit();
+}
+function finishEditCheck(i,val){
+  if(val.trim()) wStepChecklist[i].text=val.trim();
+  delete wStepChecklist[i]._editing;
+  renderWorkStepChecklistEdit();
+}
+function setCheckDur(i,val){
+  wStepChecklist[i].duration_minutes=parseInt(val)||null;
+}
+let checkDragFrom=null;
+function checkDragStart(e,i){checkDragFrom=i;e.dataTransfer.effectAllowed='move';}
+function checkDragOver(e,i){e.preventDefault();}
+function checkDrop(e,i){
+  e.preventDefault();
+  if(checkDragFrom===null||checkDragFrom===i)return;
+  const arr=[...wStepChecklist];
+  arr.splice(i,0,arr.splice(checkDragFrom,1)[0]);
+  wStepChecklist=arr; checkDragFrom=null;
+  renderWorkStepChecklistEdit();
 }
 
 function setCheckMs(i,msId){
@@ -2592,21 +2652,27 @@ async function saveWorkStep(){
   const start=document.getElementById('workStepStart').value||null;
   const end=document.getElementById('workStepEnd').value||null;
   const date=document.getElementById('workStepDate').value||wStepDate;
-  // checklist에서 첫 번째 milestone_id를 step의 대표 태그로 사용
   const firstMs=wStepChecklist.find(c=>c.milestone_id);
   const repMs=firstMs?wMilestones.find(m=>m.id===firstMs.milestone_id):null;
   const repGoal=repMs?wGoals.find(g=>g.id===repMs.goal_id):null;
   const repCore=repGoal?wCores.find(c=>c.id===repGoal.core_id):null;
+  const todayStepCount=wSteps.filter(s=>s.step_date===date).length;
   const data={
     milestone_id:repMs?repMs.id:null,
     goal_id:repGoal?repGoal.id:null,
     core_id:repCore?repCore.id:null,
-    start_time:start, end_time:end, step_date:date,
-    checklist:wStepChecklist
+    start_time:start,
+    end_time:end,
+    step_date:date,
+    checklist:wStepChecklist,
+    order_index:id?undefined:todayStepCount
   };
+  if(id) delete data.order_index;
   try{
-    if(id) await sb.from('slit_work_steps').update(data).eq('id',id);
-    else await sb.from('slit_work_steps').insert(data);
+    let res;
+    if(id) res=await sb.from('slit_work_steps').update(data).eq('id',id);
+    else res=await sb.from('slit_work_steps').insert(data);
+    if(res.error) throw res.error;
     wStepDate=date;
     closeWorkModal('workStepModal');await loadWork();showToast('저장됐어요!');
   }catch(e){showToast('저장 실패: '+e.message);}
