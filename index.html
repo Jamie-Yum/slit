@@ -740,20 +740,19 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .core-chip:hover{border-color:var(--text3);color:var(--text);}
 .core-chip.active{background:var(--accent-bg);border-color:var(--ing-border);color:var(--accent);}
 .core-chip .cc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.goal-block{margin-bottom:6px;}
-.goal-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1px solid var(--border2);background:var(--surface);font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all 0.12s;max-width:100%;flex-wrap:wrap;}
-.goal-chip.expanded{background:var(--surface2);border-color:var(--border2);}
-.goal-chip-title{font-size:12px;font-weight:500;color:var(--text);}
-.goal-chip-meta{font-family:var(--mono);font-size:9px;color:var(--text3);}
-.goal-chip-edit{background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;padding:0 2px;flex-shrink:0;}
-.goal-ms-wrap{padding:6px 0 2px 16px;display:flex;flex-wrap:wrap;gap:5px;}
-.goal-add-ms{padding:3px 0 6px 16px;}
+.goal-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:8px;}
+.goal-block-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.goal-block-left{display:flex;align-items:center;gap:7px;flex:1;min-width:0;}
+.goal-core-badge{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:20px;flex-shrink:0;font-weight:500;}
+.goal-block-title{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.goal-block-meta{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:8px;}
 .goal-edit-btn{background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;padding:2px 6px;flex-shrink:0;}
-.ms-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--surface);font-size:11px;color:var(--text2);cursor:default;transition:all 0.12s;white-space:nowrap;}
-.ms-chip.done{background:var(--surface2);color:var(--text3);text-decoration:line-through;}
-.ms-chip-edit{background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;padding:0 1px;flex-shrink:0;}
-.ms-chip-due{font-family:var(--mono);font-size:9px;color:var(--text3);}
-.ms-chip-rep{font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;background:#e8f0fb;color:#1a56a0;flex-shrink:0;}
+.goal-edit-btn{background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;padding:2px 6px;flex-shrink:0;}
+.ms-row{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:var(--surface2);border-radius:6px;margin-bottom:4px;}
+.ms-row-left{display:flex;align-items:center;gap:7px;}
+.ms-row-title{font-size:12px;color:var(--text);}
+.ms-row-due{font-family:var(--mono);font-size:10px;color:var(--text3);}
+.ms-row-edit{background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;padding:0 4px;}
 .work-add-inline{background:none;border:none;font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;padding:4px 0;display:block;}
 .work-add-inline:hover{color:var(--accent);}
 .step-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
@@ -2131,32 +2130,35 @@ function renderWorkGoalList(){
     const col=core?WORK_COLORS[core.color||'green']:WORK_COLORS.green;
     const msList=wMilestones.filter(m=>m.goal_id===g.id);
     const doneCount=msList.filter(m=>m.status==='done').length;
-    const metaTxt=(g.due_date?`~ ${g.due_date} · `:'')+`MS ${msList.length}개`;
-    return `<div class="goal-block" draggable="true" data-goal-id="${g.id}" ondragstart="wDragStart(event,'goal','${g.id}')" ondragover="wDragOver(event,'goal','${g.core_id}')" ondrop="wDrop(event,'goal','${g.id}')">
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <span style="color:var(--text3);cursor:grab;font-size:13px;">⠿</span>
-        <div class="goal-chip">
-          <span style="width:7px;height:7px;border-radius:50%;background:${col.main};flex-shrink:0;display:inline-block;"></span>
-          <span class="goal-chip-title">${g.title}</span>
-          <span class="goal-chip-meta">${metaTxt}</span>
-          <button class="goal-chip-edit" onclick="event.stopPropagation();openEditWorkGoal('${g.id}')">✎</button>
+    return `<div class="goal-block" draggable="true" data-goal-id="${g.id}" data-core-id="${g.core_id}" ondragstart="wDragStart(event,'goal','${g.id}')" ondragover="wDragOver(event,'goal','${g.core_id}')" ondrop="wDrop(event,'goal','${g.id}')">
+      <div class="goal-block-header">
+        <div class="goal-block-left">
+          <span style="color:var(--text3);cursor:grab;font-size:16px;flex-shrink:0;">⠿</span>
+          <span class="goal-core-badge" style="background:${col.bg};border:1px solid ${col.border};color:${col.main};">${core?core.title:'—'}</span>
+          <span class="goal-block-title">${g.title}</span>
         </div>
+        <button class="goal-edit-btn" onclick="openEditWorkGoal('${g.id}')">✎</button>
       </div>
-      <div class="goal-ms-wrap">${msList.map(m=>{
+      ${g.due_date?`<div class="goal-block-meta">마감 ${g.due_date} · MS ${msList.length}개 (${doneCount}완료)</div>`:`<div class="goal-block-meta">MS ${msList.length}개 (${doneCount}완료)</div>`}
+      <div>${msList.map(m=>{
         const isDone=m.status==='done';
-        const repLabel=m.repeat_type&&m.repeat_type!=='none'?(m.repeat_type==='monthly'?'↻매월':'↻매주'):'';
-        return `<div draggable="true" ondragstart="wDragStart(event,'ms','${m.id}')" ondragover="wDragOver(event,'ms','${m.goal_id}')" ondrop="wDrop(event,'ms','${m.id}')">
-          <div class="ms-chip ${isDone?'done':''}">
-            <span style="cursor:grab;font-size:11px;color:var(--text3);">⠿</span>
-            <span>${m.title}</span>
-            ${repLabel?`<span class="ms-chip-rep">${repLabel}</span>`:''}
-            ${m.due_date?`<span class="ms-chip-due">~ ${m.due_date}</span>`:''}
-            ${m.repeat_detail&&m.repeat_type!=='none'?`<span class="ms-chip-due">${m.repeat_detail}</span>`:''}
-            <button class="ms-chip-edit" onclick="openEditWorkMs('${m.id}')">✎</button>
+        const repBadge=m.repeat_type&&m.repeat_type!=='none'
+          ?`<span style="font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:10px;background:#e8f0fb;color:#1a56a0;flex-shrink:0;">↻ ${m.repeat_type==='monthly'?'매월':'매주'}</span>`:'';
+        const repDetail=m.repeat_detail&&m.repeat_type!=='none'
+          ?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);">${m.repeat_detail}</span>`:'';
+        return `<div class="ms-row" draggable="true" ondragstart="wDragStart(event,'ms','${m.id}')" ondragover="wDragOver(event,'ms','${m.goal_id}')" ondrop="wDrop(event,'ms','${m.id}')">
+          <div class="ms-row-left" style="flex:1;min-width:0;gap:6px;">
+            <span style="color:var(--text3);cursor:grab;font-size:13px;flex-shrink:0;">⠿</span>
+            <span class="ms-row-title" style="${isDone?'text-decoration:line-through;color:var(--text3);':''}">${m.title}</span>
+            ${repBadge}${repDetail}
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            ${m.due_date?`<span class="ms-row-due">${m.due_date}</span>`:''}
+            <button class="ms-row-edit" onclick="openEditWorkMs('${m.id}')">✎</button>
           </div>
         </div>`;
       }).join('')}</div>
-      <div class="goal-add-ms"><button class="work-add-inline" onclick="openAddMsForGoal('${g.id}')">+ Milestone 추가</button></div>
+      <button class="work-add-inline" onclick="openAddMsForGoal('${g.id}')">+ Milestone 추가</button>
     </div>`;
   }).join('');
 }
@@ -2250,7 +2252,7 @@ function renderWorkFlow(){
     const goals=wGoals.filter(g=>g.core_id===c.id);
     return `<div class="flow-core-block">
       <div class="flow-core-title">
-        <span style="color:${col.main};font-weight:600;">${c.title}</span>
+        <span style="color:${col.main};">${c.title}</span>
         ${c.due_date?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);">~ ${c.due_date}</span>`:''}
         <span class="flow-core-line"></span>
       </div>
