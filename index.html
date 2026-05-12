@@ -736,7 +736,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .work-mode-btn{flex:1;padding:7px 4px;border:1px solid var(--border2);border-radius:var(--radius);background:none;font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;letter-spacing:0.05em;transition:all 0.12s;text-align:center;}
 .work-mode-btn.active{background:var(--accent-bg);border-color:var(--ing-border);color:var(--accent);}
 .core-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
-.core-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;border:1px solid var(--border2);background:var(--surface);font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;transition:all 0.12s;white-space:nowrap;}
+.core-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;border:1px solid var(--border2);background:var(--surface);font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;transition:all 0.12s;white-space:nowrap;touch-action:none;user-select:none;}
 .core-chip:hover{border-color:var(--text3);color:var(--text);}
 .core-chip.active{background:var(--accent-bg);border-color:var(--ing-border);color:var(--accent);}
 .core-chip .cc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
@@ -1985,8 +1985,64 @@ let wCoreColor='green',wMsStatus='active';
 let wStepChecklist=[]; // draft checklist for step modal
 
 // ── 초기화 ──
-// ── Work 드래그 앤 드롭 ──
+// ── Work 드래그 앤 드롭 (데스크탑 + 모바일) ──
 let wDragType=null, wDragId=null, wDragOverId=null;
+
+// 모바일 터치 드래그 for Core chips
+let touchDragCoreId=null, touchDragEl=null, touchClone=null;
+
+function initCoreTouchDrag(){
+  const container=document.getElementById('workCoreChips');
+  if(!container)return;
+  container.addEventListener('touchstart',e=>{
+    const chip=e.target.closest('.core-chip[data-core-id]');
+    if(!chip)return;
+    touchDragCoreId=chip.dataset.coreId;
+    touchDragEl=chip;
+    touchClone=chip.cloneNode(true);
+    touchClone.style.cssText='position:fixed;opacity:0.7;pointer-events:none;z-index:9999;border:2px dashed var(--accent);';
+    document.body.appendChild(touchClone);
+    chip.style.opacity='0.3';
+  },{passive:true});
+  container.addEventListener('touchmove',e=>{
+    if(!touchDragCoreId||!touchClone)return;
+    e.preventDefault();
+    const t=e.touches[0];
+    touchClone.style.left=(t.clientX-touchClone.offsetWidth/2)+'px';
+    touchClone.style.top=(t.clientY-touchClone.offsetHeight/2)+'px';
+    // highlight nearest chip
+    document.querySelectorAll('.core-chip[data-core-id]').forEach(c=>{
+      const r=c.getBoundingClientRect();
+      const over=t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom;
+      c.style.outline=over&&c.dataset.coreId!==touchDragCoreId?'2px dashed var(--accent)':'';
+    });
+  },{passive:false});
+  container.addEventListener('touchend',e=>{
+    if(!touchDragCoreId||!touchClone)return;
+    const t=e.changedTouches[0];
+    let targetId=null;
+    document.querySelectorAll('.core-chip[data-core-id]').forEach(c=>{
+      const r=c.getBoundingClientRect();
+      if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom)
+        targetId=c.dataset.coreId;
+      c.style.outline='';
+    });
+    if(touchDragEl)touchDragEl.style.opacity='';
+    touchClone.remove();touchClone=null;
+    if(targetId&&targetId!==touchDragCoreId){
+      const arr=[...wCores];
+      const fi=arr.findIndex(x=>x.id===touchDragCoreId);
+      const ti=arr.findIndex(x=>x.id===targetId);
+      if(fi>=0&&ti>=0){
+        arr.splice(ti,0,arr.splice(fi,1)[0]);
+        wCores=arr;
+        Promise.all(arr.map((c,i)=>sb.from('slit_work_cores').update({order_index:i}).eq('id',c.id)))
+          .then(()=>{renderWorkCoreChips();showToast('순서 변경됐어요!');});
+      }
+    }
+    touchDragCoreId=null;touchDragEl=null;
+  },{passive:true});
+}
 
 function wDragStart(e,type,id){
   wDragType=type; wDragId=id;
@@ -2112,6 +2168,7 @@ function renderWorkCoreChips(){
   });
   html+=`<div class="core-chip" style="border-style:dashed;color:var(--text3);" onclick="openWorkModal('core')">+ 추가</div>`;
   el.innerHTML=html;
+  setTimeout(initCoreTouchDrag,50);
 }
 
 function selectWorkCore(id){
@@ -2376,8 +2433,8 @@ function openWorkModal(type){
     document.getElementById('workStepEnd').value='';
     document.getElementById('workStepDate').value=wStepDate;
     document.getElementById('workStepDeleteBtn').style.display='none';
-    document.getElementById('workStepStart').value='';
-    document.getElementById('workStepEnd').value='';
+    document.getElementById('workStepStart').value='08:30';
+    document.getElementById('workStepEnd').value='17:30';
     document.getElementById('workStepDate').value=wStepDate;
     wStepChecklist=[];
     renderWorkStepChecklistEdit();
@@ -2509,8 +2566,9 @@ function renderWorkStepChecklistEdit(){
         <span style="color:var(--text3);cursor:grab;font-size:14px;flex-shrink:0;">⠿</span>
         <button class="step-check-box ${c.done?'done':''}" onclick="toggleDraftCheck(${i})" style="flex-shrink:0;"></button>
         ${isEditing
-          ?`<input class="form-input" value="${c.text}" style="flex:1;padding:4px 8px;font-size:13px;" onblur="finishEditCheck(${i},this.value)" onkeydown="if(event.key==='Enter')this.blur()">`
-          :`<span class="task-name ${c.done?'done':''}" style="flex:1;cursor:text;" ondblclick="startEditCheck(${i})">${c.text}</span>`
+          ?`<input class="form-input" value="${c.text}" style="flex:1;padding:4px 8px;font-size:13px;" onblur="finishEditCheck(${i},this.value)" onkeydown="if(event.key==='Enter')this.blur()" autofocus>`
+          :`<span class="task-name ${c.done?'done':''}" style="flex:1;" ondblclick="startEditCheck(${i})">${c.text}</span>
+           <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;flex-shrink:0;padding:0 2px;" onclick="startEditCheck(${i})" title="수정">✎</button>`
         }
         ${c.duration_minutes?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;">${c.duration_minutes}분</span>`:''}
         <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;flex-shrink:0;" onclick="removeWorkStepCheck(${i})">×</button>
