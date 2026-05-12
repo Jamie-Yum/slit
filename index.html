@@ -772,9 +772,9 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .step-tag.t-ms{background:var(--start-bg);color:var(--start);}
 .step-checklist{display:flex;flex-direction:column;gap:5px;margin-bottom:8px;}
 .step-check-item{display:flex;align-items:center;gap:8px;}
-.step-check-box{width:15px;height:15px;border-radius:3px;border:1.5px solid var(--border2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;background:none;transition:all 0.1s;}
+.step-check-box{width:15px;height:15px;border-radius:3px;border:1.5px solid var(--border2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;background:none;transition:all 0.1s;position:relative;}
 .step-check-box.done{background:var(--accent);border-color:var(--accent);}
-.step-check-box.done::after{content:✓;color:white;font-size:9px;}
+.step-check-box.done::after{content:"";display:block;width:4px;height:8px;border:2px solid white;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);}
 .step-check-label{font-size:12px;color:var(--text2);}
 .step-check-label.done{text-decoration:line-through;color:var(--text3);}
 .step-bottom{display:flex;justify-content:flex-end;gap:6px;padding-top:6px;border-top:1px solid var(--border);}
@@ -1078,12 +1078,6 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <button class="work-mode-btn" id="workModeGantt" onclick="switchWorkMode('gantt',this)">간트</button>
       </div>
       <div id="workOverview">
-        <div class="section-title">Core</div>
-        <div class="core-chips" id="workCoreChips"></div>
-        <div class="section-title">Goal &amp; Milestone</div>
-        <div id="workGoalList"></div>
-        <button class="btn-add" onclick="openWorkModal('goal')">+ Goal 추가</button>
-        <div style="height:20px;"></div>
         <div class="section-title">Daily Step</div>
         <div class="step-nav">
           <div class="step-nav-arrows">
@@ -1098,6 +1092,27 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
           <button class="btn btn-ghost btn-sm" onclick="openWorkModal('template-pick')">템플릿 불러오기</button>
         </div>
         <div id="workStepList"></div>
+
+        <!-- Work 회고 -->
+        <div class="memo-wrap" style="margin-top:16px;">
+          <div class="memo-header">
+            <span class="memo-title">회 고</span>
+            <span class="memo-date" id="workReviewDateLabel"></span>
+          </div>
+          <div class="memo-types" id="workReviewTypes"></div>
+          <textarea class="memo-textarea" id="workReviewInput" placeholder="자유롭게 적거나 위 질문을 눌러보세요"></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+            <button class="htl-hint-btn primary" onclick="saveWorkReview()">기록하기</button>
+          </div>
+          <div id="workReviewList" style="margin-top:14px;"></div>
+        </div>
+
+        <div style="height:20px;"></div>
+        <div class="section-title">Core</div>
+        <div class="core-chips" id="workCoreChips"></div>
+        <div class="section-title">Goal &amp; Milestone</div>
+        <div id="workGoalList"></div>
+        <button class="btn-add" onclick="openWorkModal('goal')">+ Goal 추가</button>
       </div>
       <div id="workFlow" style="display:none;"><div id="workFlowContent"></div></div>
       <div id="workGantt" style="display:none;"><div class="gantt-wrap"><div id="workGanttContent"></div></div></div>
@@ -2129,6 +2144,107 @@ async function loadWork(){
   }catch(e){showToast('Work 데이터 로드 실패: '+e.message);}
   if(!wStepDate)wStepDate=toDateStr(new Date());
   renderWork();
+  initWorkReview();
+}
+
+// ── Work 회고 ──
+const WORK_REVIEW_PROMPTS=[
+  '이 시간에 가장 좋았던 것은?',
+  '방해되거나 아쉬웠던 것은?',
+  '다음엔 어떻게 다르게 해볼까?'
+];
+const WORK_REVIEW_COLORS={
+  '잘한것':['#eaf4ee','#2d6a4f'],
+  '개선점':['#fef3e2','#b45309'],
+  '다음액션':['#e8f0fb','#1a56a0'],
+  '기타':['var(--surface2)','var(--text2)']
+};
+let curWorkReviewType='잘한것';
+let workReviews=[];
+
+async function initWorkReview(){
+  const now=new Date();
+  const days=['일','월','화','수','목','금','토'];
+  const lbl=document.getElementById('workReviewDateLabel');
+  if(lbl) lbl.textContent=`${now.getMonth()+1}/${now.getDate()} ${days[now.getDay()]}`;
+  const typeEl=document.getElementById('workReviewTypes');
+  if(typeEl) typeEl.innerHTML=Object.keys(WORK_REVIEW_COLORS).map(t=>
+    `<button class="memo-type-btn ${t===curWorkReviewType?'active':''}" onclick="selectWorkReviewType('${t}',this)">${t}</button>`
+  ).join('');
+  // 프롬프트 클릭 힌트
+  const inp=document.getElementById('workReviewInput');
+  if(inp){
+    inp.placeholder='자유롭게 적거나 위 질문을 눌러보세요';
+    // 프롬프트 버튼 동적 생성
+    const promptWrap=document.getElementById('workReviewTypes');
+    if(promptWrap&&!document.getElementById('workReviewPrompts')){
+      const pw=document.createElement('div');
+      pw.id='workReviewPrompts';
+      pw.style.cssText='display:flex;flex-direction:column;gap:6px;margin-bottom:10px;';
+      pw.innerHTML=WORK_REVIEW_PROMPTS.map(p=>
+        `<button onclick="document.getElementById('workReviewInput').value='${p} ';document.getElementById('workReviewInput').focus();" style="text-align:left;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:8px;"><span style='color:var(--text3);'>💬</span>${p}</button>`
+      ).join('');
+      promptWrap.parentNode.insertBefore(pw,promptWrap);
+    }
+  }
+  await loadWorkReviews();
+}
+
+function selectWorkReviewType(t,btn){
+  curWorkReviewType=t;
+  document.querySelectorAll('#workReviewTypes .memo-type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function loadWorkReviews(){
+  try{
+    const{data,error}=await sb.from('slit_work_reviews').select('*').eq('review_date',toDateStr(new Date())).order('created_at',{ascending:false});
+    if(error)throw error;
+    workReviews=data||[];
+  }catch(e){workReviews=[];}
+  renderWorkReviews();
+}
+
+function renderWorkReviews(){
+  const el=document.getElementById('workReviewList');if(!el)return;
+  if(!workReviews.length){el.innerHTML='';return;}
+  el.innerHTML=workReviews.map(r=>{
+    const [bg,color]=WORK_REVIEW_COLORS[r.review_type]||WORK_REVIEW_COLORS['기타'];
+    return `<div class="memo-item" style="border-left-color:${color};">
+      <div class="memo-item-header">
+        <span class="memo-item-type" style="background:${bg};color:${color};">${r.review_type}</span>
+        <span class="memo-item-time">${r.created_at?r.created_at.slice(11,16):''}</span>
+        <button class="memo-item-del" onclick="deleteWorkReview('${r.id}')">×</button>
+      </div>
+      <div class="memo-item-content">${r.content}</div>
+    </div>`;
+  }).join('');
+}
+
+async function saveWorkReview(){
+  const inp=document.getElementById('workReviewInput');
+  const val=inp.value.trim();if(!val)return;
+  try{
+    const{error}=await sb.from('slit_work_reviews').insert({
+      review_date:toDateStr(new Date()),
+      review_type:curWorkReviewType,
+      content:val
+    });
+    if(error)throw error;
+    inp.value='';
+    await loadWorkReviews();
+    showToast('기록됐어요!');
+  }catch(e){
+    // 테이블 없으면 로컬에 임시 저장
+    workReviews.unshift({id:Date.now(),review_type:curWorkReviewType,content:val,created_at:new Date().toISOString()});
+    inp.value='';renderWorkReviews();showToast('기록됐어요! (로컬)');
+  }
+}
+
+async function deleteWorkReview(id){
+  try{await sb.from('slit_work_reviews').delete().eq('id',id);}catch(e){}
+  workReviews=workReviews.filter(r=>String(r.id)!==String(id));
+  renderWorkReviews();
 }
 
 function renderWork(){
