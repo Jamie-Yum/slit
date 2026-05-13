@@ -1128,6 +1128,22 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         </div>
         <div id="workStepList"></div>
 
+        <!-- 돌멩이 -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text2);letter-spacing:0.1em;text-transform:uppercase;">🪨 돌멩이</span>
+            <button onclick="openPebbleAdd()" style="background:none;border:none;font-family:var(--mono);font-size:10px;color:var(--accent);cursor:pointer;font-weight:600;">+ 추가</button>
+          </div>
+          <div id="pebbleList"></div>
+          <div id="pebbleAddRow" style="display:none;margin-top:6px;">
+            <input class="form-input" id="pebbleInput" placeholder="신경 쓰이는 것..." style="margin-bottom:6px;" onkeydown="if(event.key==='Enter')savePebble()">
+            <div style="display:flex;gap:6px;justify-content:flex-end;">
+              <button class="btn btn-ghost btn-sm" onclick="closePebbleAdd()">취소</button>
+              <button class="btn btn-primary btn-sm" onclick="savePebble()">추가</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Work 회고 -->
         <div class="memo-wrap" style="margin-top:16px;">
           <div class="memo-header">
@@ -2040,7 +2056,7 @@ const WORK_COLORS={
   teal:{main:'#0f6e56',bg:'#e1f5ee',border:'#5dcaa5'},
   coral:{main:'#993c1d',bg:'#faece7',border:'#f0997b'},
 };
-let wCores=[],wGoals=[],wMilestones=[],wSteps=[],wTemplates=[];
+let wCores=[],wGoals=[],wMilestones=[],wSteps=[],wTemplates=[],pebbles=[];
 let wSelectedCore='all',wStepDate='',wWorkMode='overview';
 let wCoreColor='green',wMsStatus='active';
 let wStepChecklist=[]; // draft checklist for step modal
@@ -2559,6 +2575,52 @@ async function loadWork(){
   if(!wStepDate)wStepDate=toDateStr(new Date());
   renderWork();
   initWorkReview();
+  await loadPebbles();
+}
+
+// ── 돌멩이 ──
+async function loadPebbles(){
+  try{const r=await sb.from('slit_pebbles').select('*').order('created_at');pebbles=r.data||[];}catch(e){pebbles=[];}
+  renderPebbles();
+}
+function renderPebbles(){
+  const el=document.getElementById('pebbleList');if(!el)return;
+  const active=pebbles.filter(p=>!p.done);
+  const done=pebbles.filter(p=>p.done);
+  const all=[...active,...done];
+  if(!all.length){el.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:8px 0;">신경 쓰이는 것이 없어요 🙂</div>`;return;}
+  el.innerHTML=all.map(p=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;background:${p.done?'var(--surface2)':'white'};border:1.5px solid ${p.done?'var(--border)':'#f0b849'};border-radius:var(--radius);transition:all 0.12s;">
+      <button onclick="togglePebble('${p.id}')" style="width:18px;height:18px;border-radius:50%;border:2px solid ${p.done?'var(--accent)':'#f0b849'};background:${p.done?'var(--accent)':'none'};flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:white;transition:all 0.12s;">${p.done?'✓':''}</button>
+      <span style="flex:1;font-size:13px;color:${p.done?'var(--text3)':'var(--text)'};${p.done?'text-decoration:line-through;':''}">${p.text}</span>
+      <button onclick="deletePebble('${p.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px;">×</button>
+    </div>`).join('');
+}
+function openPebbleAdd(){
+  document.getElementById('pebbleAddRow').style.display='block';
+  document.getElementById('pebbleInput').focus();
+}
+function closePebbleAdd(){
+  document.getElementById('pebbleAddRow').style.display='none';
+  document.getElementById('pebbleInput').value='';
+}
+async function savePebble(){
+  const text=document.getElementById('pebbleInput').value.trim();
+  if(!text){showToast('내용을 입력해주세요');return;}
+  const{error}=await sb.from('slit_pebbles').insert({text,done:false});
+  if(error){showToast('저장 실패: '+error.message);return;}
+  closePebbleAdd();
+  await loadPebbles();
+  showToast('돌멩이 추가됐어요!');
+}
+async function togglePebble(id){
+  const p=pebbles.find(x=>x.id===id);if(!p)return;
+  await sb.from('slit_pebbles').update({done:!p.done}).eq('id',id);
+  await loadPebbles();
+}
+async function deletePebble(id){
+  await sb.from('slit_pebbles').delete().eq('id',id);
+  await loadPebbles();
 }
 
 // ── Work 회고 ──
