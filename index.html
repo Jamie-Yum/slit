@@ -3151,30 +3151,39 @@ async function setCheckDate(i,val){
   wStepChecklist[i].due_date=newDate;
   renderWorkStepChecklistEdit();
 
-  // 날짜가 설정됐고, 현재 편집 중인 Step의 날짜와 다를 때 → 새 Step으로 이동
+  // 날짜가 설정됐고, 현재 편집 중인 Step의 날짜와 다를 때 → 기존 Step으로 이동 or 새 Step 생성
   const curStepDate=document.getElementById('workStepDate')?.value||wStepDate;
   if(newDate && newDate!==curStepDate){
     const item=wStepChecklist[i];
     const ms=wMilestones.find(m=>m.id===item.milestone_id);
     const goal=wGoals.find(g=>g.id===(ms?ms.goal_id:item.goal_id));
     const core=wCores.find(c=>c.id===(goal?goal.core_id:item.core_id));
+    const checkItem={text:item.text,done:false,milestone_id:item.milestone_id||null,duration_minutes:item.duration_minutes||null};
     try{
-      // 새 Step 생성
-      const newStep={
-        step_date:newDate,
-        start_time:null,end_time:null,
-        milestone_id:ms?ms.id:null,
-        goal_id:goal?goal.id:null,
-        core_id:core?core.id:null,
-        checklist:[{text:item.text,done:false,milestone_id:item.milestone_id||null,duration_minutes:item.duration_minutes||null}],
-        order_index:999
-      };
-      const res=await sb.from('slit_work_steps').insert(newStep).select().single();
-      if(res.error) throw res.error;
-      // 현재 체크리스트에서 제거
+      const existingStep=wSteps.find(s=>s.step_date===newDate);
+      if(existingStep){
+        // 기존 Step에 항목 추가
+        const updatedChecklist=[...(existingStep.checklist||[]),checkItem];
+        const res=await sb.from('slit_work_steps').update({checklist:updatedChecklist}).eq('id',existingStep.id);
+        if(res.error) throw res.error;
+        showToast(`${newDate} Step으로 이동됐어요!`);
+      } else {
+        // 해당 날짜 Step 없으면 새로 생성
+        const newStep={
+          step_date:newDate,
+          start_time:null,end_time:null,
+          milestone_id:ms?ms.id:null,
+          goal_id:goal?goal.id:null,
+          core_id:core?core.id:null,
+          checklist:[checkItem],
+          order_index:999
+        };
+        const res=await sb.from('slit_work_steps').insert(newStep).select().single();
+        if(res.error) throw res.error;
+        showToast(`${newDate}로 새 Step 생성됐어요!`);
+      }
       wStepChecklist.splice(i,1);
       renderWorkStepChecklistEdit();
-      showToast(`${newDate}로 새 Step 생성됐어요!`);
       await loadWork();
     }catch(e){
       showToast('이동 실패: '+e.message);
