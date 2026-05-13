@@ -2590,9 +2590,10 @@ function renderPebbles(){
   const all=[...active,...done];
   if(!all.length){el.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:8px 0;">신경 쓰이는 것이 없어요 🙂</div>`;return;}
   el.innerHTML=all.map(p=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;background:${p.done?'var(--surface2)':'white'};border:1.5px solid ${p.done?'var(--border)':'#f0b849'};border-radius:var(--radius);transition:all 0.12s;">
+    <div data-pebble-id="${p.id}" style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;background:${p.done?'var(--surface2)':'white'};border:1.5px solid ${p.done?'var(--border)':'#f0b849'};border-radius:var(--radius);transition:all 0.12s;">
       <button onclick="togglePebble('${p.id}')" style="width:18px;height:18px;border-radius:50%;border:2px solid ${p.done?'var(--accent)':'#f0b849'};background:${p.done?'var(--accent)':'none'};flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:white;transition:all 0.12s;">${p.done?'✓':''}</button>
-      <span style="flex:1;font-size:13px;color:${p.done?'var(--text3)':'var(--text)'};${p.done?'text-decoration:line-through;':''}">${p.text}</span>
+      <span style="flex:1;font-size:13px;color:${p.done?'var(--text3)':'var(--text)'};${p.done?'text-decoration:line-through;':''}" ondblclick="startEditPebble('${p.id}')">${p.text}</span>
+      <button onclick="startEditPebble('${p.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 2px;">✎</button>
       <button onclick="deletePebble('${p.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px;">×</button>
     </div>`).join('');
 }
@@ -2612,6 +2613,30 @@ async function savePebble(){
   closePebbleAdd();
   await loadPebbles();
   showToast('돌멩이 추가됐어요!');
+}
+function startEditPebble(id){
+  const p=pebbles.find(x=>x.id===id);if(!p)return;
+  const el=document.getElementById('pebbleList');if(!el)return;
+  const items=el.querySelectorAll('[data-pebble-id]');
+  items.forEach(item=>{
+    if(item.dataset.pebbleId===id){
+      const span=item.querySelector('span');
+      const input=document.createElement('input');
+      input.className='form-input';
+      input.value=p.text;
+      input.style.cssText='flex:1;padding:3px 8px;font-size:13px;';
+      input.onblur=()=>finishEditPebble(id,input.value);
+      input.onkeydown=(e)=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){renderPebbles();}};
+      span.replaceWith(input);
+      input.focus();
+    }
+  });
+}
+async function finishEditPebble(id,val){
+  const text=val.trim();
+  if(!text){renderPebbles();return;}
+  await sb.from('slit_pebbles').update({text}).eq('id',id);
+  await loadPebbles();
 }
 async function togglePebble(id){
   const p=pebbles.find(x=>x.id===id);if(!p)return;
