@@ -14,6 +14,18 @@
 <!-- Apple Touch Icon (홈 화면 아이콘) -->
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><defs><linearGradient id='sg' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%23e8e8ec'/><stop offset='100%25' stop-color='%23c4c4cc'/></linearGradient><linearGradient id='wl' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%23ffffff' stop-opacity='0.5'/><stop offset='20%25' stop-color='%23ffffff' stop-opacity='1'/><stop offset='80%25' stop-color='%23ffffff' stop-opacity='1'/><stop offset='100%25' stop-color='%23ffffff' stop-opacity='0.5'/></linearGradient></defs><rect width='180' height='180' rx='40' fill='url(%23sg)'/><rect x='18' y='40' width='14' height='100' rx='7' fill='%23a0a0b0' opacity='0.30'/><rect x='42' y='28' width='14' height='124' rx='7' fill='%23888898' opacity='0.48'/><rect x='66' y='16' width='14' height='148' rx='7' fill='%23707080' opacity='0.65'/><rect x='102' y='16' width='14' height='148' rx='7' fill='%23707080' opacity='0.65'/><rect x='126' y='28' width='14' height='124' rx='7' fill='%23888898' opacity='0.48'/><rect x='150' y='40' width='14' height='100' rx='7' fill='%23a0a0b0' opacity='0.30'/><rect x='80' y='4' width='22' height='172' rx='11' fill='%23ffffff' opacity='0.18'/><rect x='84' y='4' width='14' height='172' rx='7' fill='url(%23wl)'/><rect x='88' y='12' width='6' height='156' rx='3' fill='%23ffffff' opacity='0.85'/></svg>">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='sg' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%23e8e8ec'/><stop offset='100%25' stop-color='%23c4c4cc'/></linearGradient><linearGradient id='wl' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%23ffffff' stop-opacity='0.5'/><stop offset='20%25' stop-color='%23ffffff' stop-opacity='1'/><stop offset='80%25' stop-color='%23ffffff' stop-opacity='1'/><stop offset='100%25' stop-color='%23ffffff' stop-opacity='0.5'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='url(%23sg)'/><rect x='2' y='6' width='2' height='20' rx='1' fill='%23a0a0b0' opacity='0.30'/><rect x='6' y='4' width='2' height='24' rx='1' fill='%23888898' opacity='0.48'/><rect x='10' y='2' width='2' height='28' rx='1' fill='%23707080' opacity='0.65'/><rect x='18' y='2' width='2' height='28' rx='1' fill='%23707080' opacity='0.65'/><rect x='22' y='4' width='2' height='24' rx='1' fill='%23888898' opacity='0.48'/><rect x='26' y='6' width='2' height='20' rx='1' fill='%23a0a0b0' opacity='0.30'/><rect x='13' y='0' width='6' height='32' rx='3' fill='%23ffffff' opacity='0.15'/><rect x='14' y='0' width='4' height='32' rx='2' fill='url(%23wl)'/><rect x='15' y='2' width='2' height='28' rx='1' fill='%23ffffff' opacity='0.85'/></svg>">
+<style>
+#lockScreen{position:fixed;inset:0;background:var(--bg,#f5f3ef);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.lock-box{background:white;border:1.5px solid #e2ddd6;border-radius:16px;padding:40px 32px;width:280px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.08);}
+.lock-logo{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:#2d6a4f;letter-spacing:0.12em;margin-bottom:24px;}
+.lock-input{width:100%;border:1.5px solid #e2ddd6;border-radius:8px;padding:12px;font-size:20px;text-align:center;letter-spacing:0.3em;outline:none;font-family:'DM Mono',monospace;transition:border-color 0.12s;}
+.lock-input:focus{border-color:#2d6a4f;}
+.lock-input.error{border-color:#c0392b;animation:shake 0.3s;}
+.lock-btn{width:100%;margin-top:12px;padding:12px;background:#2d6a4f;color:white;border:none;border-radius:8px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.06em;cursor:pointer;}
+.lock-btn:hover{background:#245a42;}
+.lock-err{font-size:12px;color:#c0392b;margin-top:8px;min-height:18px;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Pretendard:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -837,6 +849,15 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 </style>
 </head>
 <body>
+<div id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-logo">SLIT</div>
+    <input class="lock-input" id="lockInput" type="password" maxlength="20" placeholder="····" onkeydown="if(event.key==='Enter')checkLock()">
+    <button class="lock-btn" onclick="checkLock()">입력</button>
+    <div class="lock-err" id="lockErr"></div>
+  </div>
+</div>
+
 <div class="app">
   <header>
     <div class="logo">SLIT<span> · 시간의 틈</span></div>
@@ -1494,6 +1515,26 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 <div class="toast" id="toast"></div>
 
 <script>
+const PW_HASH='354948ef61d10149fa91ad1bf6a8676f94e7d6f2b0f7d1920797b8fbe56b3c81';
+async function checkLock(){
+  const val=document.getElementById('lockInput').value;
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(val));
+  const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(hash===PW_HASH){
+    sessionStorage.setItem('slit_auth','1');
+    document.getElementById('lockScreen').style.display='none';
+  } else {
+    const inp=document.getElementById('lockInput');
+    const err=document.getElementById('lockErr');
+    inp.classList.add('error');
+    err.textContent='비밀번호가 틀렸어요';
+    inp.value='';
+    setTimeout(()=>inp.classList.remove('error'),400);
+  }
+}
+if(sessionStorage.getItem('slit_auth')==='1'){
+  document.getElementById('lockScreen').style.display='none';
+}
 const SUPA_URL='https://dvlrzbckneucpvlacdll.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2bHJ6YmNrbmV1Y3B2bGFjZGxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODE0OTUsImV4cCI6MjA5MDU1NzQ5NX0.ofzGfyjndiT-FAIcG9TCFtUSXsagTBYOnhsP91vx0sE';
 const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
