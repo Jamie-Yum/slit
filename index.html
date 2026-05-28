@@ -1895,28 +1895,55 @@ function toggleDateExpand(d){
 }
 
 // ── 회고 목록 ──
-function renderReflections(){
+async function renderReflections(){
+  const el=document.getElementById('reflectList');if(!el)return;
+
+  // Slit 회고
   const withReflect=slits
     .filter(s=>s.reflection&&s.reflection.trim())
     .sort((a,b)=>new Date(b.start_time)-new Date(a.start_time));
-  const el=document.getElementById('reflectList');
-  if(!withReflect.length){
-    el.innerHTML=`<div class="empty"><div class="empty-icon">✍</div><div class="empty-text">아직 회고가 없어요<br><span style="font-size:12px;margin-top:4px;display:block;">슬릿을 완료하고 회고를 남겨보세요</span></div></div>`;
-    return;
-  }
-  el.innerHTML=withReflect.map(s=>{
-    const st=new Date(s.start_time);
-    const title=s.title||(s.situation_label||'슬릿');
-    const dateStr=`${st.getFullYear()}.${pad(st.getMonth()+1)}.${pad(st.getDate())} ${fmtTime(st)}`;
-    return `<div class="reflect-item">
-      <div class="reflect-item-header">
-        <span class="reflect-item-title">${title}</span>
-        <span class="reflect-item-date">${dateStr}</span>
-      </div>
-      ${s.situation_label?`<div class="reflect-item-sit">📍 ${s.situation_label}</div>`:''}
-      <div class="reflect-item-text">${s.reflection}</div>
-    </div>`;
-  }).join('');
+  const slitHtml=withReflect.length
+    ? withReflect.map(s=>{
+        const st=new Date(s.start_time);
+        const title=s.title||(s.situation_label||'슬릿');
+        const dateStr=`${st.getFullYear()}.${pad(st.getMonth()+1)}.${pad(st.getDate())} ${fmtTime(st)}`;
+        return `<div class="reflect-item">
+          <div class="reflect-item-header">
+            <span class="reflect-item-title">${title}</span>
+            <span class="reflect-item-date">${dateStr}</span>
+          </div>
+          ${s.situation_label?`<div class="reflect-item-sit">📍 ${s.situation_label}</div>`:''}
+          <div class="reflect-item-text">${s.reflection}</div>
+        </div>`;
+      }).join('')
+    : `<div style="font-size:13px;color:var(--text3);padding:8px 0;">아직 슬릿 회고가 없어요</div>`;
+
+  // Work 회고
+  let allWorkReviews=[];
+  try{
+    const{data}=await sb.from('slit_work_reviews').select('*').order('review_date',{ascending:false}).order('created_at',{ascending:false});
+    allWorkReviews=data||[];
+  }catch(e){}
+  const workHtml=allWorkReviews.length
+    ? allWorkReviews.map(r=>{
+        const [bg,color]=WORK_REVIEW_COLORS[r.review_type]||WORK_REVIEW_COLORS['기타'];
+        return `<div class="reflect-item">
+          <div class="reflect-item-header">
+            <span class="reflect-item-title" style="font-size:13px;">${r.content.slice(0,40)}${r.content.length>40?'…':''}</span>
+            <span class="reflect-item-date">${r.review_date||''}</span>
+          </div>
+          <div style="margin-bottom:6px;"><span class="memo-item-type" style="background:${bg};color:${color};font-size:10px;padding:2px 8px;border-radius:20px;">${r.review_type}</span></div>
+          <div class="reflect-item-text">${r.content}</div>
+        </div>`;
+      }).join('')
+    : `<div style="font-size:13px;color:var(--text3);padding:8px 0;">아직 Work 회고가 없어요</div>`;
+
+  const sectionTitle=(label)=>`<div style="display:flex;align-items:center;gap:8px;margin:16px 0 10px;">
+    <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text2);letter-spacing:0.1em;text-transform:uppercase;">${label}</span>
+    <div style="flex:1;height:1px;background:var(--border);"></div>
+  </div>`;
+
+  el.innerHTML=sectionTitle('Slit 회고')+slitHtml+sectionTitle('Work 회고')+workHtml;
 }
 
 function switchStatsTab(tab,btn){
