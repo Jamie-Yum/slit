@@ -823,6 +823,31 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .learn-cat-add span{font-family:var(--mono);font-size:10px;color:var(--text3);}
 .core-chip.w-drag-over{outline-offset:1px;}
 
+/* ── Work 메모 ── */
+.wmemo-card{background:var(--surface);border:1.5px solid var(--border2);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all 0.12s;}
+.wmemo-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.wmemo-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.wmemo-card-title{font-size:14px;font-weight:600;color:var(--text);}
+.wmemo-card-date{font-family:var(--mono);font-size:10px;color:var(--text3);}
+.wmemo-card-preview{font-size:12px;color:var(--text2);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.wmemo-editor{background:var(--surface);border:1.5px solid var(--accent);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px;}
+.wmemo-title-input{width:100%;border:none;border-bottom:1px solid var(--border);padding:4px 0;font-size:15px;font-weight:600;color:var(--text);background:none;outline:none;margin-bottom:10px;}
+.wmemo-toolbar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;}
+.wmemo-tb-btn{background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:4px 8px;font-size:12px;cursor:pointer;color:var(--text2);transition:all 0.1s;line-height:1;}
+.wmemo-tb-btn:hover{background:var(--border);color:var(--text);}
+.wmemo-textarea{width:100%;min-height:180px;border:1px solid var(--border2);border-radius:var(--radius);padding:10px 12px;font-family:var(--sans);font-size:14px;color:var(--text);background:var(--surface2);outline:none;resize:vertical;line-height:1.7;transition:border-color 0.12s;}
+.wmemo-textarea:focus{border-color:var(--accent);background:white;}
+.wmemo-render{font-size:14px;color:var(--text);line-height:1.8;padding:4px 0;}
+.wmemo-render h1{font-size:18px;font-weight:700;margin:12px 0 6px;}
+.wmemo-render h2{font-size:15px;font-weight:700;margin:10px 0 5px;}
+.wmemo-render h3{font-size:13px;font-weight:700;margin:8px 0 4px;color:var(--text2);}
+.wmemo-render ul{padding-left:18px;margin:4px 0;}
+.wmemo-render li{margin-bottom:3px;}
+.wmemo-render strong{font-weight:700;}
+.wmemo-render em{font-style:italic;color:var(--text2);}
+.wmemo-render hr{border:none;border-top:1px solid var(--border);margin:10px 0;}
+.wmemo-render code{font-family:var(--mono);font-size:12px;background:var(--surface2);padding:1px 5px;border-radius:4px;}
+
 /* ── Learn 달력 & 과정 ── */
 .learn-cal-wrap{background:var(--surface);border:1.5px solid var(--border2);border-radius:var(--radius-lg);padding:14px 16px;margin-top:16px;}
 .learn-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
@@ -1178,6 +1203,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <button class="work-mode-btn" id="workModeFlow" onclick="switchWorkMode('flow',this)">흐름</button>
         <button class="work-mode-btn" id="workModeGantt" onclick="switchWorkMode('gantt',this)">간트</button>
         <button class="work-mode-btn" id="workModeWeekly" onclick="switchWorkMode('weekly',this)">주간</button>
+        <button class="work-mode-btn" id="workModeMemo" onclick="switchWorkMode('memo',this)">메모</button>
       </div>
       <div id="workOverview">
         <div class="section-title">Daily Step</div>
@@ -1248,6 +1274,12 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
           </div>
         </div>
         <div id="weeklyContent"></div>
+      </div>
+
+      <!-- 메모 뷰 -->
+      <div id="workMemo" style="display:none;">
+        <div id="workMemoList"></div>
+        <button class="btn-add" style="margin-top:8px;" onclick="openWorkMemoEditor(null)">+ 새 메모</button>
       </div>
     </div>
   </main>
@@ -3147,9 +3179,103 @@ function renderWork(){
 }
 
 // ── 보기 모드 전환 ──
+// ── Work 메모 ──
+let wMemos=[];
+async function loadWorkMemos(){
+  try{const{data}=await sb.from('slit_work_memos').select('*').order('updated_at',{ascending:false});wMemos=data||[];}catch(e){wMemos=[];}
+  renderWorkMemoList();
+}
+function mdToHtml(md){
+  return md
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`(.+?)`/g,'<code>$1</code>')
+    .replace(/^---$/gm,'<hr>')
+    .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs,'<ul>$1</ul>')
+    .replace(/\n/g,'<br>');
+}
+function renderWorkMemoList(){
+  const el=document.getElementById('workMemoList');if(!el)return;
+  if(!wMemos.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">메모를 작성해보세요</div></div>`;return;}
+  el.innerHTML=wMemos.map(m=>`
+    <div class="wmemo-card" onclick="openWorkMemoEditor('${m.id}')">
+      <div class="wmemo-card-header">
+        <span class="wmemo-card-title">${m.title||'제목 없음'}</span>
+        <span class="wmemo-card-date">${(m.updated_at||m.created_at||'').slice(0,10)}</span>
+      </div>
+      <div class="wmemo-card-preview">${(m.content||'').replace(/[#*\-`]/g,'').slice(0,80)}</div>
+    </div>`).join('');
+}
+let wMemoEditId=null;
+function openWorkMemoEditor(id){
+  wMemoEditId=id;
+  const m=id?wMemos.find(x=>x.id===id):null;
+  const el=document.getElementById('workMemoList');if(!el)return;
+  const editorHtml=`
+    <div class="wmemo-editor" id="wMemoEditor">
+      <input class="wmemo-title-input" id="wMemoTitle" placeholder="제목" value="${m?m.title||'':''}">
+      <div class="wmemo-toolbar">
+        <button class="wmemo-tb-btn" onclick="wMemoInsert('# ')">H1</button>
+        <button class="wmemo-tb-btn" onclick="wMemoInsert('## ')">H2</button>
+        <button class="wmemo-tb-btn" onclick="wMemoInsert('### ')">H3</button>
+        <button class="wmemo-tb-btn" onclick="wMemoWrap('**','**')"><b>B</b></button>
+        <button class="wmemo-tb-btn" onclick="wMemoWrap('*','*')"><i>I</i></button>
+        <button class="wmemo-tb-btn" onclick="wMemoInsert('- ')">• 목록</button>
+        <button class="wmemo-tb-btn" onclick="wMemoInsert('---\n')">—</button>
+        <button class="wmemo-tb-btn" onclick="wMemoWrap('\`','\`')">코드</button>
+      </div>
+      <textarea class="wmemo-textarea" id="wMemoContent" placeholder="# 제목&#10;- 항목&#10;**굵게** *기울임*&#10;&#10;이모지도 바로 입력 가능해요 🎯">${m?m.content||'':''}</textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+        <button class="btn btn-ghost btn-sm" onclick="closeWorkMemoEditor()">취소</button>
+        ${id?`<button class="btn btn-danger btn-sm" onclick="deleteWorkMemo('${id}')">삭제</button>`:''}
+        <button class="btn btn-primary btn-sm" onclick="saveWorkMemo()">저장</button>
+      </div>
+    </div>`;
+  el.insertAdjacentHTML('afterbegin',editorHtml);
+  document.getElementById('wMemoContent').focus();
+}
+function closeWorkMemoEditor(){
+  const ed=document.getElementById('wMemoEditor');if(ed)ed.remove();
+  wMemoEditId=null;
+}
+function wMemoInsert(text){
+  const ta=document.getElementById('wMemoContent');if(!ta)return;
+  const s=ta.selectionStart,val=ta.value;
+  ta.value=val.slice(0,s)+text+val.slice(s);
+  ta.selectionStart=ta.selectionEnd=s+text.length;ta.focus();
+}
+function wMemoWrap(before,after){
+  const ta=document.getElementById('wMemoContent');if(!ta)return;
+  const s=ta.selectionStart,e=ta.selectionEnd,val=ta.value;
+  const sel=val.slice(s,e)||'텍스트';
+  ta.value=val.slice(0,s)+before+sel+after+val.slice(e);
+  ta.selectionStart=s+before.length;ta.selectionEnd=s+before.length+sel.length;ta.focus();
+}
+async function saveWorkMemo(){
+  const title=document.getElementById('wMemoTitle').value.trim();
+  const content=document.getElementById('wMemoContent').value.trim();
+  if(!content){showToast('내용을 입력해주세요');return;}
+  const now=new Date().toISOString();
+  try{
+    if(wMemoEditId) await sb.from('slit_work_memos').update({title,content,updated_at:now}).eq('id',wMemoEditId);
+    else await sb.from('slit_work_memos').insert({title,content,created_at:now,updated_at:now});
+    closeWorkMemoEditor();await loadWorkMemos();showToast('저장됐어요!');
+  }catch(e){showToast('저장 실패: '+e.message);}
+}
+async function deleteWorkMemo(id){
+  if(!confirm('삭제할까요?'))return;
+  await sb.from('slit_work_memos').delete().eq('id',id);
+  closeWorkMemoEditor();await loadWorkMemos();showToast('삭제됐어요');
+}
+
 function switchWorkMode(mode,btn){
   wWorkMode=mode;
-  ['workModeOverview','workModeFlow','workModeGantt','workModeWeekly'].forEach(id=>{
+  ['workModeOverview','workModeFlow','workModeGantt','workModeWeekly','workModeMemo'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove('active');
   });
   btn.classList.add('active');
@@ -3157,9 +3283,11 @@ function switchWorkMode(mode,btn){
   document.getElementById('workFlow').style.display=mode==='flow'?'block':'none';
   document.getElementById('workGantt').style.display=mode==='gantt'?'block':'none';
   document.getElementById('workWeekly').style.display=mode==='weekly'?'block':'none';
+  document.getElementById('workMemo').style.display=mode==='memo'?'block':'none';
   if(mode==='flow')renderWorkFlow();
   if(mode==='gantt')renderWorkGantt();
   if(mode==='weekly')renderWeekly();
+  if(mode==='memo')loadWorkMemos();
 }
 
 // ── 주간 요약 ──
