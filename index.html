@@ -3182,7 +3182,9 @@ function renderWork(){
 // ── Work 메모 ──
 let wMemos=[];
 async function loadWorkMemos(){
-  try{const{data}=await sb.from('slit_work_memos').select('*').order('updated_at',{ascending:false});wMemos=data||[];}catch(e){wMemos=[];}
+  const{data,error}=await sb.from('slit_work_memos').select('*').order('updated_at',{ascending:false});
+  if(error){showToast('메모 로드 실패: '+error.message);wMemos=[];}
+  else wMemos=data||[];
   renderWorkMemoList();
 }
 function mdToHtml(md){
@@ -3261,11 +3263,11 @@ async function saveWorkMemo(){
   const content=document.getElementById('wMemoContent').value.trim();
   if(!content){showToast('내용을 입력해주세요');return;}
   const now=new Date().toISOString();
-  try{
-    if(wMemoEditId) await sb.from('slit_work_memos').update({title,content,updated_at:now}).eq('id',wMemoEditId);
-    else await sb.from('slit_work_memos').insert({title,content,created_at:now,updated_at:now});
-    closeWorkMemoEditor();await loadWorkMemos();showToast('저장됐어요!');
-  }catch(e){showToast('저장 실패: '+e.message);}
+  let res;
+  if(wMemoEditId) res=await sb.from('slit_work_memos').update({title,content,updated_at:now}).eq('id',wMemoEditId);
+  else res=await sb.from('slit_work_memos').insert({title,content,created_at:now,updated_at:now});
+  if(res.error){showToast('저장 실패: '+res.error.message);return;}
+  closeWorkMemoEditor();await loadWorkMemos();showToast('저장됐어요!');
 }
 async function deleteWorkMemo(id){
   if(!confirm('삭제할까요?'))return;
