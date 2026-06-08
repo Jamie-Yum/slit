@@ -3575,8 +3575,9 @@ function renderWorkSteps(){
           return m?`<span class="step-tag t-ms">${m.title}</span>`:'';
         }).join('')}
       </div>
-      ${checks.length?`<div class="step-checklist">${checks.map((c,i)=>`
-        <div class="step-check-item">
+      ${checks.length?`<div class="step-checklist">${checks.map((c,i)=>c._divider
+        ?`<div style="display:flex;align-items:center;gap:6px;padding:2px 0;"><div style="flex:1;height:1px;background:var(--border2);"></div></div>`
+        :`<div class="step-check-item">
           <button class="step-check-box ${c.done?'done':''}" onclick="event.stopPropagation();toggleWorkCheck('${s.id}',${i})"></button>
           <span class="step-check-label ${c.done?'done':''}">${c.text}</span>
           <span style="margin-left:auto;display:flex;align-items:center;gap:5px;flex-shrink:0;">
@@ -3856,6 +3857,13 @@ function renderWorkStepChecklistEdit(){
   })();
   if(!wStepChecklist.length){el.innerHTML='';return;}
   el.innerHTML=wStepChecklist.map((c,i)=>{
+    if(c._divider) return `
+      <div draggable="true" ondragstart="checkDragStart(event,${i})" ondragover="checkDragOver(event,${i})" ondrop="checkDrop(event,${i})"
+        style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+        <span style="color:var(--text3);cursor:grab;font-size:14px;flex-shrink:0;">⠿</span>
+        <div style="flex:1;height:1px;background:var(--border2);"></div>
+        <button onclick="removeWorkStepCheck(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;flex-shrink:0;">×</button>
+      </div>`;
     const msOpts=msOptions.replace(`value="${c.milestone_id||''}"`,`value="${c.milestone_id||''}" selected`);
     const isEditing=c._editing;
     return `<div class="task-item" style="flex-direction:column;align-items:flex-start;gap:4px;padding:8px 0;border-bottom:1px solid var(--border);" draggable="true" ondragstart="checkDragStart(event,${i})" ondragover="checkDragOver(event,${i})" ondrop="checkDrop(event,${i})">
@@ -3971,6 +3979,10 @@ function addWorkStepCheck(){
   const val=inp.value.trim();if(!val)return;
   wStepChecklist.push({text:val,done:false});
   inp.value='';
+  renderWorkStepChecklistEdit();
+}
+function addWorkStepDivider(){
+  wStepChecklist.push({_divider:true});
   renderWorkStepChecklistEdit();
 }
 
@@ -6438,6 +6450,7 @@ init();
       <div class="task-add-row" style="margin-top:8px;">
         <input class="form-input" id="newWorkStepCheck" placeholder="항목 추가..." style="flex:1" onkeydown="if(event.key==='Enter')addWorkStepCheck()">
         <button class="btn btn-ghost btn-sm" onclick="addWorkStepCheck()">+</button>
+        <button class="btn btn-ghost btn-sm" onclick="addWorkStepDivider()" title="구분선 추가">—</button>
       </div>
     </div>
     <div class="modal-actions">
