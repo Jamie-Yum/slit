@@ -3538,7 +3538,8 @@ function renderWorkSteps(){
     const core=wCores.find(c=>c.id===(goal?goal.core_id:s.core_id));
     const col=core?WORK_COLORS[core.color||'green']:WORK_COLORS.purple;
     const checks=s.checklist||[];
-    const doneChecks=checks.filter(c=>c.done).length;
+    const realChecks=checks.filter(c=>!c._divider);
+    const doneChecks=realChecks.filter(c=>c.done).length;
     const dur=s.start_time&&s.end_time?calcDur(s.start_time,s.end_time):'';
     // 남은 시간 계산
     const now=new Date();
@@ -3548,7 +3549,7 @@ function renderWorkSteps(){
       const[eh,em]=s.end_time.slice(0,5).split(':').map(Number);
       const endMs=new Date();endMs.setHours(eh,em,0,0);
       const rem=Math.round((endMs-now)/60000);
-      const uncheckedMin=checks.filter(c=>!c.done&&c.duration_minutes).reduce((a,c)=>a+(c.duration_minutes||0),0);
+      const uncheckedMin=realChecks.filter(c=>!c.done&&c.duration_minutes).reduce((a,c)=>a+(c.duration_minutes||0),0);
       const freeMin=rem-uncheckedMin;
       if(rem>0){
         const freeLabel=uncheckedMin>0
@@ -3585,7 +3586,7 @@ function renderWorkSteps(){
             ${c.duration_minutes?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);">${c.duration_minutes}분</span>`:''}
           </span>
         </div>`).join('')}</div>`:''}
-      ${checks.length?`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;">${doneChecks}/${checks.length} 완료${checks.some(c=>c.duration_minutes)?` · 총 ${checks.reduce((a,c)=>a+(c.duration_minutes||0),0)}분`:''}</div>`:''}
+      ${realChecks.length?`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;">${doneChecks}/${realChecks.length} 완료${realChecks.some(c=>c.duration_minutes)?` · 총 ${realChecks.reduce((a,c)=>a+(c.duration_minutes||0),0)}분`:''}</div>`:''}
     </div>`;
   }).join('');
   // 남은 시간 실시간 업데이트
