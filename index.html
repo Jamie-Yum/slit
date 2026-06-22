@@ -2500,6 +2500,9 @@ function renderLearnGrid(){
             const expired=days!==null&&days<0;
             const dayColor=expired?'#c0392b':days!==null&&days<=7?'var(--start)':col.main;
             badge=`<span style="font-family:var(--mono);font-size:10px;color:${dayColor};font-weight:600;flex-shrink:0;margin-left:6px;">${days===null?'만료일 미설정':expired?'만료됨':`${days}일 남음`}</span>`;
+          } else if(c.course_type==='free'){
+            const cnt=learnSessions.filter(x=>x.course_id===c.id&&x.done).length;
+            badge=`<span style="font-family:var(--mono);font-size:10px;color:${col.main};flex-shrink:0;margin-left:6px;">${cnt}회 기록</span>`;
           } else {
             const used=learnSessions.filter(x=>x.course_id===c.id&&x.done).length;
             const remaining=Math.max(0,(c.total_classes||0)-used);
@@ -2751,6 +2754,7 @@ function selectCourseType(type){
   learnCourseType=type;
   document.getElementById('courseTypeClasses').classList.toggle('active',type==='classes');
   document.getElementById('courseTypePeriod').classList.toggle('active',type==='period');
+  document.getElementById('courseTypeFree').classList.toggle('active',type==='free');
   document.getElementById('courseFieldClasses').style.display=type==='classes'?'block':'none';
   document.getElementById('courseFieldPeriod').style.display=type==='period'?'block':'none';
 }
@@ -2828,6 +2832,11 @@ function renderLearnCourseList(subjectId){
       const dayColor=expired?'#c0392b':days!==null&&days<=7?'var(--start)':col.main;
       countsHtml=`${c.start_date?c.start_date.slice(5).replace('-','/'):'?'} ~ ${c.end_date?c.end_date.slice(5).replace('-','/'):'?'} · <span style="color:${dayColor};font-weight:600;">${dayLabel}</span>`;
       pct=days!==null&&c.start_date?Math.min(100,Math.max(0,Math.round((new Date(toDateStr(new Date()))-new Date(c.start_date))/(new Date(c.end_date)-new Date(c.start_date))*100))):0;
+    } else if(c.course_type==='free'){
+      const total=learnSessions.filter(s=>s.course_id===c.id).length;
+      const done=learnSessions.filter(s=>s.course_id===c.id&&s.done).length;
+      countsHtml=`자유 기록 · 총 ${total}회 (완료 ${done}회)`;
+      pct=0;
     } else {
       const used=learnSessions.filter(s=>s.course_id===c.id&&s.done).length;
       const total=c.total_classes||0;
@@ -6670,6 +6679,10 @@ init();
         <button class="mode-btn" id="courseTypePeriod" onclick="selectCourseType('period')" style="flex:1;padding:10px 8px;">
           <p style="font-size:13px;font-weight:700;margin-bottom:2px;">기간</p>
           <p style="font-size:11px;">등록일 · 만료일</p>
+        </button>
+        <button class="mode-btn" id="courseTypeFree" onclick="selectCourseType('free')" style="flex:1;padding:10px 8px;">
+          <p style="font-size:13px;font-weight:700;margin-bottom:2px;">자유</p>
+          <p style="font-size:11px;">비정기 · 자유 기록</p>
         </button>
       </div>
     </div>
