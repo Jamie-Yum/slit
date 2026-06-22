@@ -16,12 +16,19 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='sg' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%23e8e8ec'/><stop offset='100%25' stop-color='%23c4c4cc'/></linearGradient><linearGradient id='wl' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%23ffffff' stop-opacity='0.5'/><stop offset='20%25' stop-color='%23ffffff' stop-opacity='1'/><stop offset='80%25' stop-color='%23ffffff' stop-opacity='1'/><stop offset='100%25' stop-color='%23ffffff' stop-opacity='0.5'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='url(%23sg)'/><rect x='2' y='6' width='2' height='20' rx='1' fill='%23a0a0b0' opacity='0.30'/><rect x='6' y='4' width='2' height='24' rx='1' fill='%23888898' opacity='0.48'/><rect x='10' y='2' width='2' height='28' rx='1' fill='%23707080' opacity='0.65'/><rect x='18' y='2' width='2' height='28' rx='1' fill='%23707080' opacity='0.65'/><rect x='22' y='4' width='2' height='24' rx='1' fill='%23888898' opacity='0.48'/><rect x='26' y='6' width='2' height='20' rx='1' fill='%23a0a0b0' opacity='0.30'/><rect x='13' y='0' width='6' height='32' rx='3' fill='%23ffffff' opacity='0.15'/><rect x='14' y='0' width='4' height='32' rx='2' fill='url(%23wl)'/><rect x='15' y='2' width='2' height='28' rx='1' fill='%23ffffff' opacity='0.85'/></svg>">
 <style>
 #lockScreen{position:fixed;inset:0;background:var(--bg,#f5f3ef);z-index:9999;display:flex;align-items:center;justify-content:center;}
-.lock-box{background:white;border:1.5px solid #e2ddd6;border-radius:16px;padding:40px 32px;width:280px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.08);}
+.lock-box{background:white;border:1.5px solid #e2ddd6;border-radius:20px;padding:36px 28px 28px;width:260px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.08);}
 .lock-logo{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:#2d6a4f;letter-spacing:0.12em;margin-bottom:24px;}
-.lock-input{width:100%;border:1.5px solid #e2ddd6;border-radius:8px;padding:12px;font-size:20px;text-align:center;letter-spacing:0.3em;outline:none;font-family:'DM Mono',monospace;transition:border-color 0.12s;}
-.lock-input:focus{border-color:#2d6a4f;}
-.lock-input.error{border-color:#c0392b;animation:shake 0.3s;}
-.lock-btn{width:100%;margin-top:12px;padding:12px;background:#2d6a4f;color:white;border:none;border-radius:8px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.06em;cursor:pointer;}
+.lock-dots{display:flex;justify-content:center;gap:10px;margin-bottom:24px;height:14px;}
+.lock-dot{width:12px;height:12px;border-radius:50%;border:1.5px solid #c5c0b8;background:transparent;transition:background 0.12s,border-color 0.12s;}
+.lock-dot.filled{background:#2d6a4f;border-color:#2d6a4f;}
+.lock-dot.error{background:#c0392b;border-color:#c0392b;}
+.lock-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:0;}
+.lock-key{background:#f7f5f2;border:1.5px solid #e2ddd6;border-radius:12px;padding:16px 0;font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:#333;cursor:pointer;user-select:none;transition:background 0.1s,transform 0.08s;}
+.lock-key:active{background:#e8e4de;transform:scale(0.95);}
+.lock-key.del{font-size:14px;color:#888;}
+.lock-key.empty{background:transparent;border-color:transparent;cursor:default;}
+.lock-err{color:#c0392b;font-size:11px;margin-top:12px;min-height:16px;font-family:'DM Mono',monospace;}
+@keyframes lockShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 .lock-btn:hover{background:#245a42;}
 .lock-err{font-size:12px;color:#c0392b;margin-top:8px;min-height:18px;}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
@@ -877,8 +884,21 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 <div id="lockScreen">
   <div class="lock-box">
     <div class="lock-logo">SLIT</div>
-    <input class="lock-input" id="lockInput" type="password" maxlength="20" placeholder="····" onkeydown="if(event.key==='Enter')checkLock()">
-    <button class="lock-btn" onclick="checkLock()">입력</button>
+    <div class="lock-dots" id="lockDots"></div>
+    <div class="lock-pad">
+      <button class="lock-key" onclick="lockKey('1')">1</button>
+      <button class="lock-key" onclick="lockKey('2')">2</button>
+      <button class="lock-key" onclick="lockKey('3')">3</button>
+      <button class="lock-key" onclick="lockKey('4')">4</button>
+      <button class="lock-key" onclick="lockKey('5')">5</button>
+      <button class="lock-key" onclick="lockKey('6')">6</button>
+      <button class="lock-key" onclick="lockKey('7')">7</button>
+      <button class="lock-key" onclick="lockKey('8')">8</button>
+      <button class="lock-key" onclick="lockKey('9')">9</button>
+      <div class="lock-key empty"></div>
+      <button class="lock-key" onclick="lockKey('0')">0</button>
+      <button class="lock-key del" onclick="lockDel()">⌫</button>
+    </div>
     <div class="lock-err" id="lockErr"></div>
   </div>
 </div>
@@ -1548,22 +1568,49 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 
 <script>
 const PW_HASH='354948ef61d10149fa91ad1bf6a8676f94e7d6f2b0f7d1920797b8fbe56b3c81';
+let lockPin='';
+const LOCK_LEN=4;
+function renderLockDots(){
+  const el=document.getElementById('lockDots');
+  if(!el)return;
+  el.innerHTML='';
+  for(let i=0;i<LOCK_LEN;i++){
+    const d=document.createElement('div');
+    d.className='lock-dot'+(i<lockPin.length?' filled':'');
+    el.appendChild(d);
+  }
+}
+function lockKey(n){
+  if(lockPin.length>=LOCK_LEN)return;
+  lockPin+=n;
+  renderLockDots();
+  if(lockPin.length===LOCK_LEN)checkLock();
+}
+function lockDel(){
+  lockPin=lockPin.slice(0,-1);
+  renderLockDots();
+  document.getElementById('lockErr').textContent='';
+}
 async function checkLock(){
-  const val=document.getElementById('lockInput').value;
-  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(val));
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(lockPin));
   const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
   if(hash===PW_HASH){
     sessionStorage.setItem('slit_auth','1');
     document.getElementById('lockScreen').style.display='none';
   } else {
-    const inp=document.getElementById('lockInput');
-    const err=document.getElementById('lockErr');
-    inp.classList.add('error');
-    err.textContent='비밀번호가 틀렸어요';
-    inp.value='';
-    setTimeout(()=>inp.classList.remove('error'),400);
+    const dots=document.querySelectorAll('.lock-dot');
+    dots.forEach(d=>{d.classList.add('error');d.classList.remove('filled');});
+    document.getElementById('lockErr').textContent='비밀번호가 틀렸어요';
+    document.getElementById('lockScreen').style.animation='lockShake 0.3s';
+    setTimeout(()=>{
+      dots.forEach(d=>d.classList.remove('error'));
+      document.getElementById('lockScreen').style.animation='';
+      lockPin='';
+      renderLockDots();
+    },500);
   }
 }
+renderLockDots();
 if(sessionStorage.getItem('slit_auth')==='1'){
   document.getElementById('lockScreen').style.display='none';
 }
