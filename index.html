@@ -1067,6 +1067,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <button class="stats-tab active" id="gardenTabVmv" onclick="switchGardenTab('vmv',this)">Light</button>
         <button class="stats-tab" id="gardenTabJourney" onclick="switchGardenTab('journey',this)">Journey</button>
         <button class="stats-tab" id="gardenTabPeople" onclick="switchGardenTab('people',this)">사람</button>
+        <button class="stats-tab" id="gardenTabMoney" onclick="switchGardenTab('money',this)">Money</button>
       </div>
 
       <!-- Light -->
@@ -1168,6 +1169,23 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <div class="section-title">사람 & 그룹</div>
         <div id="peopleGrid" class="people-grid"></div>
         <button class="btn-add" style="margin-top:12px" onclick="openPersonModal()">+ 사람 / 그룹 추가</button>
+      </div>
+
+      <!-- Money -->
+      <div id="gardenMoney" style="display:none;">
+        <!-- 연간 요약 -->
+        <div id="moneySummaryYear" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;"></div>
+        <!-- 월 네비 -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <button class="btn btn-ghost btn-sm" onclick="moneyMonthMove(-1)">‹</button>
+          <span id="moneyMonthLabel" style="font-family:var(--mono);font-size:13px;font-weight:700;flex:1;text-align:center;"></span>
+          <button class="btn btn-ghost btn-sm" onclick="moneyMonthMove(1)">›</button>
+          <button class="btn btn-ghost btn-sm" onclick="openMoneyModal()">+ 추가</button>
+        </div>
+        <!-- 월 합계 -->
+        <div id="moneySummaryMonth" style="display:flex;gap:10px;margin-bottom:14px;"></div>
+        <!-- 기록 목록 -->
+        <div id="moneyList"></div>
       </div>
     </div>
 
@@ -1690,7 +1708,7 @@ function showView(name,btn){
   if(name==='slit'){renderToday();renderPlan();renderTodayMemos();}
   if(name==='wave')renderWaves();
   if(name==='stats'){renderStats();}
-  if(name==='garden'){loadVmv();renderPeople();loadBeingExtras();}
+  if(name==='garden'){loadVmv();renderPeople();loadBeingExtras();loadMoneyRecords();}
   if(name==='learn'){closeLearnDetail&&typeof closeLearnDetail==='function'&&closeLearnDetail();loadLearn();}
   if(name==='work'){loadWork();}
 }
@@ -2162,13 +2180,168 @@ async function deleteStatsMemo(id){
   await loadAll(); renderStatsMemos(); showToast('삭제됐어요');
 }
 
+// ── Money ──
+let moneyRecords=[];
+let moneyCurrentYear=new Date().getFullYear();
+let moneyCurrentMonth=new Date().getMonth()+1;
+let moneyType='income';
+
+async function loadMoneyRecords(){
+  const{data,error}=await sb.from('slit_money_records').select('*').order('record_date',{ascending:false});
+  if(!error) moneyRecords=data||[];
+}
+
+function moneyMonthMove(dir){
+  moneyCurrentMonth+=dir;
+  if(moneyCurrentMonth>12){moneyCurrentMonth=1;moneyCurrentYear++;}
+  if(moneyCurrentMonth<1){moneyCurrentMonth=12;moneyCurrentYear--;}
+  renderMoneyView();
+}
+
+function selectMoneyType(type){
+  moneyType=type;
+  document.getElementById('moneyTypeIncome').classList.toggle('active',type==='income');
+  document.getElementById('moneyTypeLoss').classList.toggle('active',type==='loss');
+  const g=document.getElementById('moneyIncomeDateGroup');
+  if(g) g.style.display=type==='income'?'':'none';
+}
+
+function moneyUpdateCategoryOther(){}
+
+function openMoneyModal(id){
+  const rec=id?moneyRecords.find(r=>r.id===id):null;
+  document.getElementById('moneyEditId').value=id||'';
+  document.getElementById('moneyModalTitle').textContent=id?'기록 수정':'금융 기록 추가';
+  document.getElementById('moneyDeleteBtn').style.display=id?'inline-flex':'none';
+  document.getElementById('moneyDate').value=rec?rec.record_date:toDateStr(new Date());
+  document.getElementById('moneyInstitution').value=rec?rec.institution||'':'';
+  document.getElementById('moneyCategory').value=rec?rec.category:'월급';
+  document.getElementById('moneyDetail').value=rec?rec.detail||'':'';
+  document.getElementById('moneyAmount').value=rec?rec.amount:'';
+  document.getElementById('moneyTransactionDate').value=rec?rec.transaction_date||'':'';
+  document.getElementById('moneyIncomeDate').value=rec?rec.income_date||'':'';
+  document.getElementById('moneyMemo').value=rec?rec.memo||'':'';
+  selectMoneyType(rec?rec.type:'income');
+  document.getElementById('moneyModal').classList.add('open');
+}
+
+async function saveMoneyRecord(){
+  const id=document.getElementById('moneyEditId').value;
+  const amount=parseFloat(document.getElementById('moneyAmount').value)||0;
+  if(!amount){showToast('금액을 입력해주세요');return;}
+  const data={
+    record_date:document.getElementById('moneyDate').value||toDateStr(new Date()),
+    institution:document.getElementById('moneyInstitution').value.trim()||null,
+    category:document.getElementById('moneyCategory').value,
+    detail:document.getElementById('moneyDetail').value.trim()||null,
+    transaction_date:document.getElementById('moneyTransactionDate').value||null,
+    income_date:moneyType==='income'?(document.getElementById('moneyIncomeDate').value||null):null,
+    type:moneyType,
+    amount,
+    memo:document.getElementById('moneyMemo').value.trim()||null
+  };
+  let res;
+  if(id) res=await sb.from('slit_money_records').update(data).eq('id',id);
+  else res=await sb.from('slit_money_records').insert(data);
+  if(res.error){showToast('저장 실패: '+res.error.message);return;}
+  closeWorkModal('moneyModal');
+  await loadMoneyRecords();
+  renderMoneyView();
+  showToast('저장됐어요!');
+}
+
+async function deleteMoneyRecord(){
+  const id=document.getElementById('moneyEditId').value;
+  if(!id||!confirm('이 기록을 삭제할까요?'))return;
+  await sb.from('slit_money_records').delete().eq('id',id);
+  closeWorkModal('moneyModal');
+  await loadMoneyRecords();
+  renderMoneyView();
+  showToast('삭제됐어요');
+}
+
+function moneyFmt(n){
+  return (n<0?'-':'')+'₩'+Math.abs(n).toLocaleString('ko-KR');
+}
+
+function renderMoneyView(){
+  const y=moneyCurrentYear, m=moneyCurrentMonth;
+  document.getElementById('moneyMonthLabel').textContent=`${y}년 ${m}월`;
+
+  // 월 기록
+  const monthRecs=moneyRecords.filter(r=>{
+    const d=new Date(r.record_date);
+    return d.getFullYear()===y && d.getMonth()+1===m;
+  });
+  const monthIncome=monthRecs.filter(r=>r.type==='income').reduce((a,r)=>a+Number(r.amount),0);
+  const monthLoss=monthRecs.filter(r=>r.type==='loss').reduce((a,r)=>a+Number(r.amount),0);
+  const monthNet=monthIncome-monthLoss;
+
+  const summMonth=document.getElementById('moneySummaryMonth');
+  summMonth.innerHTML=`
+    <div style="flex:1;background:var(--ing-bg);border-radius:10px;padding:10px 12px;">
+      <div style="font-size:10px;color:var(--ing);font-weight:700;margin-bottom:2px;">수익</div>
+      <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ing);">${moneyFmt(monthIncome)}</div>
+    </div>
+    <div style="flex:1;background:#fdf0ef;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:10px;color:#c0392b;font-weight:700;margin-bottom:2px;">손실</div>
+      <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:#c0392b;">${moneyFmt(monthLoss)}</div>
+    </div>
+    <div style="flex:1;background:var(--card-bg,#faf9f7);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;">
+      <div style="font-size:10px;color:var(--text2);font-weight:700;margin-bottom:2px;">순손익</div>
+      <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:${monthNet>=0?'var(--ing)':'#c0392b'};">${moneyFmt(monthNet)}</div>
+    </div>`;
+
+  // 연간 기록
+  const yearRecs=moneyRecords.filter(r=>new Date(r.record_date).getFullYear()===y);
+  const yearIncome=yearRecs.filter(r=>r.type==='income').reduce((a,r)=>a+Number(r.amount),0);
+  const yearLoss=yearRecs.filter(r=>r.type==='loss').reduce((a,r)=>a+Number(r.amount),0);
+  const yearNet=yearIncome-yearLoss;
+  const summYear=document.getElementById('moneySummaryYear');
+  summYear.innerHTML=`<div style="width:100%;background:var(--card-bg,#faf9f7);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+    <span style="font-size:11px;font-weight:700;color:var(--text2);">${y}년 연간</span>
+    <span style="font-size:12px;color:var(--ing);font-family:var(--mono);">수익 ${moneyFmt(yearIncome)}</span>
+    <span style="font-size:12px;color:#c0392b;font-family:var(--mono);">손실 ${moneyFmt(yearLoss)}</span>
+    <span style="font-size:13px;font-weight:700;font-family:var(--mono);color:${yearNet>=0?'var(--ing)':'#c0392b'};">순손익 ${moneyFmt(yearNet)}</span>
+  </div>`;
+
+  // 기록 목록
+  const listEl=document.getElementById('moneyList');
+  if(!monthRecs.length){
+    listEl.innerHTML=`<div class="empty"><div class="empty-icon">💰</div><div class="empty-text">이 달 기록이 없어요</div></div>`;
+    return;
+  }
+  const sorted=[...monthRecs].sort((a,b)=>b.record_date.localeCompare(a.record_date));
+  listEl.innerHTML=sorted.map(r=>{
+    const isIncome=r.type==='income';
+    const color=isIncome?'var(--ing)':'#c0392b';
+    const bg=isIncome?'var(--ing-bg)':'#fdf0ef';
+    return `<div style="background:var(--card-bg,#faf9f7);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;" onclick="openMoneyModal('${r.id}')">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="font-size:10px;background:${bg};color:${color};border-radius:4px;padding:2px 7px;font-weight:700;">${isIncome?'수익':'손실'}</span>
+        <span style="font-size:12px;font-weight:600;flex:1;">${r.category}${r.detail?' · '+r.detail:''}</span>
+        <span style="font-family:var(--mono);font-size:14px;font-weight:700;color:${color};">${isIncome?'+':'−'}${moneyFmt(Number(r.amount))}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap;">
+        ${r.institution?`<span>${r.institution}</span>`:''}
+        <span>${r.record_date}</span>
+        ${r.transaction_date?`<span>거래 ${r.transaction_date}</span>`:''}
+        ${r.income_date?`<span>입금 ${r.income_date}</span>`:''}
+        ${r.memo?`<span>${r.memo}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 // ── 가꾸기 탭 ──
 function switchGardenTab(tab,btn){
-  ['gardenTabVmv','gardenTabJourney','gardenTabPeople'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
+  ['gardenTabVmv','gardenTabJourney','gardenTabPeople','gardenTabMoney'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
   btn.classList.add('active');
   document.getElementById('gardenVmv').style.display=tab==='vmv'?'block':'none';
   document.getElementById('gardenJourney').style.display=tab==='journey'?'block':'none';
   document.getElementById('gardenPeople').style.display=tab==='people'?'block':'none';
+  document.getElementById('gardenMoney').style.display=tab==='money'?'block':'none';
+  if(tab==='money') renderMoneyView();
 }
 
 // ── VMV ──
@@ -6818,6 +6991,76 @@ init();
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('routineModal')">취소</button>
       <button class="btn btn-primary" onclick="saveRoutine()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- MONEY MODAL -->
+<div class="work-modal-overlay" id="moneyModal">
+  <div class="work-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="moneyModalTitle">금융 기록 추가</div>
+    <input type="hidden" id="moneyEditId">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">날짜</label>
+        <input class="form-input" type="date" id="moneyDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">수익 / 손실</label>
+        <div style="display:flex;gap:6px;">
+          <button class="mode-btn active" id="moneyTypeIncome" onclick="selectMoneyType('income')" style="flex:1;padding:8px 4px;font-size:12px;">수익</button>
+          <button class="mode-btn" id="moneyTypeLoss" onclick="selectMoneyType('loss')" style="flex:1;padding:8px 4px;font-size:12px;">손실</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">금융 기관</label>
+      <input class="form-input" id="moneyInstitution" placeholder="예: 삼성증권, 카카오뱅크, 회사">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">항목</label>
+        <select class="form-input" id="moneyCategory" onchange="moneyUpdateCategoryOther()">
+          <option value="월급">월급</option>
+          <option value="강사료">강사료</option>
+          <option value="주식">주식</option>
+          <option value="펀드">펀드</option>
+          <option value="보험료">보험료</option>
+          <option value="이자">이자</option>
+          <option value="부동산">부동산</option>
+          <option value="프리랜서">프리랜서</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">상세 항목</label>
+        <input class="form-input" id="moneyDetail" placeholder="예: 2026년 6월분">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">금액 (원)</label>
+      <input class="form-input" type="number" id="moneyAmount" placeholder="0" min="0">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">거래 날짜</label>
+        <input class="form-input" type="date" id="moneyTransactionDate">
+      </div>
+      <div class="form-group" id="moneyIncomeDateGroup">
+        <label class="form-label">입금 날짜</label>
+        <input class="form-input" type="date" id="moneyIncomeDate">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">메모</label>
+      <input class="form-input" id="moneyMemo" placeholder="추가 메모">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" id="moneyDeleteBtn" onclick="deleteMoneyRecord()" style="display:none;">삭제</button>
+      <div style="flex:1;"></div>
+      <button class="btn btn-ghost" onclick="closeWorkModal('moneyModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveMoneyRecord()">저장</button>
     </div>
   </div>
 </div>
