@@ -31,6 +31,9 @@
 @keyframes lockShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 .lock-btn:hover{background:#245a42;}
 .lock-err{font-size:12px;color:#c0392b;margin-top:8px;min-height:18px;}
+.money-type-btn{flex:1;padding:9px 4px;font-size:13px;font-weight:600;border-radius:var(--radius);border:2px solid var(--border2);background:white;cursor:pointer;transition:all 0.15s;color:var(--text2);}
+.money-type-btn.active-income{background:var(--ing-bg);border-color:var(--ing-border);color:var(--ing);}
+.money-type-btn.active-loss{background:#fdf0ef;border-color:#e8a89e;color:#c0392b;}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2205,10 +2208,10 @@ function moneyMonthMove(dir){
 
 function selectMoneyType(type){
   moneyType=type;
-  document.getElementById('moneyTypeIncome').classList.toggle('active',type==='income');
-  document.getElementById('moneyTypeLoss').classList.toggle('active',type==='loss');
-  const g=document.getElementById('moneyIncomeDateGroup');
-  if(g) g.style.display=type==='income'?'':'none';
+  const incomeBtn=document.getElementById('moneyTypeIncome');
+  const lossBtn=document.getElementById('moneyTypeLoss');
+  incomeBtn.className='money-type-btn'+(type==='income'?' active-income':'');
+  lossBtn.className='money-type-btn'+(type==='loss'?' active-loss':'');
 }
 
 let moneyExchangeRateCache=null;
@@ -7086,8 +7089,8 @@ init();
       <div class="form-group">
         <label class="form-label">수익 / 손실</label>
         <div style="display:flex;gap:6px;">
-          <button class="mode-btn active" id="moneyTypeIncome" onclick="selectMoneyType('income')" style="flex:1;padding:8px 4px;font-size:12px;">수익</button>
-          <button class="mode-btn" id="moneyTypeLoss" onclick="selectMoneyType('loss')" style="flex:1;padding:8px 4px;font-size:12px;">손실</button>
+          <button class="money-type-btn active-income" id="moneyTypeIncome" onclick="selectMoneyType('income')">수익</button>
+          <button class="money-type-btn" id="moneyTypeLoss" onclick="selectMoneyType('loss')">손실</button>
         </div>
       </div>
     </div>
