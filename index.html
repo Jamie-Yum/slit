@@ -1177,7 +1177,9 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <!-- Money -->
       <div id="gardenMoney" style="display:none;">
         <!-- 연간 요약 -->
-        <div id="moneySummaryYear" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;"></div>
+        <div id="moneySummaryYear" style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;"></div>
+        <!-- 연간 카테고리별 합계 -->
+        <div id="moneyCategoryYear" style="margin-bottom:16px;"></div>
         <!-- 월 네비 -->
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
           <button class="btn btn-ghost btn-sm" onclick="moneyMonthMove(-1)">‹</button>
@@ -1185,8 +1187,6 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
           <button class="btn btn-ghost btn-sm" onclick="moneyMonthMove(1)">›</button>
           <button class="btn btn-ghost btn-sm" onclick="openMoneyModal()">+ 추가</button>
         </div>
-        <!-- 연간 카테고리별 합계 -->
-        <div id="moneyCategoryYear" style="margin-bottom:16px;"></div>
         <!-- 월 합계 -->
         <div id="moneySummaryMonth" style="display:flex;gap:10px;margin-bottom:14px;"></div>
         <!-- 기록 목록 -->
