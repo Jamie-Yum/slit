@@ -4071,20 +4071,6 @@ function openEditWorkStep(id){
 // ── 체크리스트 ──
 function renderWorkStepChecklistEdit(){
   const el=document.getElementById('workStepChecklistEdit');if(!el)return;
-  // Goal별로 묶어서 optgroup 생성
-  const msOptions=(()=>{
-    let html='<option value="">— MS 없음 —</option>';
-    wGoals.forEach(g=>{
-      const msList=wMilestones.filter(m=>m.goal_id===g.id);
-      if(!msList.length) return;
-      const core=wCores.find(c=>c.id===g.core_id);
-      const groupLabel=core?`${core.title} › ${g.title}`:g.title;
-      html+=`<optgroup label="${groupLabel}">`;
-      msList.forEach(m=>{ html+=`<option value="${m.id}">${m.title}</option>`; });
-      html+=`</optgroup>`;
-    });
-    return html;
-  })();
   if(!wStepChecklist.length){el.innerHTML='';return;}
   el.innerHTML=wStepChecklist.map((c,i)=>{
     if(c._divider) return `
@@ -4094,7 +4080,25 @@ function renderWorkStepChecklistEdit(){
         <div style="flex:1;height:1px;background:var(--border2);"></div>
         <button onclick="removeWorkStepCheck(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;flex-shrink:0;">×</button>
       </div>`;
-    const msOpts=msOptions.replace(`value="${c.milestone_id||''}"`,`value="${c.milestone_id||''}" selected`);
+    // 현재 milestone_id에서 goal_id 역산
+    const curMs=c.milestone_id?wMilestones.find(m=>m.id===c.milestone_id):null;
+    const curGoalId=c._goalFilter||(curMs?curMs.goal_id:'')||'';
+    // Goal select 옵션
+    let goalOpts='<option value="">— Goal —</option>';
+    wGoals.forEach(g=>{
+      const hasMsInGoal=wMilestones.some(m=>m.goal_id===g.id);
+      if(!hasMsInGoal) return;
+      const core=wCores.find(co=>co.id===g.core_id);
+      const label=core?`${core.title} › ${g.title}`:g.title;
+      goalOpts+=`<option value="${g.id}"${g.id===curGoalId?' selected':''}>${label}</option>`;
+    });
+    // MS select 옵션 (선택된 Goal 아래만)
+    let msOpts='<option value="">— MS 없음 —</option>';
+    if(curGoalId){
+      wMilestones.filter(m=>m.goal_id===curGoalId).forEach(m=>{
+        msOpts+=`<option value="${m.id}"${m.id===c.milestone_id?' selected':''}>${m.title}</option>`;
+      });
+    }
     const isEditing=c._editing;
     return `<div class="task-item" style="flex-direction:column;align-items:flex-start;gap:4px;padding:8px 0;border-bottom:1px solid var(--border);" draggable="true" ondragstart="checkDragStart(event,${i})" ondragover="checkDragOver(event,${i})" ondrop="checkDrop(event,${i})">
       <div style="display:flex;align-items:center;gap:8px;width:100%;">
@@ -4109,7 +4113,8 @@ function renderWorkStepChecklistEdit(){
         <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;flex-shrink:0;" onclick="removeWorkStepCheck(${i})">×</button>
       </div>
       <div style="display:flex;gap:5px;padding-left:40px;width:100%;align-items:center;margin-top:4px;">
-        <select style="flex:1;min-width:0;font-family:var(--mono);font-size:11px;padding:3px 6px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text2);" onchange="setCheckMs(${i},this.value)">${msOpts}</select>
+        <select style="flex:1;min-width:0;font-family:var(--mono);font-size:11px;padding:3px 6px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text2);" onchange="setCheckGoalFilter(${i},this.value)">${goalOpts}</select>
+        <select style="flex:1;min-width:0;font-family:var(--mono);font-size:11px;padding:3px 6px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text2);" onchange="setCheckMs(${i},this.value)"${!curGoalId?' disabled':''} title="MS">${msOpts}</select>
         <input type="number" placeholder="분" min="1" max="480" value="${c.duration_minutes||''}" style="width:44px;flex-shrink:0;font-family:var(--mono);font-size:11px;padding:3px 6px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text2);text-align:center;" onchange="setCheckDur(${i},this.value)" title="소요 시간(분)">
         <div style="position:relative;flex-shrink:0;">
           <button onclick="document.getElementById('chkDate${i}').showPicker?document.getElementById('chkDate${i}').showPicker():document.getElementById('chkDate${i}').click()" style="background:${c.due_date?'#eaf4ee':'var(--surface2)'};border:1px solid ${c.due_date?'#9dd0b4':'var(--border2)'};border-radius:var(--radius);padding:3px 6px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:3px;line-height:1;" title="날짜 설정">
@@ -4195,6 +4200,14 @@ function checkDrop(e,i){
   renderWorkStepChecklistEdit();
 }
 
+function setCheckGoalFilter(i,goalId){
+  wStepChecklist[i]._goalFilter=goalId||'';
+  wStepChecklist[i].milestone_id=null;
+  wStepChecklist[i].goal_id=goalId||null;
+  const goal=goalId?wGoals.find(g=>g.id===goalId):null;
+  wStepChecklist[i].core_id=goal?goal.core_id:null;
+  renderWorkStepChecklistEdit();
+}
 function setCheckMs(i,msId){
   wStepChecklist[i].milestone_id=msId||null;
   const ms=wMilestones.find(m=>m.id===msId);
