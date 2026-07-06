@@ -2234,33 +2234,46 @@ async function fetchUsdKrwRate(){
 
 async function moneyUpdateCategoryOther(){
   const cat=document.getElementById('moneyCategory').value;
-  const usdGroup=document.getElementById('moneyUsdGroup');
-  const infoEl=document.getElementById('moneyExchangeInfo');
-  if(cat==='해외 주식'){
-    usdGroup.style.display='';
+  const isStock=cat==='주식'||cat==='해외 주식';
+  const isForeign=cat==='해외 주식';
+  document.getElementById('moneyStockGroup').style.display=isStock?'':'none';
+  document.getElementById('moneyExchangeRateGroup').style.display=isForeign?'':'none';
+  const unit=isForeign?' (USD)':' (원)';
+  document.getElementById('moneyBuyPriceLabel').textContent='매수가'+unit;
+  document.getElementById('moneySellPriceLabel').textContent='매도가'+unit;
+  if(isForeign){
     const rateEl=document.getElementById('moneyExchangeRate');
+    const infoEl=document.getElementById('moneyExchangeInfo');
     if(!rateEl.value){
       infoEl.textContent='환율 불러오는 중...';
       const rate=await fetchUsdKrwRate();
       if(rate){
         rateEl.value=rate;
         infoEl.textContent=`현재 환율 1 USD = ₩${rate.toLocaleString('ko-KR')} (자동)`;
-        moneyCalcKrw();
+        moneyCalcAmount();
       }else{
         infoEl.textContent='환율 불러오기 실패 — 직접 입력해주세요';
       }
     }
-  }else{
-    usdGroup.style.display='none';
   }
 }
 
-function moneyCalcKrw(){
-  const usd=parseFloat(document.getElementById('moneyAmountUsd').value)||0;
-  const rate=parseFloat(document.getElementById('moneyExchangeRate').value)||0;
-  if(usd&&rate){
-    document.getElementById('moneyAmount').value=Math.round(usd*rate);
+function moneyCalcAmount(){
+  const cat=document.getElementById('moneyCategory').value;
+  const buy=parseFloat(document.getElementById('moneyBuyPrice').value)||0;
+  const sell=parseFloat(document.getElementById('moneySellPrice').value)||0;
+  const qty=parseFloat(document.getElementById('moneyQuantity').value)||0;
+  if(!buy||!sell||!qty) return;
+  const diff=sell-buy;
+  let krw;
+  if(cat==='해외 주식'){
+    const rate=parseFloat(document.getElementById('moneyExchangeRate').value)||0;
+    if(!rate) return;
+    krw=Math.round(Math.abs(diff)*qty*rate);
+  }else{
+    krw=Math.round(Math.abs(diff)*qty);
   }
+  document.getElementById('moneyAmount').value=krw;
 }
 
 function openMoneyModal(id){
@@ -2277,8 +2290,10 @@ function openMoneyModal(id){
   document.getElementById('moneyApplicationDate').value=rec?rec.application_date||'':'';
   document.getElementById('moneyIncomeDate').value=rec?rec.income_date||'':'';
   document.getElementById('moneyMemo').value=rec?rec.memo||'':'';
-  // USD 필드
-  document.getElementById('moneyAmountUsd').value=rec?rec.amount_usd||'':'';
+  // 주식 필드
+  document.getElementById('moneyBuyPrice').value=rec?rec.buy_price||'':'';
+  document.getElementById('moneySellPrice').value=rec?rec.sell_price||'':'';
+  document.getElementById('moneyQuantity').value=rec?rec.quantity||'':'';
   document.getElementById('moneyExchangeRate').value=rec?rec.exchange_rate||'':'';
   document.getElementById('moneyExchangeInfo').textContent='';
   selectMoneyType(rec?rec.type:'income');
@@ -2298,7 +2313,9 @@ async function saveMoneyRecord(){
     transaction_date:document.getElementById('moneyTransactionDate').value||null,
     application_date:document.getElementById('moneyApplicationDate').value||null,
     income_date:moneyType==='income'?(document.getElementById('moneyIncomeDate').value||null):null,
-    amount_usd:document.getElementById('moneyCategory').value==='해외 주식'?(parseFloat(document.getElementById('moneyAmountUsd').value)||null):null,
+    buy_price:parseFloat(document.getElementById('moneyBuyPrice').value)||null,
+    sell_price:parseFloat(document.getElementById('moneySellPrice').value)||null,
+    quantity:parseFloat(document.getElementById('moneyQuantity').value)||null,
     exchange_rate:document.getElementById('moneyCategory').value==='해외 주식'?(parseFloat(document.getElementById('moneyExchangeRate').value)||null):null,
     type:moneyType,
     amount,
@@ -2392,7 +2409,10 @@ function renderMoneyView(){
         ${r.transaction_date?`<span>시작 ${r.transaction_date}</span>`:''}
         ${r.application_date?`<span>신청 ${r.application_date}</span>`:''}
         ${r.income_date?`<span>입금 ${r.income_date}</span>`:''}
-        ${r.amount_usd?`<span style="color:var(--text2);">$${Number(r.amount_usd).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}${r.exchange_rate?' × ₩'+Number(r.exchange_rate).toLocaleString('ko-KR'):''}</span>`:''}
+        ${r.buy_price!=null?`<span>매수 ${r.category==='해외 주식'?'$':'₩'}${Number(r.buy_price).toLocaleString()}</span>`:''}
+        ${r.sell_price!=null?`<span>매도 ${r.category==='해외 주식'?'$':'₩'}${Number(r.sell_price).toLocaleString()}</span>`:''}
+        ${r.quantity!=null?`<span>${Number(r.quantity).toLocaleString()}주</span>`:''}
+        ${r.exchange_rate!=null?`<span>환율 ₩${Number(r.exchange_rate).toLocaleString()}</span>`:''}
         ${r.memo?`<span>${r.memo}</span>`:''}
       </div>
     </div>`;
@@ -7118,14 +7138,26 @@ init();
         <input class="form-input" id="moneyDetail" placeholder="예: 2026년 6월분">
       </div>
     </div>
-    <div class="form-group" id="moneyUsdGroup" style="display:none;">
-      <label class="form-label">달러 금액 (USD)</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input class="form-input" type="number" id="moneyAmountUsd" placeholder="0.00" min="0" step="0.01" oninput="moneyCalcKrw()">
-        <span style="font-size:13px;color:var(--text2);white-space:nowrap;flex-shrink:0;">×</span>
-        <input class="form-input" type="number" id="moneyExchangeRate" placeholder="환율" min="0" step="1" oninput="moneyCalcKrw()" style="width:100px;flex-shrink:0;">
+    <div id="moneyStockGroup" style="display:none;">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" id="moneyBuyPriceLabel">매수가</label>
+          <input class="form-input" type="number" id="moneyBuyPrice" placeholder="0" min="0" step="any" oninput="moneyCalcAmount()">
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="moneySellPriceLabel">매도가</label>
+          <input class="form-input" type="number" id="moneySellPrice" placeholder="0" min="0" step="any" oninput="moneyCalcAmount()">
+        </div>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:5px;" id="moneyExchangeInfo"></div>
+      <div class="form-group">
+        <label class="form-label">수량</label>
+        <input class="form-input" type="number" id="moneyQuantity" placeholder="0" min="0" step="any" oninput="moneyCalcAmount()">
+      </div>
+      <div class="form-group" id="moneyExchangeRateGroup" style="display:none;">
+        <label class="form-label">환율 (USD → 원)</label>
+        <input class="form-input" type="number" id="moneyExchangeRate" placeholder="환율" min="0" step="1" oninput="moneyCalcAmount()">
+        <div style="font-size:11px;color:var(--text3);margin-top:5px;" id="moneyExchangeInfo"></div>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">금액 (원)</label>
