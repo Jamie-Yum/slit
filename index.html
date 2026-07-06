@@ -2241,21 +2241,6 @@ async function moneyUpdateCategoryOther(){
   const unit=isForeign?' (USD)':' (원)';
   document.getElementById('moneyBuyPriceLabel').textContent='매수가'+unit;
   document.getElementById('moneySellPriceLabel').textContent='매도가'+unit;
-  if(isForeign){
-    const rateEl=document.getElementById('moneyExchangeRate');
-    const infoEl=document.getElementById('moneyExchangeInfo');
-    if(!rateEl.value){
-      infoEl.textContent='환율 불러오는 중...';
-      const rate=await fetchUsdKrwRate();
-      if(rate){
-        rateEl.value=rate;
-        infoEl.textContent=`현재 환율 1 USD = ₩${rate.toLocaleString('ko-KR')} (자동)`;
-        moneyCalcAmount();
-      }else{
-        infoEl.textContent='환율 불러오기 실패 — 직접 입력해주세요';
-      }
-    }
-  }
 }
 
 function moneyCalcAmount(){
@@ -2412,7 +2397,7 @@ function renderMoneyView(){
         ${r.buy_price!=null?`<span>매수 ${r.category==='해외 주식'?'$':'₩'}${Number(r.buy_price).toLocaleString()}</span>`:''}
         ${r.sell_price!=null?`<span>매도 ${r.category==='해외 주식'?'$':'₩'}${Number(r.sell_price).toLocaleString()}</span>`:''}
         ${r.quantity!=null?`<span>${Number(r.quantity).toLocaleString()}주</span>`:''}
-        ${r.exchange_rate!=null?`<span>환율 ₩${Number(r.exchange_rate).toLocaleString()}</span>`:''}
+
         ${r.memo?`<span>${r.memo}</span>`:''}
       </div>
     </div>`;
