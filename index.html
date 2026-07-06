@@ -7127,20 +7127,20 @@ init();
       <div class="form-row">
         <div class="form-group">
           <label class="form-label" id="moneyBuyPriceLabel">매수가</label>
-          <input class="form-input" type="number" id="moneyBuyPrice" placeholder="0" min="0" step="any" oninput="moneyCalcAmount()">
+          <input class="form-input" type="number" id="moneyBuyPrice" placeholder="0" min="0" step="any">
         </div>
         <div class="form-group">
           <label class="form-label" id="moneySellPriceLabel">매도가</label>
-          <input class="form-input" type="number" id="moneySellPrice" placeholder="0" min="0" step="any" oninput="moneyCalcAmount()">
+          <input class="form-input" type="number" id="moneySellPrice" placeholder="0" min="0" step="any">
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">수량</label>
-        <input class="form-input" type="number" id="moneyQuantity" placeholder="0" min="0" step="any" oninput="moneyCalcAmount()">
+        <input class="form-input" type="number" id="moneyQuantity" placeholder="0" min="0" step="any">
       </div>
       <div class="form-group" id="moneyExchangeRateGroup" style="display:none;">
         <label class="form-label">환율 (USD → 원)</label>
-        <input class="form-input" type="number" id="moneyExchangeRate" placeholder="환율" min="0" step="1" oninput="moneyCalcAmount()">
+        <input class="form-input" type="number" id="moneyExchangeRate" placeholder="환율" min="0" step="1">
         <div style="font-size:11px;color:var(--text3);margin-top:5px;" id="moneyExchangeInfo"></div>
       </div>
     </div>
