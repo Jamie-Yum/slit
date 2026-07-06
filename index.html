@@ -2281,9 +2281,8 @@ function openMoneyModal(id){
   document.getElementById('moneyAmountUsd').value=rec?rec.amount_usd||'':'';
   document.getElementById('moneyExchangeRate').value=rec?rec.exchange_rate||'':'';
   document.getElementById('moneyExchangeInfo').textContent='';
-  const usdGroup=document.getElementById('moneyUsdGroup');
-  usdGroup.style.display=(rec&&rec.category==='해외 주식')?'':'none';
   selectMoneyType(rec?rec.type:'income');
+  moneyUpdateCategoryOther();
   document.getElementById('moneyModal').classList.add('open');
 }
 
