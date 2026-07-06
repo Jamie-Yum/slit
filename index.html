@@ -1185,6 +1185,8 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
           <button class="btn btn-ghost btn-sm" onclick="moneyMonthMove(1)">›</button>
           <button class="btn btn-ghost btn-sm" onclick="openMoneyModal()">+ 추가</button>
         </div>
+        <!-- 연간 카테고리별 합계 -->
+        <div id="moneyCategoryYear" style="margin-bottom:16px;"></div>
         <!-- 월 합계 -->
         <div id="moneySummaryMonth" style="display:flex;gap:10px;margin-bottom:14px;"></div>
         <!-- 기록 목록 -->
@@ -2370,6 +2372,35 @@ function renderMoneyView(){
     <span style="font-size:12px;color:#c0392b;font-family:var(--mono);">손실 ${moneyFmt(yearLoss)}</span>
     <span style="font-size:13px;font-weight:700;font-family:var(--mono);color:${yearNet>=0?'var(--ing)':'#c0392b'};">순손익 ${moneyFmt(yearNet)}</span>
   </div>`;
+
+  // 연간 카테고리별 합계
+  const cats=[...new Set(yearRecs.map(r=>r.category))].sort();
+  const catEl=document.getElementById('moneyCategoryYear');
+  if(cats.length){
+    const rows=cats.map(cat=>{
+      const recs=yearRecs.filter(r=>r.category===cat);
+      const inc=recs.filter(r=>r.type==='income').reduce((a,r)=>a+Number(r.amount),0);
+      const los=recs.filter(r=>r.type==='loss').reduce((a,r)=>a+Number(r.amount),0);
+      const net=inc-los;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);">
+        <span style="font-size:12px;font-weight:600;color:var(--text);min-width:72px;">${cat}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--ing);flex:1;">${inc?'↑ '+moneyFmt(inc):''}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:#c0392b;flex:1;">${los?'↓ '+moneyFmt(los):''}</span>
+        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${net>=0?'var(--ing)':'#c0392b'};">${moneyFmt(net)}</span>
+      </div>`;
+    }).join('');
+    catEl.innerHTML=`<div style="background:var(--card-bg,#faf9f7);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2,#f0ede8);border-bottom:1px solid var(--border);">
+        <span style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:0.08em;text-transform:uppercase;min-width:72px;">카테고리</span>
+        <span style="font-size:10px;font-weight:700;color:var(--ing);flex:1;">수익</span>
+        <span style="font-size:10px;font-weight:700;color:#c0392b;flex:1;">손실</span>
+        <span style="font-size:10px;font-weight:700;color:var(--text2);">순손익</span>
+      </div>
+      ${rows}
+    </div>`;
+  } else {
+    catEl.innerHTML='';
+  }
 
   // 기록 목록
   const listEl=document.getElementById('moneyList');
