@@ -2367,17 +2367,17 @@ function renderMoneyView(){
 
   const summMonth=document.getElementById('moneySummaryMonth');
   summMonth.innerHTML=`
-    <div style="flex:1;background:var(--ing-bg);border-radius:10px;padding:10px 12px;">
-      <div style="font-size:10px;color:var(--ing);font-weight:700;margin-bottom:2px;">수익</div>
-      <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ing);">${moneyFmt(monthIncome)}</div>
+    <div style="flex:1;background:var(--ft-bg);border-radius:10px;padding:10px 12px;">
+      <div style="font-size:10px;color:var(--ft);font-weight:700;margin-bottom:2px;">수익</div>
+      <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ft);">${moneyFmt(monthIncome)}</div>
     </div>
     <div style="flex:1;background:#fdf0ef;border-radius:10px;padding:10px 12px;">
       <div style="font-size:10px;color:#c0392b;font-weight:700;margin-bottom:2px;">손실</div>
       <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:#c0392b;">${moneyFmt(monthLoss)}</div>
     </div>
-    <div style="flex:1;background:var(--end-bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;">
-      <div style="font-size:10px;color:var(--end);font-weight:700;margin-bottom:2px;">순이익</div>
-      <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--end);">${moneyFmt(monthNet)}</div>
+    <div style="flex:1;background:var(--card-bg,#faf9f7);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;">
+      <div style="font-size:10px;color:var(--text);font-weight:700;margin-bottom:2px;">순이익</div>
+      <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);">${moneyFmt(monthNet)}</div>
     </div>`;
 
   // 연간 기록
@@ -2397,7 +2397,7 @@ function renderMoneyView(){
     const net=v.income-v.loss;
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">
       <span style="font-size:12px;color:var(--text2);">${cat}</span>
-      <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--end);">${moneyFmt(net)}</span>
+      <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${moneyFmt(net)}</span>
     </div>`;
   }).join('');
 
@@ -2405,9 +2405,9 @@ function renderMoneyView(){
   summYear.innerHTML=`<div style="width:100%;background:var(--card-bg,#faf9f7);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;">
     <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:${catRows?'10px':'0'};">
       <span style="font-size:11px;font-weight:700;color:var(--text2);">${y}년 종합</span>
-      <span style="font-size:12px;color:var(--ing);font-family:var(--mono);">수익 ${moneyFmt(yearIncome)}</span>
+      <span style="font-size:12px;color:var(--ft);font-family:var(--mono);">수익 ${moneyFmt(yearIncome)}</span>
       <span style="font-size:12px;color:#c0392b;font-family:var(--mono);">손실 ${moneyFmt(yearLoss)}</span>
-      <span style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--end);">순이익 ${moneyFmt(yearNet)}</span>
+      <span style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text);">순이익 ${moneyFmt(yearNet)}</span>
     </div>
     ${catRows}
   </div>`;
@@ -2423,7 +2423,7 @@ function renderMoneyView(){
       const net=inc-los;
       const detailRows=recs.map(r=>{
         const isIncome=r.type==='income';
-        const col=isIncome?'var(--ing)':'#c0392b';
+        const col=isIncome?'var(--ft)':'#c0392b';
         return `<div style="display:flex;align-items:center;gap:8px;padding:7px 12px 7px 20px;border-top:1px solid var(--border);cursor:pointer;" onclick="openMoneyModal('${r.id}')">
           <span style="font-size:11px;color:var(--text3);white-space:nowrap;">${r.record_date}</span>
           <span style="font-size:11px;color:var(--text2);flex:1;">${r.detail||r.institution||''}</span>
@@ -2433,9 +2433,9 @@ function renderMoneyView(){
       return `<div>
         <div onclick="moneyCatToggle(${ci})" style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;">
           <span style="font-size:12px;font-weight:600;color:var(--text);min-width:72px;">${cat}</span>
-          <span style="font-family:var(--mono);font-size:11px;color:var(--ing);flex:1;">${inc?'↑ '+moneyFmt(inc):''}</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--ft);flex:1;">${inc?'↑ '+moneyFmt(inc):''}</span>
           <span style="font-family:var(--mono);font-size:11px;color:#c0392b;flex:1;">${los?'↓ '+moneyFmt(los):''}</span>
-          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${net>=0?'var(--ing)':'#c0392b'};">${moneyFmt(net)}</span>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${moneyFmt(net)}</span>
           <span id="moneyCatChevron${ci}" style="font-size:11px;color:var(--text3);margin-left:4px;">▸</span>
         </div>
         <div id="moneyCatDetail${ci}" style="display:none;">${detailRows}</div>
@@ -2444,9 +2444,9 @@ function renderMoneyView(){
     catEl.innerHTML=`<div style="background:var(--card-bg,#faf9f7);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:4px;">
       <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2,#f0ede8);border-bottom:1px solid var(--border);">
         <span style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:0.08em;min-width:72px;">카테고리</span>
-        <span style="font-size:10px;font-weight:700;color:var(--ing);flex:1;">수익</span>
+        <span style="font-size:10px;font-weight:700;color:var(--ft);flex:1;">수익</span>
         <span style="font-size:10px;font-weight:700;color:#c0392b;flex:1;">손실</span>
-        <span style="font-size:10px;font-weight:700;color:var(--text2);">순이익</span>
+        <span style="font-size:10px;font-weight:700;color:var(--text);">순이익</span>
       </div>
       ${rows}
     </div>`;
@@ -2463,8 +2463,8 @@ function renderMoneyView(){
   const sorted=[...monthRecs].sort((a,b)=>b.record_date.localeCompare(a.record_date));
   listEl.innerHTML=sorted.map(r=>{
     const isIncome=r.type==='income';
-    const color=isIncome?'var(--ing)':'#c0392b';
-    const bg=isIncome?'var(--ing-bg)':'#fdf0ef';
+    const color=isIncome?'var(--ft)':'#c0392b';
+    const bg=isIncome?'var(--ft-bg)':'#fdf0ef';
     return `<div style="background:var(--card-bg,#faf9f7);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;" onclick="openMoneyModal('${r.id}')">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
         <span style="font-size:10px;background:${bg};color:${color};border-radius:4px;padding:2px 7px;font-weight:700;">${isIncome?'수익':'손실'}</span>
