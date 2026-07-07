@@ -2376,7 +2376,7 @@ function renderMoneyView(){
       <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:#c0392b;">${moneyFmt(monthLoss)}</div>
     </div>
     <div style="flex:1;background:var(--end-bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;">
-      <div style="font-size:10px;color:var(--end);font-weight:700;margin-bottom:2px;">순손익</div>
+      <div style="font-size:10px;color:var(--end);font-weight:700;margin-bottom:2px;">순이익</div>
       <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--end);">${moneyFmt(monthNet)}</div>
     </div>`;
 
@@ -2407,7 +2407,7 @@ function renderMoneyView(){
       <span style="font-size:11px;font-weight:700;color:var(--text2);">${y}년 종합</span>
       <span style="font-size:12px;color:var(--ing);font-family:var(--mono);">수익 ${moneyFmt(yearIncome)}</span>
       <span style="font-size:12px;color:#c0392b;font-family:var(--mono);">손실 ${moneyFmt(yearLoss)}</span>
-      <span style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--end);">순손익 ${moneyFmt(yearNet)}</span>
+      <span style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--end);">순이익 ${moneyFmt(yearNet)}</span>
     </div>
     ${catRows}
   </div>`;
@@ -2446,7 +2446,7 @@ function renderMoneyView(){
         <span style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:0.08em;min-width:72px;">카테고리</span>
         <span style="font-size:10px;font-weight:700;color:var(--ing);flex:1;">수익</span>
         <span style="font-size:10px;font-weight:700;color:#c0392b;flex:1;">손실</span>
-        <span style="font-size:10px;font-weight:700;color:var(--text2);">순손익</span>
+        <span style="font-size:10px;font-weight:700;color:var(--text2);">순이익</span>
       </div>
       ${rows}
     </div>`;
