@@ -2192,6 +2192,18 @@ async function deleteStatsMemo(id){
 
 // ── Money ──
 let moneyRecords=[];
+const MONEY_CAT_COLOR={
+  '월급':     {c:'#1a7a4a',bg:'#e8f5ee'},
+  '강사료':   {c:'#1a7a4a',bg:'#e8f5ee'},
+  '프리랜서': {c:'#1a7a4a',bg:'#e8f5ee'},
+  '주식':     {c:'#1a56db',bg:'#ebf0fd'},
+  '해외 주식':{c:'#0e7490',bg:'#e0f7fa'},
+  '펀드':     {c:'#7e3af2',bg:'#f0ebfe'},
+  '부동산':   {c:'#b45309',bg:'#fef3c7'},
+  '이자':     {c:'#0369a1',bg:'#e0f2fe'},
+  '보험료':   {c:'#c0392b',bg:'#fdf0ef'},
+  '기타':     {c:'#6b7280',bg:'#f3f4f6'},
+};
 let moneyCurrentYear=new Date().getFullYear();
 let moneyCurrentMonth=new Date().getMonth()+1;
 let moneyType='income';
@@ -2416,6 +2428,7 @@ function renderMoneyView(){
   const catEl=document.getElementById('moneyCategoryYear');
   if(cats.length){
     const rows=cats.map((cat,ci)=>{
+      const cc=MONEY_CAT_COLOR[cat]||{c:'#6b7280',bg:'#f3f4f6'};
       const recs=[...yearRecs.filter(r=>r.category===cat)].sort((a,b)=>b.record_date.localeCompare(a.record_date));
       const inc=recs.filter(r=>r.type==='income').reduce((a,r)=>a+Number(r.amount),0);
       const los=recs.filter(r=>r.type==='loss').reduce((a,r)=>a+Number(r.amount),0);
@@ -2430,8 +2443,8 @@ function renderMoneyView(){
         </div>`;
       }).join('');
       return `<div>
-        <div onclick="moneyCatToggle(${ci})" style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;">
-          <span style="font-size:12px;font-weight:600;color:var(--text);min-width:72px;">${cat}</span>
+        <div onclick="moneyCatToggle(${ci})" style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;border-left:3px solid ${cc.c};">
+          <span style="font-size:11px;font-weight:700;color:${cc.c};background:${cc.bg};border-radius:4px;padding:2px 7px;white-space:nowrap;">${cat}</span>
           <span style="font-family:var(--mono);font-size:11px;color:var(--ft);flex:1;">${inc?'↑ '+moneyFmt(inc):''}</span>
           <span style="font-family:var(--mono);font-size:11px;color:#c0392b;flex:1;">${los?'↓ '+moneyFmt(los):''}</span>
           <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${moneyFmt(net)}</span>
@@ -2464,10 +2477,11 @@ function renderMoneyView(){
     const isIncome=r.type==='income';
     const color=isIncome?'var(--ft)':'#c0392b';
     const bg=isIncome?'var(--ft-bg)':'#fdf0ef';
-    return `<div style="background:var(--card-bg,#faf9f7);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;" onclick="openMoneyModal('${r.id}')">
+    const cc=MONEY_CAT_COLOR[r.category]||{c:'#6b7280',bg:'#f3f4f6'};
+    return `<div style="background:var(--card-bg,#faf9f7);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;border-left:3px solid ${cc.c};" onclick="openMoneyModal('${r.id}')">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-        <span style="font-size:10px;background:${bg};color:${color};border-radius:4px;padding:2px 7px;font-weight:700;">${isIncome?'수익':'손실'}</span>
-        <span style="font-size:12px;font-weight:600;flex:1;">${r.category}${r.detail?' · '+r.detail:''}</span>
+        <span style="font-size:10px;background:${cc.bg};color:${cc.c};border-radius:4px;padding:2px 7px;font-weight:700;">${r.category}</span>
+        <span style="font-size:12px;font-weight:600;flex:1;">${r.detail||''}</span>
         <span style="font-family:var(--mono);font-size:14px;font-weight:700;color:${color};">${isIncome?'+':'−'}${moneyFmt(Number(r.amount))}</span>
       </div>
       <div style="font-size:11px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap;">
