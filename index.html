@@ -2397,11 +2397,7 @@ function renderMoneyView(){
     const net=v.income-v.loss;
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);">
       <span style="font-size:12px;color:var(--text2);">${cat}</span>
-      <div style="display:flex;gap:12px;font-family:var(--mono);font-size:11px;">
-        ${v.income?`<span style="color:var(--ing);">+${moneyFmt(v.income)}</span>`:''}
-        ${v.loss?`<span style="color:#c0392b;">-${moneyFmt(v.loss)}</span>`:''}
-        <span style="color:var(--end);font-weight:700;">${moneyFmt(net)}</span>
-      </div>
+      <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--end);">${moneyFmt(net)}</span>
     </div>`;
   }).join('');
 
