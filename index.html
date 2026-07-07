@@ -2268,7 +2268,7 @@ function openMoneyModal(id){
   document.getElementById('moneyEditId').value=id||'';
   document.getElementById('moneyModalTitle').textContent=id?'기록 수정':'금융 기록 추가';
   document.getElementById('moneyDeleteBtn').style.display=id?'inline-flex':'none';
-  document.getElementById('moneyDate').value=rec?rec.record_date:toDateStr(new Date());
+  document.getElementById('moneyCopyBtn').style.display=id?'inline-flex':'none';
   document.getElementById('moneyInstitution').value=rec?rec.institution||'':'';
   document.getElementById('moneyCategory').value=rec?rec.category:'월급';
   document.getElementById('moneyDetail').value=rec?rec.detail||'':'';
@@ -2293,7 +2293,7 @@ async function saveMoneyRecord(){
   const amount=parseFloat(document.getElementById('moneyAmount').value)||0;
   if(!amount){showToast('금액을 입력해주세요');return;}
   const data={
-    record_date:document.getElementById('moneyDate').value||toDateStr(new Date()),
+    record_date:(moneyType==='income'?document.getElementById('moneyIncomeDate').value:null)||document.getElementById('moneyTransactionDate').value||toDateStr(new Date()),
     institution:document.getElementById('moneyInstitution').value.trim()||null,
     category:document.getElementById('moneyCategory').value,
     detail:document.getElementById('moneyDetail').value.trim()||null,
@@ -2326,6 +2326,18 @@ async function deleteMoneyRecord(){
   await loadMoneyRecords();
   renderMoneyView();
   showToast('삭제됐어요');
+}
+async function copyMoneyRecord(){
+  const id=document.getElementById('moneyEditId').value;
+  const rec=moneyRecords.find(r=>r.id===id);
+  if(!rec) return;
+  const {id:_,created_at:__,...data}=rec;
+  const res=await sb.from('slit_money_records').insert(data);
+  if(res.error){showToast('복제 실패: '+res.error.message);return;}
+  closeWorkModal('moneyModal');
+  await loadMoneyRecords();
+  renderMoneyView();
+  showToast('복제됐어요!');
 }
 
 function moneyCatToggle(ci){
@@ -7160,18 +7172,12 @@ init();
     <div class="modal-handle"></div>
     <div class="modal-title" id="moneyModalTitle">금융 기록 추가</div>
     <input type="hidden" id="moneyEditId">
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">날짜</label>
-        <input class="form-input" type="date" id="moneyDate">
-      </div>
-      <div class="form-group">
+    <div class="form-group">
         <label class="form-label">수익 / 손실</label>
         <div style="display:flex;gap:6px;">
           <button class="money-type-btn active-income" id="moneyTypeIncome" onclick="selectMoneyType('income')">수익</button>
           <button class="money-type-btn" id="moneyTypeLoss" onclick="selectMoneyType('loss')">손실</button>
         </div>
-      </div>
     </div>
     <div class="form-group">
       <label class="form-label">금융 기관</label>
@@ -7244,6 +7250,7 @@ init();
     <div class="modal-actions">
       <button class="btn btn-danger btn-sm" id="moneyDeleteBtn" onclick="deleteMoneyRecord()" style="display:none;">삭제</button>
       <div style="flex:1;"></div>
+      <button class="btn btn-ghost btn-sm" id="moneyCopyBtn" onclick="copyMoneyRecord()" style="display:none;">복제</button>
       <button class="btn btn-ghost" onclick="closeWorkModal('moneyModal')">취소</button>
       <button class="btn btn-primary" onclick="saveMoneyRecord()">저장</button>
     </div>
