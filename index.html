@@ -1006,6 +1006,40 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <!-- 슬릿 목록 -->
       <div id="allSlits" style="margin-top:4px;"></div>
 
+      <!-- 개인 월간 계획 -->
+      <div class="work-plan-section" id="personalMonthlySection" style="margin-top:12px;">
+        <div class="work-plan-header" onclick="togglePersonalPlan('monthly')">
+          <span class="work-plan-label">🌙 월간</span>
+          <span class="work-plan-period" id="personalMonthlyPeriod"></span>
+          <span class="work-plan-progress" id="personalMonthlyProgress"></span>
+          <span class="work-plan-chevron" id="personalMonthlyChevron">▸</span>
+        </div>
+        <div class="work-plan-body" id="personalMonthlyBody" style="display:none;">
+          <div id="personalMonthlyList"></div>
+          <div class="work-plan-add-row">
+            <input class="work-plan-add-input" id="personalMonthlyAddInput" placeholder="항목 추가..." onkeydown="if(event.key==='Enter')addPersonalPlanItem('monthly')">
+            <button class="btn btn-ghost btn-sm" onclick="addPersonalPlanItem('monthly')">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 개인 주간 계획 -->
+      <div class="work-plan-section" id="personalWeeklySection" style="margin-top:8px;">
+        <div class="work-plan-header" onclick="togglePersonalPlan('weekly')">
+          <span class="work-plan-label">✦ 주간</span>
+          <span class="work-plan-period" id="personalWeeklyPeriod"></span>
+          <span class="work-plan-progress" id="personalWeeklyProgress"></span>
+          <span class="work-plan-chevron" id="personalWeeklyChevron">▸</span>
+        </div>
+        <div class="work-plan-body" id="personalWeeklyBody" style="display:none;">
+          <div id="personalWeeklyList"></div>
+          <div class="work-plan-add-row">
+            <input class="work-plan-add-input" id="personalWeeklyAddInput" placeholder="항목 추가..." onkeydown="if(event.key==='Enter')addPersonalPlanItem('weekly')">
+            <button class="btn btn-ghost btn-sm" onclick="addPersonalPlanItem('weekly')">+</button>
+          </div>
+        </div>
+      </div>
+
       <!-- 루틴 -->
       <div id="routineBar" style="display:none;margin-bottom:8px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -1773,7 +1807,7 @@ function showView(name,btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active'); btn.classList.add('active');
-  if(name==='slit'){renderToday();renderPlan();renderTodayMemos();}
+  if(name==='slit'){renderToday();renderPlan();renderTodayMemos();loadPersonalPlans();}
   if(name==='wave')renderWaves();
   if(name==='stats'){renderStats();}
   if(name==='garden'){loadVmv();renderPeople();loadBeingExtras();loadMoneyRecords();}
@@ -2664,6 +2698,100 @@ const WORK_COLORS={
 };
 let wCores=[],wGoals=[],wMilestones=[],wSteps=[],wTemplates=[],pebbles=[];
 let workPlans={};
+
+// ── 개인 월간·주간 계획 ──
+let personalPlans={};
+function personalPlanItems(type){
+  const key=type==='monthly'?workPlanMonthKey():workPlanWeekKey();
+  const p=personalPlans[type+'_'+key];
+  if(!p?.content) return [];
+  try{return JSON.parse(p.content);}catch{return [];}
+}
+async function loadPersonalPlans(){
+  const{data,error}=await sb.from('slit_personal_plans').select('*');
+  if(!error)(data||[]).forEach(p=>{ personalPlans[p.type+'_'+p.period_key]=p; });
+  renderPersonalPlans();
+}
+function renderPersonalPlanList(type){
+  const listId=type==='monthly'?'personalMonthlyList':'personalWeeklyList';
+  const el=document.getElementById(listId); if(!el) return;
+  const items=personalPlanItems(type);
+  if(!items.length){el.innerHTML='';return;}
+  el.innerHTML=items.map((it,i)=>`
+    <div class="work-plan-item">
+      <button class="work-plan-check ${it.done?'done':''}" onclick="togglePersonalPlanItem('${type}',${i})"></button>
+      <span class="work-plan-item-text ${it.done?'done':''}" ondblclick="editPersonalPlanItem('${type}',${i})">${it.text}</span>
+      <button class="work-plan-item-del" onclick="deletePersonalPlanItem('${type}',${i})">×</button>
+    </div>`).join('');
+}
+function renderPersonalPlans(){
+  const now=new Date();
+  document.getElementById('personalMonthlyPeriod').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월`;
+  document.getElementById('personalWeeklyPeriod').textContent=workPlanWeekLabel(workPlanWeekKey());
+  ['monthly','weekly'].forEach(type=>{
+    const items=personalPlanItems(type);
+    const done=items.filter(x=>x.done).length;
+    const total=items.length;
+    const progId=type==='monthly'?'personalMonthlyProgress':'personalWeeklyProgress';
+    const secId=type==='monthly'?'personalMonthlySection':'personalWeeklySection';
+    document.getElementById(progId).textContent=total?`${done}/${total}`:'';
+    document.getElementById(secId).style.borderColor=total?'var(--accent)':'';
+    renderPersonalPlanList(type);
+  });
+}
+function togglePersonalPlan(type){
+  const bodyId=type==='monthly'?'personalMonthlyBody':'personalWeeklyBody';
+  const chevId=type==='monthly'?'personalMonthlyChevron':'personalWeeklyChevron';
+  const body=document.getElementById(bodyId);
+  const chev=document.getElementById(chevId);
+  const open=body.style.display==='none';
+  body.style.display=open?'block':'none';
+  chev.classList.toggle('open',open);
+  if(open) document.getElementById(type==='monthly'?'personalMonthlyAddInput':'personalWeeklyAddInput').focus();
+}
+async function _savePersonalPlanItems(type,items){
+  const key=type==='monthly'?workPlanMonthKey():workPlanWeekKey();
+  const content=JSON.stringify(items);
+  const existing=personalPlans[type+'_'+key];
+  let res;
+  if(existing) res=await sb.from('slit_personal_plans').update({content,updated_at:new Date().toISOString()}).eq('id',existing.id);
+  else res=await sb.from('slit_personal_plans').insert({type,period_key:key,content});
+  if(res.error){showToast('저장 실패');return;}
+  await loadPersonalPlans();
+}
+async function addPersonalPlanItem(type){
+  const inputId=type==='monthly'?'personalMonthlyAddInput':'personalWeeklyAddInput';
+  const text=document.getElementById(inputId).value.trim();
+  if(!text) return;
+  const items=personalPlanItems(type);
+  items.push({text,done:false});
+  document.getElementById(inputId).value='';
+  await _savePersonalPlanItems(type,items);
+}
+async function togglePersonalPlanItem(type,i){
+  const items=personalPlanItems(type); items[i].done=!items[i].done;
+  await _savePersonalPlanItems(type,items);
+}
+async function deletePersonalPlanItem(type,i){
+  const items=personalPlanItems(type); items.splice(i,1);
+  await _savePersonalPlanItems(type,items);
+}
+function editPersonalPlanItem(type,i){
+  const listId=type==='monthly'?'personalMonthlyList':'personalWeeklyList';
+  const rows=document.getElementById(listId).querySelectorAll('.work-plan-item');
+  const span=rows[i]?.querySelector('.work-plan-item-text'); if(!span) return;
+  const old=span.textContent;
+  const inp=document.createElement('input');
+  inp.className='work-plan-add-input';inp.value=old;inp.style.flex='1';
+  span.replaceWith(inp); inp.focus(); inp.select();
+  const finish=async()=>{
+    const val=inp.value.trim()||old;
+    const items=personalPlanItems(type); items[i].text=val;
+    await _savePersonalPlanItems(type,items);
+  };
+  inp.onblur=finish;
+  inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.value=old;inp.blur();}};
+}
 
 function workPlanMonthKey(){return new Date().toISOString().slice(0,7);}
 function workPlanWeekKey(){
