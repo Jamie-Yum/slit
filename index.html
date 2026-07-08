@@ -1783,7 +1783,7 @@ let slitMode='between',picks={start:null,end:null,during:null},activeSlot='start
 let draftTasks=[],selPeople=[],draftAvoids=[],curPeriod='day',pType='person';
 
 async function init() {
-  await loadAll(); await loadWaves(); await loadRoutines(); await loadVmv(); await loadWork(); await loadBeingExtras(); await loadLearn(); startClock(); renderToday(); renderStats(); initMemo();
+  await loadAll(); await loadWaves(); await loadRoutines(); await loadVmv(); await loadWork(); await loadBeingExtras(); await loadLearn(); await loadPersonalPlans(); await loadWorkPlans(); startClock(); renderToday(); renderStats(); initMemo();
 }
 async function loadAll() {
   try {
