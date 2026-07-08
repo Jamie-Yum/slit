@@ -777,6 +777,24 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .work-plan-add-row{display:flex;align-items:center;gap:6px;margin-top:8px;}
 .work-plan-add-input{flex:1;border:1px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--surface);color:var(--text);outline:none;}
 .work-plan-add-input:focus{border-color:var(--accent);}
+/* ── 주간 달력 ── */
+.week-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;overflow-x:auto;}
+.week-cal-day{background:var(--surface2,#f7f5f2);border:1.5px solid var(--border);border-radius:10px;padding:6px 4px;min-width:40px;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.week-cal-day.today{border-color:var(--accent);background:var(--accent-bg);}
+.week-cal-dow{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:0.04em;}
+.week-cal-date{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);line-height:1;}
+.week-cal-day.today .week-cal-date{color:var(--accent);}
+.week-cal-items{width:100%;display:flex;flex-direction:column;gap:2px;margin-top:2px;}
+.week-cal-item{display:flex;align-items:center;gap:3px;cursor:pointer;}
+.week-cal-cb{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;transition:all 0.1s;}
+.week-cal-cb.done{background:var(--accent);border-color:var(--accent);}
+.week-cal-item-text{font-size:10px;color:var(--text2);line-height:1.3;word-break:break-all;}
+.week-cal-item-text.done{color:var(--text3);text-decoration:line-through;}
+.week-cal-add{background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;margin-top:2px;padding:0;line-height:1;}
+.week-cal-add:hover{color:var(--accent);}
+/* 날 입력 모달 */
+.week-day-modal{position:fixed;inset:0;z-index:3000;display:flex;align-items:flex-end;background:rgba(0,0,0,0.3);}
+.week-day-modal-box{background:var(--surface);width:100%;border-radius:16px 16px 0 0;padding:20px 16px 32px;}
 /* ── Work Tab ── */
 .work-mode-row{display:flex;gap:4px;margin-bottom:16px;}
 .work-mode-btn{flex:1;padding:7px 4px;border:1px solid var(--border2);border-radius:var(--radius);background:none;font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;letter-spacing:0.05em;transition:all 0.12s;text-align:center;}
@@ -985,6 +1003,9 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
           </div>
         </div>
       </div>
+
+      <!-- 주간 달력 -->
+      <div id="personalWeekCal" style="margin-bottom:12px;"></div>
 
       <!-- 날짜 선택 -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -2711,6 +2732,7 @@ async function loadPersonalPlans(){
   const{data,error}=await sb.from('slit_personal_plans').select('*');
   if(!error)(data||[]).forEach(p=>{ personalPlans[p.type+'_'+p.period_key]=p; });
   renderPersonalPlans();
+  renderWeekCal();
 }
 function renderPersonalPlanList(type){
   const listId=type==='monthly'?'personalMonthlyList':'personalWeeklyList';
@@ -2791,6 +2813,138 @@ function editPersonalPlanItem(type,i){
   };
   inp.onblur=finish;
   inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.value=old;inp.blur();}};
+}
+
+// ── 주간 달력 (개인) ──
+let weekCalDate=null; // 현재 열려있는 날 (입력 모달용)
+
+function weekCalDays(){
+  const mon=new Date(); const dow=mon.getDay()||7;
+  mon.setDate(mon.getDate()-dow+1);
+  return Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
+}
+
+function personalDayKey(d){return d.toISOString().slice(0,10);}
+
+function personalDayItems(dateKey){
+  const p=personalPlans['daily_'+dateKey];
+  if(!p?.content) return [];
+  try{return JSON.parse(p.content);}catch{return [];}
+}
+
+async function _savePersonalDayItems(dateKey,items){
+  const content=JSON.stringify(items);
+  const existing=personalPlans['daily_'+dateKey];
+  let res;
+  if(existing) res=await sb.from('slit_personal_plans').update({content,updated_at:new Date().toISOString()}).eq('id',existing.id);
+  else res=await sb.from('slit_personal_plans').insert({type:'daily',period_key:dateKey,content});
+  if(res.error){showToast('저장 실패');return;}
+  await loadPersonalPlans();
+}
+
+async function toggleWeekCalItem(dateKey,i){
+  const items=personalDayItems(dateKey);
+  items[i].done=!items[i].done;
+  await _savePersonalDayItems(dateKey,items);
+  renderWeekCal();
+}
+
+async function deleteWeekCalItem(dateKey,i){
+  const items=personalDayItems(dateKey);
+  items.splice(i,1);
+  await _savePersonalDayItems(dateKey,items);
+  renderWeekCal();
+}
+
+function openWeekDayModal(dateKey){
+  weekCalDate=dateKey;
+  const existing=document.getElementById('weekDayModal');
+  if(existing) existing.remove();
+  const el=document.createElement('div');
+  el.className='week-day-modal'; el.id='weekDayModal';
+  const d=new Date(dateKey);
+  const dows=['일','월','화','수','목','금','토'];
+  const label=`${d.getMonth()+1}/${d.getDate()} (${dows[d.getDay()]})`;
+  el.innerHTML=`
+    <div class="week-day-modal-box">
+      <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">${label}</div>
+      <div id="weekDayModalList" style="margin-bottom:10px;"></div>
+      <div style="display:flex;gap:6px;">
+        <input class="work-plan-add-input" id="weekDayModalInput" placeholder="항목 추가..." style="flex:1;" onkeydown="if(event.key==='Enter')addWeekDayItem()">
+        <button class="btn btn-ghost btn-sm" onclick="addWeekDayItem()">+</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeWeekDayModal()">닫기</button>
+      </div>
+    </div>`;
+  el.onclick=e=>{if(e.target===el)closeWeekDayModal();};
+  document.body.appendChild(el);
+  renderWeekDayModalList();
+  setTimeout(()=>document.getElementById('weekDayModalInput')?.focus(),100);
+}
+
+function renderWeekDayModalList(){
+  const el=document.getElementById('weekDayModalList'); if(!el) return;
+  const items=personalDayItems(weekCalDate);
+  if(!items.length){el.innerHTML='';return;}
+  el.innerHTML=items.map((it,i)=>`
+    <div class="work-plan-item">
+      <button class="work-plan-check ${it.done?'done':''}" onclick="toggleWeekCalItemModal(${i})"></button>
+      <span class="work-plan-item-text ${it.done?'done':''}">${it.text}</span>
+      <button class="work-plan-item-del" onclick="deleteWeekCalItemModal(${i})">×</button>
+    </div>`).join('');
+}
+
+async function toggleWeekCalItemModal(i){
+  const items=personalDayItems(weekCalDate);
+  items[i].done=!items[i].done;
+  await _savePersonalDayItems(weekCalDate,items);
+  renderWeekDayModalList(); renderWeekCal();
+}
+
+async function deleteWeekCalItemModal(i){
+  const items=personalDayItems(weekCalDate);
+  items.splice(i,1);
+  await _savePersonalDayItems(weekCalDate,items);
+  renderWeekDayModalList(); renderWeekCal();
+}
+
+async function addWeekDayItem(){
+  const text=document.getElementById('weekDayModalInput').value.trim();
+  if(!text) return;
+  const items=personalDayItems(weekCalDate);
+  items.push({text,done:false});
+  document.getElementById('weekDayModalInput').value='';
+  await _savePersonalDayItems(weekCalDate,items);
+  renderWeekDayModalList(); renderWeekCal();
+}
+
+function closeWeekDayModal(){
+  document.getElementById('weekDayModal')?.remove();
+  weekCalDate=null;
+}
+
+function renderWeekCal(){
+  const el=document.getElementById('personalWeekCal'); if(!el) return;
+  const today=new Date().toISOString().slice(0,10);
+  const days=weekCalDays();
+  const dows=['월','화','수','목','금','토','일'];
+  el.innerHTML=`<div class="week-cal">${days.map((d,di)=>{
+    const key=personalDayKey(d);
+    const isToday=key===today;
+    const items=personalDayItems(key);
+    const itemsHtml=items.length
+      ? `<div class="week-cal-items">${items.map((it,i)=>`
+          <div class="week-cal-item" onclick="toggleWeekCalItem('${key}',${i})">
+            <div class="week-cal-cb ${it.done?'done':''}"></div>
+            <span class="week-cal-item-text ${it.done?'done':''}">${it.text}</span>
+          </div>`).join('')}</div>`
+      : '';
+    return `<div class="week-cal-day${isToday?' today':''}">
+      <span class="week-cal-dow">${dows[di]}</span>
+      <span class="week-cal-date">${d.getDate()}</span>
+      ${itemsHtml}
+      <button class="week-cal-add" onclick="openWeekDayModal('${key}')">+</button>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 function workPlanMonthKey(){return new Date().toISOString().slice(0,7);}
