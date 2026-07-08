@@ -952,6 +952,40 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <div class="date-now" id="dateDisplay"></div>
       </div>
 
+      <!-- 개인 월간 계획 -->
+      <div class="work-plan-section" id="personalMonthlySection" style="margin-bottom:8px;">
+        <div class="work-plan-header" onclick="togglePersonalPlan('monthly')">
+          <span class="work-plan-label">🌙 월간</span>
+          <span class="work-plan-period" id="personalMonthlyPeriod"></span>
+          <span class="work-plan-progress" id="personalMonthlyProgress"></span>
+          <span class="work-plan-chevron" id="personalMonthlyChevron">▸</span>
+        </div>
+        <div class="work-plan-body" id="personalMonthlyBody" style="display:none;">
+          <div id="personalMonthlyList"></div>
+          <div class="work-plan-add-row">
+            <input class="work-plan-add-input" id="personalMonthlyAddInput" placeholder="항목 추가..." onkeydown="if(event.key==='Enter')addPersonalPlanItem('monthly')">
+            <button class="btn btn-ghost btn-sm" onclick="addPersonalPlanItem('monthly')">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 개인 주간 계획 -->
+      <div class="work-plan-section" id="personalWeeklySection" style="margin-bottom:12px;">
+        <div class="work-plan-header" onclick="togglePersonalPlan('weekly')">
+          <span class="work-plan-label">✦ 주간</span>
+          <span class="work-plan-period" id="personalWeeklyPeriod"></span>
+          <span class="work-plan-progress" id="personalWeeklyProgress"></span>
+          <span class="work-plan-chevron" id="personalWeeklyChevron">▸</span>
+        </div>
+        <div class="work-plan-body" id="personalWeeklyBody" style="display:none;">
+          <div id="personalWeeklyList"></div>
+          <div class="work-plan-add-row">
+            <input class="work-plan-add-input" id="personalWeeklyAddInput" placeholder="항목 추가..." onkeydown="if(event.key==='Enter')addPersonalPlanItem('weekly')">
+            <button class="btn btn-ghost btn-sm" onclick="addPersonalPlanItem('weekly')">+</button>
+          </div>
+        </div>
+      </div>
+
       <!-- 날짜 선택 -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
         <button onclick="homeMoveDate(-1)" style="background:none;border:1.5px solid var(--border2);border-radius:var(--radius);width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--text2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">‹</button>
@@ -1005,40 +1039,6 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 
       <!-- 슬릿 목록 -->
       <div id="allSlits" style="margin-top:4px;"></div>
-
-      <!-- 개인 월간 계획 -->
-      <div class="work-plan-section" id="personalMonthlySection" style="margin-top:12px;">
-        <div class="work-plan-header" onclick="togglePersonalPlan('monthly')">
-          <span class="work-plan-label">🌙 월간</span>
-          <span class="work-plan-period" id="personalMonthlyPeriod"></span>
-          <span class="work-plan-progress" id="personalMonthlyProgress"></span>
-          <span class="work-plan-chevron" id="personalMonthlyChevron">▸</span>
-        </div>
-        <div class="work-plan-body" id="personalMonthlyBody" style="display:none;">
-          <div id="personalMonthlyList"></div>
-          <div class="work-plan-add-row">
-            <input class="work-plan-add-input" id="personalMonthlyAddInput" placeholder="항목 추가..." onkeydown="if(event.key==='Enter')addPersonalPlanItem('monthly')">
-            <button class="btn btn-ghost btn-sm" onclick="addPersonalPlanItem('monthly')">+</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 개인 주간 계획 -->
-      <div class="work-plan-section" id="personalWeeklySection" style="margin-top:8px;">
-        <div class="work-plan-header" onclick="togglePersonalPlan('weekly')">
-          <span class="work-plan-label">✦ 주간</span>
-          <span class="work-plan-period" id="personalWeeklyPeriod"></span>
-          <span class="work-plan-progress" id="personalWeeklyProgress"></span>
-          <span class="work-plan-chevron" id="personalWeeklyChevron">▸</span>
-        </div>
-        <div class="work-plan-body" id="personalWeeklyBody" style="display:none;">
-          <div id="personalWeeklyList"></div>
-          <div class="work-plan-add-row">
-            <input class="work-plan-add-input" id="personalWeeklyAddInput" placeholder="항목 추가..." onkeydown="if(event.key==='Enter')addPersonalPlanItem('weekly')">
-            <button class="btn btn-ghost btn-sm" onclick="addPersonalPlanItem('weekly')">+</button>
-          </div>
-        </div>
-      </div>
 
       <!-- 루틴 -->
       <div id="routineBar" style="display:none;margin-bottom:8px;">
