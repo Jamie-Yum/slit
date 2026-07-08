@@ -753,6 +753,17 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 }
 ::-webkit-scrollbar{width:4px;height:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
+/* ── Work Plan ── */
+.work-plan-section{border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.work-plan-header{display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;user-select:none;background:var(--surface2,#f7f5f2);}
+.work-plan-label{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.06em;}
+.work-plan-period{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:600;flex:1;}
+.work-plan-chevron{font-size:11px;color:var(--text3);transition:transform 0.15s;}
+.work-plan-chevron.open{transform:rotate(90deg);}
+.work-plan-body{padding:12px 14px;border-top:1px solid var(--border);}
+.work-plan-textarea{width:100%;min-height:100px;border:1px solid var(--border2);border-radius:8px;padding:10px;font-size:13px;font-family:inherit;line-height:1.6;resize:vertical;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box;}
+.work-plan-textarea:focus{border-color:var(--accent);}
+.work-plan-preview{font-size:13px;color:var(--text2);line-height:1.6;white-space:pre-wrap;padding:4px 0;}
 /* ── Work Tab ── */
 .work-mode-row{display:flex;gap:4px;margin-bottom:16px;}
 .work-mode-btn{flex:1;padding:7px 4px;border:1px solid var(--border2);border-radius:var(--radius);background:none;font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;letter-spacing:0.05em;transition:all 0.12s;text-align:center;}
@@ -1249,6 +1260,38 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <button class="work-mode-btn" id="workModeMemo" onclick="switchWorkMode('memo',this)">메모</button>
       </div>
       <div id="workOverview">
+        <!-- 월간 계획 -->
+        <div class="work-plan-section" id="workMonthlySection">
+          <div class="work-plan-header" onclick="toggleWorkPlan('monthly')">
+            <span class="work-plan-label">📅 월간 계획</span>
+            <span class="work-plan-period" id="workMonthlyPeriod"></span>
+            <span class="work-plan-chevron" id="workMonthlyChevron">▸</span>
+          </div>
+          <div class="work-plan-body" id="workMonthlyBody" style="display:none;">
+            <textarea class="work-plan-textarea" id="workMonthlyInput" placeholder="이번 달 목표와 계획을 적어보세요..."></textarea>
+            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px;">
+              <button class="btn btn-ghost btn-sm" onclick="toggleWorkPlan('monthly')">닫기</button>
+              <button class="btn btn-primary btn-sm" onclick="saveWorkPlan('monthly')">저장</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 주간 계획 -->
+        <div class="work-plan-section" id="workWeeklyPlanSection">
+          <div class="work-plan-header" onclick="toggleWorkPlan('weekly')">
+            <span class="work-plan-label">📋 주간 계획</span>
+            <span class="work-plan-period" id="workWeeklyPlanPeriod"></span>
+            <span class="work-plan-chevron" id="workWeeklyPlanChevron">▸</span>
+          </div>
+          <div class="work-plan-body" id="workWeeklyPlanBody" style="display:none;">
+            <textarea class="work-plan-textarea" id="workWeeklyPlanInput" placeholder="이번 주 할 일과 우선순위를 적어보세요..."></textarea>
+            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px;">
+              <button class="btn btn-ghost btn-sm" onclick="toggleWorkPlan('weekly')">닫기</button>
+              <button class="btn btn-primary btn-sm" onclick="saveWorkPlan('weekly')">저장</button>
+            </div>
+          </div>
+        </div>
+
         <div class="section-title">Daily Step</div>
         <div class="step-nav">
           <div class="step-nav-arrows">
@@ -1720,7 +1763,7 @@ function showView(name,btn){
   if(name==='stats'){renderStats();}
   if(name==='garden'){loadVmv();renderPeople();loadBeingExtras();loadMoneyRecords();}
   if(name==='learn'){closeLearnDetail&&typeof closeLearnDetail==='function'&&closeLearnDetail();loadLearn();}
-  if(name==='work'){loadWork();}
+  if(name==='work'){loadWork();loadWorkPlans();}
 }
 
 // ── 메모 ──
@@ -2605,6 +2648,69 @@ const WORK_COLORS={
   coral:{main:'#993c1d',bg:'#faece7',border:'#f0997b'},
 };
 let wCores=[],wGoals=[],wMilestones=[],wSteps=[],wTemplates=[],pebbles=[];
+let workPlans={};
+
+function workPlanMonthKey(d){return (d||new Date()).toISOString().slice(0,7);}
+function workPlanWeekKey(d){
+  const dt=d?new Date(d):new Date();
+  const day=dt.getDay()||7;
+  dt.setDate(dt.getDate()-day+1);
+  return dt.toISOString().slice(0,10);
+}
+function workPlanWeekLabel(key){
+  const mon=new Date(key);
+  const sun=new Date(mon); sun.setDate(sun.getDate()+6);
+  const fmt=dt=>`${dt.getMonth()+1}/${dt.getDate()}`;
+  return `${fmt(mon)} – ${fmt(sun)}`;
+}
+
+async function loadWorkPlans(){
+  const{data,error}=await sb.from('slit_work_plans').select('*');
+  if(!error)(data||[]).forEach(p=>{ workPlans[p.type+'_'+p.period_key]=p; });
+  renderWorkPlans();
+}
+
+function renderWorkPlans(){
+  const monthKey=workPlanMonthKey();
+  const weekKey=workPlanWeekKey();
+  const now=new Date();
+  const monthLabel=`${now.getFullYear()}년 ${now.getMonth()+1}월`;
+  document.getElementById('workMonthlyPeriod').textContent=monthLabel;
+  document.getElementById('workWeeklyPlanPeriod').textContent=workPlanWeekLabel(weekKey);
+  const mPlan=workPlans['monthly_'+monthKey];
+  const wPlan=workPlans['weekly_'+weekKey];
+  if(mPlan?.content) document.getElementById('workMonthlyInput').value=mPlan.content;
+  if(wPlan?.content) document.getElementById('workWeeklyPlanInput').value=wPlan.content;
+  // 내용 있으면 헤더에 미리보기 dot 표시
+  const mHdr=document.getElementById('workMonthlySection');
+  const wHdr=document.getElementById('workWeeklyPlanSection');
+  if(mPlan?.content) mHdr.style.borderColor='var(--accent)';
+  else mHdr.style.borderColor='';
+  if(wPlan?.content) wHdr.style.borderColor='var(--accent)';
+  else wHdr.style.borderColor='';
+}
+
+function toggleWorkPlan(type){
+  const bodyId=type==='monthly'?'workMonthlyBody':'workWeeklyPlanBody';
+  const chevId=type==='monthly'?'workMonthlyChevron':'workWeeklyPlanChevron';
+  const body=document.getElementById(bodyId);
+  const chev=document.getElementById(chevId);
+  const open=body.style.display==='none';
+  body.style.display=open?'block':'none';
+  chev.classList.toggle('open',open);
+}
+
+async function saveWorkPlan(type){
+  const key=type==='monthly'?workPlanMonthKey():workPlanWeekKey();
+  const content=document.getElementById(type==='monthly'?'workMonthlyInput':'workWeeklyPlanInput').value;
+  const existing=workPlans[type+'_'+key];
+  let res;
+  if(existing) res=await sb.from('slit_work_plans').update({content,updated_at:new Date().toISOString()}).eq('id',existing.id);
+  else res=await sb.from('slit_work_plans').insert({type,period_key:key,content});
+  if(res.error){showToast('저장 실패');return;}
+  await loadWorkPlans();
+  showToast('저장됐어요!');
+}
 let wSelectedCore='all',wStepDate='',wWorkMode='overview';
 let wCoreColor='green',wMsStatus='active';
 let wStepChecklist=[]; // draft checklist for step modal
