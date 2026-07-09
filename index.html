@@ -774,6 +774,9 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .work-plan-item-text.done{color:var(--text3);text-decoration:line-through;}
 .work-plan-item-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:0 2px;flex-shrink:0;opacity:0.4;}
 .work-plan-item-del:hover{opacity:1;color:#c0392b;}
+.plan-move-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:10px;padding:0;line-height:1;opacity:0.4;flex-shrink:0;}
+.plan-move-btn:hover{opacity:1;}
+.plan-move-btn:disabled{opacity:0.15;cursor:default;}
 .work-plan-add-row{display:flex;align-items:center;gap:6px;margin-top:8px;}
 .work-plan-add-input{flex:1;border:1px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--surface);color:var(--text);outline:none;}
 .work-plan-add-input:focus{border-color:var(--accent);}
@@ -2746,8 +2749,17 @@ function renderPersonalPlanList(type){
     <div class="work-plan-item">
       <button class="work-plan-check ${it.done?'done':''}" onclick="togglePersonalPlanItem('${type}',${i})"></button>
       <span class="work-plan-item-text ${it.done?'done':''}" ondblclick="editPersonalPlanItem('${type}',${i})">${it.text}</span>
+      <button class="plan-move-btn" onclick="movePersonalPlanItem('${type}',${i},-1)" ${i===0?'disabled':''}>↑</button>
+      <button class="plan-move-btn" onclick="movePersonalPlanItem('${type}',${i},1)" ${i===items.length-1?'disabled':''}>↓</button>
       <button class="work-plan-item-del" onclick="deletePersonalPlanItem('${type}',${i})">×</button>
     </div>`).join('');
+}
+async function movePersonalPlanItem(type,i,dir){
+  const items=personalPlanItems(type); const j=i+dir;
+  if(j<0||j>=items.length) return;
+  [items[i],items[j]]=[items[j],items[i]];
+  await _savePersonalPlanItems(type,items);
+  renderPersonalPlanList(type);
 }
 function renderPersonalPlans(){
   const now=new Date();
@@ -3118,8 +3130,17 @@ function renderWorkPlanList(type){
     <div class="work-plan-item">
       <button class="work-plan-check ${it.done?'done':''}" onclick="toggleWorkPlanItem('${type}',${i})"></button>
       <span class="work-plan-item-text ${it.done?'done':''}" ondblclick="editWorkPlanItem('${type}',${i})">${it.text}</span>
+      <button class="plan-move-btn" onclick="moveWorkPlanItem('${type}',${i},-1)" ${i===0?'disabled':''}>↑</button>
+      <button class="plan-move-btn" onclick="moveWorkPlanItem('${type}',${i},1)" ${i===items.length-1?'disabled':''}>↓</button>
       <button class="work-plan-item-del" onclick="deleteWorkPlanItem('${type}',${i})">×</button>
     </div>`).join('');
+}
+async function moveWorkPlanItem(type,i,dir){
+  const items=workPlanItems(type); const j=i+dir;
+  if(j<0||j>=items.length) return;
+  [items[i],items[j]]=[items[j],items[i]];
+  await _saveWorkPlanItems(type,items);
+  renderWorkPlanList(type);
 }
 
 function renderWorkPlans(){
