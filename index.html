@@ -2881,16 +2881,37 @@ function openWeekDayModal(dateKey){
   setTimeout(()=>document.getElementById('weekDayModalInput')?.focus(),100);
 }
 
+let weekCalEditIdx=null;
 function renderWeekDayModalList(){
   const el=document.getElementById('weekDayModalList'); if(!el) return;
   const items=personalDayItems(weekCalDate);
   if(!items.length){el.innerHTML='';return;}
-  el.innerHTML=items.map((it,i)=>`
-    <div class="work-plan-item">
-      <button class="work-plan-check ${it.done?'done':''}" onclick="toggleWeekCalItemModal(${i})"></button>
-      <span class="work-plan-item-text ${it.done?'done':''}">${it.text}</span>
-      <button class="work-plan-item-del" onclick="deleteWeekCalItemModal(${i})">×</button>
-    </div>`).join('');
+  el.innerHTML=items.map((it,i)=>{
+    if(weekCalEditIdx===i) return `
+      <div class="work-plan-item">
+        <input class="work-plan-add-input" id="weekCalEditInput_${i}" value="${it.text.replace(/"/g,'&quot;')}" style="flex:1;" onkeydown="if(event.key==='Enter')saveWeekCalItemEdit(${i});if(event.key==='Escape'){weekCalEditIdx=null;renderWeekDayModalList();}">
+        <button class="btn btn-ghost btn-sm" onclick="saveWeekCalItemEdit(${i})">저장</button>
+        <button class="work-plan-item-del" onclick="weekCalEditIdx=null;renderWeekDayModalList()">×</button>
+      </div>`;
+    return `
+      <div class="work-plan-item">
+        <button class="work-plan-check ${it.done?'done':''}" onclick="toggleWeekCalItemModal(${i})"></button>
+        <span class="work-plan-item-text ${it.done?'done':''}" style="flex:1;cursor:pointer;" ondblclick="weekCalEditIdx=${i};renderWeekDayModalList();setTimeout(()=>document.getElementById('weekCalEditInput_${i}')?.select(),50)">${it.text}</span>
+        <button class="work-plan-item-del" style="color:var(--text3);font-size:13px;background:none;border:none;cursor:pointer;padding:0 2px;" onclick="weekCalEditIdx=${i};renderWeekDayModalList();setTimeout(()=>document.getElementById('weekCalEditInput_${i}')?.select(),50)">✎</button>
+        <button class="work-plan-item-del" onclick="deleteWeekCalItemModal(${i})">×</button>
+      </div>`;
+  }).join('');
+  if(weekCalEditIdx!==null) setTimeout(()=>document.getElementById(`weekCalEditInput_${weekCalEditIdx}`)?.focus(),50);
+}
+
+async function saveWeekCalItemEdit(i){
+  const val=document.getElementById(`weekCalEditInput_${i}`)?.value.trim();
+  if(!val) return;
+  const items=personalDayItems(weekCalDate);
+  items[i].text=val;
+  weekCalEditIdx=null;
+  await _savePersonalDayItems(weekCalDate,items);
+  renderWeekDayModalList(); renderWeekCal();
 }
 
 async function toggleWeekCalItemModal(i){
