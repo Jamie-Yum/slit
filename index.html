@@ -1362,6 +1362,9 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
           </div>
         </div>
 
+        <!-- 업무 주간 달력 -->
+        <div id="workWeekCal" style="margin-bottom:12px;"></div>
+
         <div class="section-title">Daily Step</div>
         <div class="step-nav">
           <div class="step-nav-arrows">
@@ -2992,6 +2995,118 @@ async function loadWorkPlans(){
   const{data,error}=await sb.from('slit_work_plans').select('*');
   if(!error)(data||[]).forEach(p=>{ workPlans[p.type+'_'+p.period_key]=p; });
   renderWorkPlans();
+  renderWorkWeekCal();
+}
+
+// ── 업무 주간 달력 ──
+let workWeekCalDate=null, workWeekCalEditIdx=null;
+function workDayItems(dateKey){
+  const p=workPlans['daily_'+dateKey];
+  if(!p?.content) return [];
+  try{return JSON.parse(p.content);}catch{return [];}
+}
+async function _saveWorkDayItems(dateKey,items){
+  const content=JSON.stringify(items);
+  const existing=workPlans['daily_'+dateKey];
+  let res;
+  if(existing) res=await sb.from('slit_work_plans').update({content,updated_at:new Date().toISOString()}).eq('id',existing.id);
+  else res=await sb.from('slit_work_plans').insert({type:'daily',period_key:dateKey,content});
+  if(res.error){showToast('저장 실패');return;}
+  await loadWorkPlans();
+}
+function renderWorkWeekCal(){
+  const el=document.getElementById('workWeekCal'); if(!el) return;
+  const today=new Date().toISOString().slice(0,10);
+  const days=weekCalDays();
+  const dows=['월','화','수','목','금','토','일'];
+  el.innerHTML=`<div class="week-cal">${days.map((d,di)=>{
+    const key=d.toISOString().slice(0,10);
+    const isToday=key===today;
+    const items=workDayItems(key);
+    const itemsHtml=items.length
+      ?`<div class="week-cal-items">${items.map((it,i)=>`
+          <div class="week-cal-item" onclick="toggleWorkCalItem('${key}',${i})">
+            <div class="week-cal-cb ${it.done?'done':''}"></div>
+            <span class="week-cal-item-text ${it.done?'done':''}">${it.text}</span>
+          </div>`).join('')}</div>`:'';
+    return `<div class="week-cal-day${isToday?' today':''}">
+      <span class="week-cal-dow">${dows[di]}</span>
+      <span class="week-cal-date">${d.getDate()}</span>
+      ${itemsHtml}
+      <button class="week-cal-add" onclick="openWorkWeekDayModal('${key}')">+</button>
+    </div>`;
+  }).join('')}</div>`;
+}
+async function toggleWorkCalItem(key,i){
+  const items=workDayItems(key); items[i].done=!items[i].done;
+  await _saveWorkDayItems(key,items); renderWorkWeekCal();
+}
+function openWorkWeekDayModal(dateKey){
+  workWeekCalDate=dateKey; workWeekCalEditIdx=null;
+  document.getElementById('workWeekDayModal')?.remove();
+  const el=document.createElement('div');
+  el.className='week-day-modal'; el.id='workWeekDayModal';
+  const d=new Date(dateKey);
+  const dows=['일','월','화','수','목','금','토'];
+  const label=`${d.getMonth()+1}/${d.getDate()} (${dows[d.getDay()]})`;
+  el.innerHTML=`
+    <div class="week-day-modal-box">
+      <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">${label}</div>
+      <div id="workWeekDayModalList" style="margin-bottom:10px;"></div>
+      <div style="display:flex;gap:6px;">
+        <input class="work-plan-add-input" id="workWeekDayModalInput" placeholder="항목 추가..." style="flex:1;" onkeydown="if(event.key==='Enter')addWorkWeekDayItem()">
+        <button class="btn btn-ghost btn-sm" onclick="addWorkWeekDayItem()">+</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeWorkWeekDayModal()">닫기</button>
+      </div>
+    </div>`;
+  el.onclick=e=>{if(e.target===el)closeWorkWeekDayModal();};
+  document.body.appendChild(el);
+  renderWorkWeekDayModalList();
+  setTimeout(()=>document.getElementById('workWeekDayModalInput')?.focus(),100);
+}
+function renderWorkWeekDayModalList(){
+  const el=document.getElementById('workWeekDayModalList'); if(!el) return;
+  const items=workDayItems(workWeekCalDate);
+  if(!items.length){el.innerHTML='';return;}
+  el.innerHTML=items.map((it,i)=>{
+    if(workWeekCalEditIdx===i) return `
+      <div class="work-plan-item">
+        <input class="work-plan-add-input" id="workWkEditInput_${i}" value="${it.text.replace(/"/g,'&quot;')}" style="flex:1;" onkeydown="if(event.key==='Enter')saveWorkWeekCalItemEdit(${i});if(event.key==='Escape'){workWeekCalEditIdx=null;renderWorkWeekDayModalList();}">
+        <button class="btn btn-ghost btn-sm" onclick="saveWorkWeekCalItemEdit(${i})">저장</button>
+        <button class="work-plan-item-del" onclick="workWeekCalEditIdx=null;renderWorkWeekDayModalList()">×</button>
+      </div>`;
+    return `
+      <div class="work-plan-item">
+        <button class="work-plan-check ${it.done?'done':''}" onclick="toggleWorkWeekCalItemModal(${i})"></button>
+        <span class="work-plan-item-text ${it.done?'done':''}" style="flex:1;cursor:pointer;" ondblclick="workWeekCalEditIdx=${i};renderWorkWeekDayModalList();setTimeout(()=>document.getElementById('workWkEditInput_${i}')?.select(),50)">${it.text}</span>
+        <button style="color:var(--text3);font-size:13px;background:none;border:none;cursor:pointer;padding:0 2px;" onclick="workWeekCalEditIdx=${i};renderWorkWeekDayModalList();setTimeout(()=>document.getElementById('workWkEditInput_${i}')?.select(),50)">✎</button>
+        <button class="work-plan-item-del" onclick="deleteWorkWeekCalItemModal(${i})">×</button>
+      </div>`;
+  }).join('');
+  if(workWeekCalEditIdx!==null) setTimeout(()=>document.getElementById(`workWkEditInput_${workWeekCalEditIdx}`)?.focus(),50);
+}
+async function toggleWorkWeekCalItemModal(i){
+  const items=workDayItems(workWeekCalDate); items[i].done=!items[i].done;
+  await _saveWorkDayItems(workWeekCalDate,items); renderWorkWeekDayModalList(); renderWorkWeekCal();
+}
+async function deleteWorkWeekCalItemModal(i){
+  const items=workDayItems(workWeekCalDate); items.splice(i,1);
+  await _saveWorkDayItems(workWeekCalDate,items); renderWorkWeekDayModalList(); renderWorkWeekCal();
+}
+async function addWorkWeekDayItem(){
+  const text=document.getElementById('workWeekDayModalInput').value.trim(); if(!text) return;
+  const items=workDayItems(workWeekCalDate); items.push({text,done:false});
+  document.getElementById('workWeekDayModalInput').value='';
+  await _saveWorkDayItems(workWeekCalDate,items); renderWorkWeekDayModalList(); renderWorkWeekCal();
+}
+async function saveWorkWeekCalItemEdit(i){
+  const val=document.getElementById(`workWkEditInput_${i}`)?.value.trim(); if(!val) return;
+  const items=workDayItems(workWeekCalDate); items[i].text=val; workWeekCalEditIdx=null;
+  await _saveWorkDayItems(workWeekCalDate,items); renderWorkWeekDayModalList(); renderWorkWeekCal();
+}
+function closeWorkWeekDayModal(){
+  document.getElementById('workWeekDayModal')?.remove();
+  workWeekCalDate=null; workWeekCalEditIdx=null;
 }
 
 function renderWorkPlanList(type){
