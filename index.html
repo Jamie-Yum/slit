@@ -2839,7 +2839,7 @@ function weekCalDays(){
   return Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
 }
 
-function personalDayKey(d){return d.toISOString().slice(0,10);}
+function personalDayKey(d){return toDateStr(d);}
 
 function personalDayItems(dateKey){
   const p=personalPlans['daily_'+dateKey];
@@ -2960,7 +2960,7 @@ function closeWeekDayModal(){
 
 function renderWeekCal(){
   const el=document.getElementById('personalWeekCal'); if(!el) return;
-  const today=new Date().toISOString().slice(0,10);
+  const today=toDateStr(new Date());
   const days=weekCalDays();
   const dows=['월','화','수','목','금','토','일'];
   el.innerHTML=`<div class="week-cal">${days.map((d,di)=>{
@@ -2983,12 +2983,12 @@ function renderWeekCal(){
   }).join('')}</div>`;
 }
 
-function workPlanMonthKey(){return new Date().toISOString().slice(0,7);}
+function workPlanMonthKey(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1);}
 function workPlanWeekKey(){
   const dt=new Date();
   const day=dt.getDay()||7;
   dt.setDate(dt.getDate()-day+1);
-  return dt.toISOString().slice(0,10);
+  return toDateStr(dt);
 }
 function workPlanWeekLabel(key){
   const mon=new Date(key);
@@ -3028,11 +3028,11 @@ async function _saveWorkDayItems(dateKey,items){
 }
 function renderWorkWeekCal(){
   const el=document.getElementById('workWeekCal'); if(!el) return;
-  const today=new Date().toISOString().slice(0,10);
+  const today=toDateStr(new Date());
   const days=weekCalDays();
   const dows=['월','화','수','목','금','토','일'];
   el.innerHTML=`<div class="week-cal">${days.map((d,di)=>{
-    const key=d.toISOString().slice(0,10);
+    const key=toDateStr(d);
     const isToday=key===today;
     const items=workDayItems(key);
     const itemsHtml=items.length
