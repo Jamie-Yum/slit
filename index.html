@@ -757,7 +757,9 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .work-plan-section{border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
 .work-plan-header{display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;user-select:none;background:var(--surface2,#f7f5f2);}
 .work-plan-label{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.06em;}
-.work-plan-period{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:600;flex:1;}
+.work-plan-period{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:600;flex:1;display:flex;align-items:center;gap:4px;}
+.plan-week-nav{background:none;border:none;color:var(--text2);cursor:pointer;font-size:13px;padding:0 2px;line-height:1;flex-shrink:0;}
+.plan-week-nav:hover{color:var(--accent);}
 .work-plan-chevron{font-size:11px;color:var(--text3);transition:transform 0.15s;}
 .work-plan-chevron.open{transform:rotate(90deg);}
 .work-plan-body{padding:12px 14px;border-top:1px solid var(--border);}
@@ -2728,8 +2730,14 @@ let workPlans={};
 
 // ── 개인 월간·주간 계획 ──
 let personalPlans={};
+let personalWeekOffset=0, workWeekOffset=0;
+function weekKeyWithOffset(offset){
+  const dt=new Date(); const day=dt.getDay()||7;
+  dt.setDate(dt.getDate()-day+1+(offset*7));
+  return toDateStr(dt);
+}
 function personalPlanItems(type){
-  const key=type==='monthly'?workPlanMonthKey():workPlanWeekKey();
+  const key=type==='monthly'?workPlanMonthKey():weekKeyWithOffset(personalWeekOffset);
   const p=personalPlans[type+'_'+key];
   if(!p?.content) return [];
   try{return JSON.parse(p.content);}catch{return [];}
@@ -2761,10 +2769,12 @@ async function movePersonalPlanItem(type,i,dir){
   await _savePersonalPlanItems(type,items);
   renderPersonalPlanList(type);
 }
+function movePersonalWeek(dir){ personalWeekOffset+=dir; renderPersonalPlans(); }
 function renderPersonalPlans(){
   const now=new Date();
   document.getElementById('personalMonthlyPeriod').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월`;
-  document.getElementById('personalWeeklyPeriod').textContent=workPlanWeekLabel(workPlanWeekKey());
+  document.getElementById('personalWeeklyPeriod').innerHTML=
+    `<button class="plan-week-nav" onclick="event.stopPropagation();movePersonalWeek(-1)">‹</button><span>${workPlanWeekLabel(weekKeyWithOffset(personalWeekOffset))}</span><button class="plan-week-nav" onclick="event.stopPropagation();movePersonalWeek(1)">›</button>`;
   ['monthly','weekly'].forEach(type=>{
     const items=personalPlanItems(type);
     const done=items.filter(x=>x.done).length;
@@ -2787,7 +2797,7 @@ function togglePersonalPlan(type){
   if(open) document.getElementById(type==='monthly'?'personalMonthlyAddInput':'personalWeeklyAddInput').focus();
 }
 async function _savePersonalPlanItems(type,items){
-  const key=type==='monthly'?workPlanMonthKey():workPlanWeekKey();
+  const key=type==='monthly'?workPlanMonthKey():weekKeyWithOffset(personalWeekOffset);
   const content=JSON.stringify(items);
   const existing=personalPlans[type+'_'+key];
   let res;
@@ -2997,7 +3007,7 @@ function workPlanWeekLabel(key){
   return `${fmt(mon)} – ${fmt(sun)}`;
 }
 function workPlanItems(type){
-  const key=type==='monthly'?workPlanMonthKey():workPlanWeekKey();
+  const key=type==='monthly'?workPlanMonthKey():weekKeyWithOffset(workWeekOffset);
   const p=workPlans[type+'_'+key];
   if(!p?.content) return [];
   try{return JSON.parse(p.content);}catch{return [];}
@@ -3143,12 +3153,12 @@ async function moveWorkPlanItem(type,i,dir){
   renderWorkPlanList(type);
 }
 
+function moveWorkWeek(dir){ workWeekOffset+=dir; renderWorkPlans(); }
 function renderWorkPlans(){
   const now=new Date();
-  const monthKey=workPlanMonthKey();
-  const weekKey=workPlanWeekKey();
   document.getElementById('workMonthlyPeriod').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월`;
-  document.getElementById('workWeeklyPlanPeriod').textContent=workPlanWeekLabel(weekKey);
+  document.getElementById('workWeeklyPlanPeriod').innerHTML=
+    `<button class="plan-week-nav" onclick="event.stopPropagation();moveWorkWeek(-1)">‹</button><span>${workPlanWeekLabel(weekKeyWithOffset(workWeekOffset))}</span><button class="plan-week-nav" onclick="event.stopPropagation();moveWorkWeek(1)">›</button>`;
   ['monthly','weekly'].forEach(type=>{
     const items=workPlanItems(type);
     const done=items.filter(x=>x.done).length;
@@ -3173,7 +3183,7 @@ function toggleWorkPlan(type){
 }
 
 async function _saveWorkPlanItems(type,items){
-  const key=type==='monthly'?workPlanMonthKey():workPlanWeekKey();
+  const key=type==='monthly'?workPlanMonthKey():weekKeyWithOffset(workWeekOffset);
   const content=JSON.stringify(items);
   const existing=workPlans[type+'_'+key];
   let res;
