@@ -2769,7 +2769,7 @@ async function movePersonalPlanItem(type,i,dir){
   await _savePersonalPlanItems(type,items);
   renderPersonalPlanList(type);
 }
-function movePersonalWeek(dir){ personalWeekOffset+=dir; renderPersonalPlans(); }
+function movePersonalWeek(dir){ personalWeekOffset+=dir; renderPersonalPlans(); renderWeekCal(); }
 function renderPersonalPlans(){
   const now=new Date();
   document.getElementById('personalMonthlyPeriod').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월`;
@@ -2843,9 +2843,9 @@ function editPersonalPlanItem(type,i){
 // ── 주간 달력 (개인) ──
 let weekCalDate=null; // 현재 열려있는 날 (입력 모달용)
 
-function weekCalDays(){
+function weekCalDays(offset=0){
   const mon=new Date(); const dow=mon.getDay()||7;
-  mon.setDate(mon.getDate()-dow+1);
+  mon.setDate(mon.getDate()-dow+1+(offset*7));
   return Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
 }
 
@@ -2971,7 +2971,7 @@ function closeWeekDayModal(){
 function renderWeekCal(){
   const el=document.getElementById('personalWeekCal'); if(!el) return;
   const today=toDateStr(new Date());
-  const days=weekCalDays();
+  const days=weekCalDays(personalWeekOffset);
   const dows=['월','화','수','목','금','토','일'];
   el.innerHTML=`<div class="week-cal">${days.map((d,di)=>{
     const key=personalDayKey(d);
@@ -3039,7 +3039,7 @@ async function _saveWorkDayItems(dateKey,items){
 function renderWorkWeekCal(){
   const el=document.getElementById('workWeekCal'); if(!el) return;
   const today=toDateStr(new Date());
-  const days=weekCalDays();
+  const days=weekCalDays(workWeekOffset);
   const dows=['월','화','수','목','금','토','일'];
   el.innerHTML=`<div class="week-cal">${days.map((d,di)=>{
     const key=toDateStr(d);
@@ -3153,7 +3153,7 @@ async function moveWorkPlanItem(type,i,dir){
   renderWorkPlanList(type);
 }
 
-function moveWorkWeek(dir){ workWeekOffset+=dir; renderWorkPlans(); }
+function moveWorkWeek(dir){ workWeekOffset+=dir; renderWorkPlans(); renderWorkWeekCal(); }
 function renderWorkPlans(){
   const now=new Date();
   document.getElementById('workMonthlyPeriod').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월`;
