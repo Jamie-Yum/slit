@@ -1813,8 +1813,27 @@ function toTimeStr(d){return pad(d.getHours())+':'+pad(d.getMinutes());}
 function fmtTime(d){return pad(d.getHours())+':'+pad(d.getMinutes());}
 function fmtDur(min){if(!min||min<=0)return'—';const h=Math.floor(min/60),m=min%60;return h>0?(m>0?`${h}시간 ${m}분`:`${h}시간`):`${m}분`;}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function isSlitDirty(){
+  const st=document.getElementById('b-start-time')?.value;
+  const et=document.getElementById('b-end-time')?.value;
+  const title=document.getElementById('slitTitle')?.value?.trim();
+  const hasPick=picks&&(picks.start||picks.end||picks.during);
+  return !!(st||et||title||hasPick);
+}
+
+function tryCloseSlitModal(){
+  if(!isSlitDirty()){closeModal('slitModal');return;}
+  if(confirm('작성 중인 내용이 있어요. 닫으면 사라져요.\n정말 닫을까요?')){
+    closeModal('slitModal');
+  }
+}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
+document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{
+  if(e.target!==el) return;
+  if(el.id==='slitModal'){tryCloseSlitModal();return;}
+  el.classList.remove('open');
+}));
 
 function startClock(){updateClock();setInterval(updateClock,1000);}
 function updateClock(){
