@@ -1495,7 +1495,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
           <div class="board-time-label lbl-st">시작</div>
           <div class="board-time-display" id="b-start-display">--:--</div>
           <!-- 투명 time input: 탭하면 피커가 뜨고, 선택하면 표시값 업데이트 -->
-          <input class="board-time-edit" id="b-start-time" type="time" oninput="overviewTimeChanged('start')">
+          <input class="board-time-edit" id="b-start-time" type="time" oninput="overviewTimeChanged('start')" onchange="overviewTimeChanged('start')">
         </div>
         <div class="board-dur-mid" style="flex:0.8;">
           <div class="board-dur-text" id="b-duration">—</div>
@@ -1504,7 +1504,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <div class="board-time-box box-end-t" style="flex:1;">
           <div class="board-time-label lbl-et">종료</div>
           <div class="board-time-display" id="b-end-display">--:--</div>
-          <input class="board-time-edit" id="b-end-time" type="time" oninput="overviewTimeChanged('end')">
+          <input class="board-time-edit" id="b-end-time" type="time" oninput="overviewTimeChanged('end')" onchange="overviewTimeChanged('end')">
         </div>
       </div>
     </div>
