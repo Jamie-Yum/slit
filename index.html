@@ -186,7 +186,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .board-during-name { font-size:24px; font-weight:700; color:var(--text3); transition:all 0.2s; letter-spacing:-0.01em; }
 .board-during-name.set { color:var(--ing); transform:scale(1.05); display:inline-block; }
 .board-time-row { display:flex; align-items:center; gap:6px; }
-.board-time-box { flex:1; background:white; border-radius:var(--radius); padding:8px 6px; text-align:center; border:2px solid var(--border2); position:relative; overflow:hidden; }
+.board-time-box { flex:1; background:white; border-radius:var(--radius); padding:8px 6px; text-align:center; border:2px solid var(--border2); position:relative; }
 .board-time-box.box-start-t { border-color:var(--start-border); background:var(--start-bg); }
 .board-time-box.box-end-t { border-color:var(--end-border); background:var(--end-bg); }
 .board-time-label { font-size:10px; margin-bottom:2px; font-weight:700; font-family:var(--mono); letter-spacing:0.08em; }
@@ -197,16 +197,14 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .board-time-val.set-et { color:var(--end); }
 /* time input을 박스 전체에 투명하게 깔아서 탭하면 피커가 뜨도록 */
 .board-time-edit {
-  position:absolute; inset:0; width:100%; height:100%;
-  opacity:0; cursor:pointer;
-  -webkit-appearance:none; border:none; background:none;
-}
-.board-time-display {
+  width:100%; border:none; background:none; outline:none;
   font-family:var(--mono); font-size:18px; font-weight:700;
-  color:var(--text3); pointer-events:none;
+  color:var(--text3); text-align:center; cursor:pointer;
+  -webkit-appearance:none; padding:0;
 }
-.board-time-display.set-st { color:var(--start); }
-.board-time-display.set-et { color:var(--end); }
+.board-time-edit.set-st { color:var(--start); }
+.board-time-edit.set-et { color:var(--end); }
+.board-time-display { display:none; }
 .board-dur-mid { flex:1; text-align:center; }
 .board-dur-text { font-size:12px; color:var(--text2); margin-bottom:4px; font-weight:500; }
 .board-dur-bar { height:3px; background:var(--border); border-radius:2px; position:relative; overflow:hidden; }
@@ -1493,9 +1491,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <div class="board-time-row">
         <div class="board-time-box box-start-t" style="flex:1;">
           <div class="board-time-label lbl-st">시작</div>
-          <div class="board-time-display" id="b-start-display">--:--</div>
-          <!-- 투명 time input: 탭하면 피커가 뜨고, 선택하면 표시값 업데이트 -->
-          <input class="board-time-edit" id="b-start-time" type="time" oninput="overviewTimeChanged('start')" onchange="overviewTimeChanged('start')">
+          <input class="board-time-edit" id="b-start-time" type="time" oninput="overviewTimeChanged('start')">
         </div>
         <div class="board-dur-mid" style="flex:0.8;">
           <div class="board-dur-text" id="b-duration">—</div>
@@ -1503,8 +1499,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         </div>
         <div class="board-time-box box-end-t" style="flex:1;">
           <div class="board-time-label lbl-et">종료</div>
-          <div class="board-time-display" id="b-end-display">--:--</div>
-          <input class="board-time-edit" id="b-end-time" type="time" oninput="overviewTimeChanged('end')" onchange="overviewTimeChanged('end')">
+          <input class="board-time-edit" id="b-end-time" type="time" oninput="overviewTimeChanged('end')">
         </div>
       </div>
     </div>
@@ -1818,8 +1813,27 @@ function toTimeStr(d){return pad(d.getHours())+':'+pad(d.getMinutes());}
 function fmtTime(d){return pad(d.getHours())+':'+pad(d.getMinutes());}
 function fmtDur(min){if(!min||min<=0)return'—';const h=Math.floor(min/60),m=min%60;return h>0?(m>0?`${h}시간 ${m}분`:`${h}시간`):`${m}분`;}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function isSlitDirty(){
+  const st=document.getElementById('b-start-time')?.value;
+  const et=document.getElementById('b-end-time')?.value;
+  const title=document.getElementById('slitTitle')?.value?.trim();
+  const hasPick=picks&&(picks.start||picks.end||picks.during);
+  return !!(st||et||title||hasPick);
+}
+
+function tryCloseSlitModal(){
+  if(!isSlitDirty()){closeModal('slitModal');return;}
+  if(confirm('작성 중인 내용이 있어요. 닫으면 사라져요.\n정말 닫을까요?')){
+    closeModal('slitModal');
+  }
+}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
+document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{
+  if(e.target!==el) return;
+  if(el.id==='slitModal'){tryCloseSlitModal();return;}
+  el.classList.remove('open');
+}));
 
 function startClock(){updateClock();setInterval(updateClock,1000);}
 function updateClock(){
@@ -5979,12 +5993,10 @@ function goStep(name){
 // Overview 시간 input 직접 수정 시
 // time input 값을 텍스트 표시로 동기화 (iOS Safari 대응)
 function syncTimeDisplay(){
-  const st=document.getElementById('b-start-time').value;
-  const et=document.getElementById('b-end-time').value;
-  const sd=document.getElementById('b-start-display');
-  const ed=document.getElementById('b-end-display');
-  if(sd){sd.textContent=st||'--:--';sd.className='board-time-display'+(st?' set-st':'');}
-  if(ed){ed.textContent=et||'--:--';ed.className='board-time-display'+(et?' set-et':'');}
+  const si=document.getElementById('b-start-time');
+  const ei=document.getElementById('b-end-time');
+  if(si){si.className='board-time-edit'+(si.value?' set-st':'');}
+  if(ei){ei.className='board-time-edit'+(ei.value?' set-et':'');}
 }
 function overviewTimeChanged(which){
   const st=document.getElementById('b-start-time').value;
