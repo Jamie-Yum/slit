@@ -1237,16 +1237,10 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <!-- Journey -->
       <div id="gardenJourney" style="display:none;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div class="section-title" style="margin:0;">Goal — 올해의 목표</div>
-          <button class="btn btn-ghost btn-sm" onclick="openBeingGoalModal()">+ 추가</button>
+          <div class="section-title" style="margin:0;">Goal & Project</div>
+          <button class="btn btn-ghost btn-sm" onclick="openBeingGoalModal()">+ Goal</button>
         </div>
         <div id="beingGoalList"></div>
-        <div style="height:20px;"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div class="section-title" style="margin:0;">Project — 용기 있는 도전</div>
-          <button class="btn btn-ghost btn-sm" onclick="openBeingProjectModal()">+ 추가</button>
-        </div>
-        <div id="beingProjectList"></div>
       </div>
 
       <!-- 사람 -->
@@ -3270,19 +3264,43 @@ async function loadBeingExtras(){
 
 function renderBeingGoals(){
   const el=document.getElementById('beingGoalList');if(!el)return;
-  const year=new Date().getFullYear();
   const byYear={};
   beingGoals.forEach(g=>{if(!byYear[g.year])byYear[g.year]=[];byYear[g.year].push(g);});
-  if(!beingGoals.length){el.innerHTML=`<div class="empty"><div class="empty-text">올해의 목표를 추가해보세요!</div></div>`;return;}
+  if(!beingGoals.length){el.innerHTML=`<div class="empty"><div class="empty-text">Goal을 추가해보세요!</div></div>`;return;}
   el.innerHTML=Object.entries(byYear).sort((a,b)=>b[0]-a[0]).map(([yr,goals])=>`
-    <div style="margin-bottom:16px;">
+    <div style="margin-bottom:20px;">
       <div class="section-title" style="margin-bottom:8px;">${yr}년</div>
       ${goals.map(g=>{
         const isDone=g.status==='done';
-        return `<div class="goal-block" style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:16px;">${isDone?'✅':'⭕'}</span>
-          <span style="flex:1;font-size:14px;${isDone?'text-decoration:line-through;color:var(--text3);':''}">${g.title}</span>
-          <button class="goal-edit-btn" onclick="openEditBeingGoal('${g.id}')">✎</button>
+        const projects=beingProjects.filter(p=>p.goal_id===g.id);
+        const projHtml=projects.map(p=>{
+          const checks=p.checklist||[];
+          const done=checks.filter(c=>c.done).length;
+          return `<div class="goal-block" style="margin-left:26px;margin-top:6px;padding:10px 12px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:${p.description||checks.length?'6px':'0'};">
+              <span style="font-size:14px;">🚀</span>
+              <span style="flex:1;font-size:13px;font-weight:600;">${p.title}</span>
+              ${p.due_date?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);">~ ${p.due_date}</span>`:''}
+              <button class="goal-edit-btn" onclick="openEditBeingProject('${p.id}')">✎</button>
+            </div>
+            ${p.description?`<div style="font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5;">${p.description}</div>`:''}
+            ${checks.length?`<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:4px;">
+              ${checks.map((c,i)=>`<div style="display:flex;align-items:center;gap:7px;">
+                <button class="step-check-box ${c.done?'done':''}" onclick="toggleProjectCheck('${p.id}',${i})"></button>
+                <span style="font-size:12px;color:var(--text2);${c.done?'text-decoration:line-through;color:var(--text3);':''}">${c.text}</span>
+              </div>`).join('')}
+            </div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--text3);">${done}/${checks.length} 완료</div>`:''}
+          </div>`;
+        }).join('');
+        return `<div style="margin-bottom:8px;">
+          <div class="goal-block" style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:16px;">${isDone?'✅':'⭕'}</span>
+            <span style="flex:1;font-size:14px;${isDone?'text-decoration:line-through;color:var(--text3);':''}">${g.title}</span>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 8px;" onclick="openBeingProjectModal('${g.id}')">+ Project</button>
+            <button class="goal-edit-btn" onclick="openEditBeingGoal('${g.id}')">✎</button>
+          </div>
+          ${projHtml}
         </div>`;
       }).join('')}
     </div>`).join('');
@@ -3373,7 +3391,12 @@ async function deleteBeingGoal(){
   closeWorkModal('beingGoalModal');await loadBeingExtras();showToast('삭제됐어요');
 }
 
-function openBeingProjectModal(){
+function renderBeingProjectGoalSelect(selectedId){
+  const el=document.getElementById('beingProjectGoalSelect');if(!el)return;
+  el.innerHTML=`<option value="">Goal 선택 (선택사항)</option>`+
+    beingGoals.map(g=>`<option value="${g.id}"${g.id===selectedId?' selected':''}>${g.title}</option>`).join('');
+}
+function openBeingProjectModal(goalId=''){
   document.getElementById('beingProjectModalTitle').textContent='Project 추가';
   document.getElementById('beingProjectEditId').value='';
   document.getElementById('beingProjectTitle').value='';
@@ -3381,6 +3404,7 @@ function openBeingProjectModal(){
   document.getElementById('beingProjectDue').value='';
   document.getElementById('beingProjectDeleteBtn').style.display='none';
   bpChecklist=[];renderBeingProjectChecklistEdit();
+  renderBeingProjectGoalSelect(goalId);
   document.getElementById('beingProjectModal').classList.add('open');
 }
 
@@ -3393,6 +3417,7 @@ function openEditBeingProject(id){
   document.getElementById('beingProjectDue').value=p.due_date||'';
   document.getElementById('beingProjectDeleteBtn').style.display='inline-flex';
   bpChecklist=[...(p.checklist||[])];renderBeingProjectChecklistEdit();
+  renderBeingProjectGoalSelect(p.goal_id||'');
   document.getElementById('beingProjectModal').classList.add('open');
 }
 
@@ -3418,9 +3443,11 @@ async function saveBeingProject(){
   const id=document.getElementById('beingProjectEditId').value;
   const title=document.getElementById('beingProjectTitle').value.trim();
   if(!title){showToast('이름을 입력해주세요');return;}
+  const goalId=document.getElementById('beingProjectGoalSelect')?.value||null;
   const data={title,description:document.getElementById('beingProjectDesc').value.trim()||null,
     due_date:document.getElementById('beingProjectDue').value||null,
-    checklist:bpChecklist,order_index:beingProjects.length};
+    checklist:bpChecklist,order_index:beingProjects.length,
+    goal_id:goalId||null};
   try{
     if(id) await sb.from('slit_being_projects').update(data).eq('id',id);
     else await sb.from('slit_being_projects').insert(data);
@@ -7559,6 +7586,10 @@ init();
     <div class="modal-handle"></div>
     <div class="modal-title" id="beingProjectModalTitle">Project 추가</div>
     <input type="hidden" id="beingProjectEditId">
+    <div class="form-group">
+      <label class="form-label">연결할 Goal</label>
+      <select class="form-input" id="beingProjectGoalSelect"></select>
+    </div>
     <div class="form-group">
       <label class="form-label">프로젝트 이름</label>
       <input class="form-input" id="beingProjectTitle" placeholder="예: 책 쓰기, 강연 열기">
