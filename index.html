@@ -34,6 +34,33 @@
 .money-type-btn{flex:1;padding:9px 4px;font-size:13px;font-weight:600;border-radius:var(--radius);border:2px solid var(--border2);background:white;cursor:pointer;transition:all 0.15s;color:var(--text2);}
 .money-type-btn.active-income{background:var(--ing-bg);border-color:var(--ing-border);color:var(--ing);}
 .money-type-btn.active-loss{background:#fdf0ef;border-color:#e8a89e;color:#c0392b;}
+.happiness-emoji-btn{background:var(--surface2);border:2px solid transparent;border-radius:8px;padding:6px 8px;font-size:18px;cursor:pointer;transition:all 0.12s;}
+.happiness-emoji-btn.active{border-color:var(--accent);background:var(--accent-bg);}
+.happiness-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:background 0.1s;}
+.happiness-item:hover{background:var(--surface2);}
+.happiness-item-emoji{font-size:24px;flex-shrink:0;line-height:1;}
+.happiness-item-date{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:4px;}
+.happiness-item-content{font-size:14px;color:var(--text);line-height:1.5;}
+.book-status-btn{flex:1;padding:8px 4px;font-size:12px;font-weight:600;border-radius:var(--radius);border:1.5px solid var(--border2);background:var(--surface);cursor:pointer;transition:all 0.12s;color:var(--text2);}
+.book-status-btn.active[data-status="want"]{background:var(--ft-bg);border-color:var(--ft-border);color:var(--ft);}
+.book-status-btn.active[data-status="reading"]{background:var(--ing-bg);border-color:var(--ing-border);color:var(--ing);}
+.book-status-btn.active[data-status="done"]{background:var(--end-bg);border-color:var(--end-border);color:var(--end);}
+.books-col{flex:1;min-width:160px;max-width:220px;}
+.books-col-header{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 10px;border-radius:var(--radius);margin-bottom:8px;text-align:center;}
+.books-col-header.want{background:var(--ft-bg);color:var(--ft);}
+.books-col-header.reading{background:var(--ing-bg);color:var(--ing);}
+.books-col-header.done{background:var(--end-bg);color:var(--end);}
+.book-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px;cursor:pointer;transition:background 0.1s;}
+.book-card:hover{background:var(--surface2);}
+.book-card-cover{width:100%;max-height:80px;object-fit:cover;border-radius:4px;margin-bottom:6px;}
+.book-card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;line-height:1.3;}
+.book-card-author{font-size:11px;color:var(--text3);}
+.book-card-actions{display:flex;gap:4px;margin-top:8px;}
+.book-action-btn{flex:1;padding:4px;font-size:10px;border:1px solid var(--border2);border-radius:4px;background:none;cursor:pointer;color:var(--text2);font-weight:500;}
+.book-action-btn:hover{background:var(--surface2);}
+.excerpt-item{padding:12px;border-left:3px solid var(--accent);background:var(--accent-bg);border-radius:0 var(--radius) var(--radius) 0;margin-bottom:10px;}
+.excerpt-item-content{font-size:14px;color:var(--text);line-height:1.6;font-style:italic;}
+.excerpt-item-meta{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:6px;display:flex;justify-content:space-between;}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1153,6 +1180,8 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <button class="stats-tab" id="gardenTabJourney" onclick="switchGardenTab('journey',this)">Journey</button>
         <button class="stats-tab" id="gardenTabPeople" onclick="switchGardenTab('people',this)">사람</button>
         <button class="stats-tab" id="gardenTabMoney" onclick="switchGardenTab('money',this)">Money</button>
+        <button class="stats-tab" id="gardenTabHappiness" onclick="switchGardenTab('happiness',this)">행복</button>
+        <button class="stats-tab" id="gardenTabBooks" onclick="switchGardenTab('books',this)">독서</button>
       </div>
 
       <!-- Light -->
@@ -1267,6 +1296,24 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <div id="moneySummaryMonth" style="display:flex;gap:10px;margin-bottom:14px;"></div>
         <!-- 기록 목록 -->
         <div id="moneyList"></div>
+      </div>
+
+      <!-- 행복 기록 -->
+      <div id="gardenHappiness" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="section-title" style="margin:0;">소소한 행복</div>
+          <button class="btn btn-ghost btn-sm" onclick="openHappinessModal()">+ 기록</button>
+        </div>
+        <div id="happinessList"></div>
+      </div>
+
+      <!-- 독서 칸반 -->
+      <div id="gardenBooks" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="section-title" style="margin:0;">독서</div>
+          <button class="btn btn-ghost btn-sm" onclick="openBookModal()">+ 책 추가</button>
+        </div>
+        <div id="booksKanban"></div>
       </div>
     </div>
 
@@ -1779,8 +1826,268 @@ let slits=[],people=[],pMap={},tMap={},memos=[];
 let slitMode='between',picks={start:null,end:null,during:null},activeSlot='start',curCat=0;
 let draftTasks=[],selPeople=[],draftAvoids=[],curPeriod='day',pType='person';
 
+// ── 행복 기록 ──
+let happinessLogs=[];
+let editHappinessId=null;
+
+async function loadHappiness(){
+  try{
+    const{data,error}=await sb.from('slit_happiness_logs').select('*').order('recorded_at',{ascending:false}).order('created_at',{ascending:false});
+    if(error) throw error;
+    happinessLogs=data||[];
+  }catch(e){happinessLogs=[];}
+}
+
+function renderHappiness(){
+  const el=document.getElementById('happinessList');if(!el)return;
+  if(!happinessLogs.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">✨</div><div class="empty-text">소소한 행복을 기록해보세요</div></div>`;return;
+  }
+  el.innerHTML=happinessLogs.map(h=>`
+    <div class="happiness-item" onclick="openHappinessModal('${h.id}')">
+      <div class="happiness-item-emoji">${h.emoji||'✨'}</div>
+      <div style="flex:1;">
+        <div class="happiness-item-date">${h.recorded_at}</div>
+        <div class="happiness-item-content">${h.content}</div>
+      </div>
+    </div>`).join('');
+}
+
+function openHappinessModal(id){
+  editHappinessId=id||null;
+  document.getElementById('happinessModalTitle').textContent=id?'행복 기록 수정':'행복 기록';
+  document.getElementById('happinessDeleteBtn').style.display=id?'':'none';
+  const today=toDateStr(new Date());
+  if(id){
+    const h=happinessLogs.find(x=>x.id===id);if(!h)return;
+    document.getElementById('happinessDate').value=h.recorded_at;
+    document.getElementById('happinessContent').value=h.content;
+    document.getElementById('happinessEmoji').value=h.emoji||'✨';
+    document.querySelectorAll('.happiness-emoji-btn').forEach(b=>{b.classList.toggle('active',b.textContent.trim()===(h.emoji||'✨'));});
+  } else {
+    document.getElementById('happinessDate').value=today;
+    document.getElementById('happinessContent').value='';
+    document.getElementById('happinessEmoji').value='✨';
+    document.querySelectorAll('.happiness-emoji-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  }
+  document.getElementById('happinessModal').classList.add('open');
+  setTimeout(()=>document.getElementById('happinessContent').focus(),100);
+}
+
+function selectHappinessEmoji(btn,emoji){
+  document.querySelectorAll('.happiness-emoji-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('happinessEmoji').value=emoji;
+}
+
+async function saveHappiness(){
+  const date=document.getElementById('happinessDate').value;
+  const content=document.getElementById('happinessContent').value.trim();
+  const emoji=document.getElementById('happinessEmoji').value||'✨';
+  if(!date||!content){showToast('날짜와 내용을 입력해주세요');return;}
+  const data={recorded_at:date,content,emoji};
+  let res;
+  if(editHappinessId){
+    res=await sb.from('slit_happiness_logs').update(data).eq('id',editHappinessId);
+  } else {
+    res=await sb.from('slit_happiness_logs').insert(data);
+  }
+  if(res.error){showToast('저장 실패: '+res.error.message);return;}
+  closeModal('happinessModal');
+  await loadHappiness();
+  renderHappiness();
+  showToast('저장되었습니다 ✨');
+}
+
+async function deleteHappiness(){
+  if(!editHappinessId)return;
+  if(!confirm('이 기록을 삭제할까요?'))return;
+  const res=await sb.from('slit_happiness_logs').delete().eq('id',editHappinessId);
+  if(res.error){showToast('삭제 실패');return;}
+  closeModal('happinessModal');
+  await loadHappiness();
+  renderHappiness();
+  showToast('삭제되었습니다');
+}
+
+// ── 독서 칸반 ──
+let books=[], bookExcerpts=[];
+let editBookId=null, excerptBookId=null;
+
+async function loadBooks(){
+  try{
+    const[b,e]=await Promise.all([
+      sb.from('slit_books').select('*').order('order_index').order('created_at',{ascending:false}),
+      sb.from('slit_book_excerpts').select('*').order('created_at',{ascending:false}),
+    ]);
+    books=b.data||[]; bookExcerpts=e.data||[];
+  }catch(e){books=[];bookExcerpts=[];}
+}
+
+function renderBooksKanban(){
+  const el=document.getElementById('booksKanban');if(!el)return;
+  const cols=[
+    {status:'want',label:'읽고 싶다',cls:'want'},
+    {status:'reading',label:'읽는 중',cls:'reading'},
+    {status:'done',label:'완독',cls:'done'},
+  ];
+  el.innerHTML=`<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;">
+    ${cols.map(col=>{
+      const colBooks=books.filter(b=>b.status===col.status);
+      return `<div class="books-col">
+        <div class="books-col-header ${col.cls}">${col.label} ${colBooks.length?`<span style="opacity:0.7;">(${colBooks.length})</span>`:''}</div>
+        ${colBooks.length?colBooks.map(b=>bookCardHtml(b)).join(''):`<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3);border:1.5px dashed var(--border);border-radius:var(--radius);">비어있어요</div>`}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function bookCardHtml(b){
+  const excerptCount=bookExcerpts.filter(e=>e.book_id===b.id).length;
+  return `<div class="book-card" onclick="openBookModal('${b.id}')">
+    ${b.cover_url?`<img class="book-card-cover" src="${b.cover_url}" alt="${b.title}" onerror="this.style.display='none'">`:''}
+    <div class="book-card-title">${b.title}</div>
+    ${b.author?`<div class="book-card-author">${b.author}</div>`:''}
+    ${b.start_date||b.end_date?`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;">${b.start_date||'?'} ~ ${b.end_date||''}</div>`:''}
+    <div class="book-card-actions" onclick="event.stopPropagation()">
+      <button class="book-action-btn" onclick="openExcerptsModal('${b.id}')">✏ 필사${excerptCount?` (${excerptCount})`:''}</button>
+      ${b.status!=='want'?`<button class="book-action-btn" onclick="moveBook('${b.id}','want')">읽고싶다</button>`:''}
+      ${b.status!=='reading'?`<button class="book-action-btn" onclick="moveBook('${b.id}','reading')">읽는중</button>`:''}
+      ${b.status!=='done'?`<button class="book-action-btn" onclick="moveBook('${b.id}','done')">완독</button>`:''}
+    </div>
+  </div>`;
+}
+
+async function moveBook(id,status){
+  const res=await sb.from('slit_books').update({status,updated_at:new Date().toISOString()}).eq('id',id);
+  if(res.error){showToast('변경 실패');return;}
+  await loadBooks();
+  renderBooksKanban();
+}
+
+function openBookModal(id){
+  editBookId=id||null;
+  document.getElementById('bookModalTitle').textContent=id?'책 수정':'책 추가';
+  document.getElementById('bookDeleteBtn').style.display=id?'':'none';
+  if(id){
+    const b=books.find(x=>x.id===id);if(!b)return;
+    document.getElementById('bookTitle').value=b.title;
+    document.getElementById('bookAuthor').value=b.author||'';
+    document.getElementById('bookCoverUrl').value=b.cover_url||'';
+    document.getElementById('bookStatus').value=b.status||'want';
+    document.getElementById('bookStartDate').value=b.start_date||'';
+    document.getElementById('bookEndDate').value=b.end_date||'';
+    document.getElementById('bookMemo').value=b.memo||'';
+    const prev=document.getElementById('bookCoverPreview');
+    prev.src=b.cover_url||'';prev.style.display=b.cover_url?'block':'none';
+  } else {
+    ['bookTitle','bookAuthor','bookCoverUrl','bookStartDate','bookEndDate','bookMemo'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('bookStatus').value='want';
+    document.getElementById('bookCoverPreview').style.display='none';
+  }
+  document.querySelectorAll('.book-status-btn').forEach(b=>b.classList.toggle('active',b.dataset.status===(document.getElementById('bookStatus').value)));
+  document.getElementById('bookModal').classList.add('open');
+  setTimeout(()=>document.getElementById('bookTitle').focus(),100);
+}
+
+function selectBookStatus(btn){
+  document.querySelectorAll('.book-status-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('bookStatus').value=btn.dataset.status;
+}
+
+function previewBookCover(){
+  const url=document.getElementById('bookCoverUrl').value.trim();
+  const prev=document.getElementById('bookCoverPreview');
+  prev.src=url;prev.style.display=url?'block':'none';
+}
+
+async function saveBook(){
+  const title=document.getElementById('bookTitle').value.trim();
+  if(!title){showToast('제목을 입력해주세요');return;}
+  const data={
+    title,
+    author:document.getElementById('bookAuthor').value.trim()||null,
+    cover_url:document.getElementById('bookCoverUrl').value.trim()||null,
+    status:document.getElementById('bookStatus').value||'want',
+    start_date:document.getElementById('bookStartDate').value||null,
+    end_date:document.getElementById('bookEndDate').value||null,
+    memo:document.getElementById('bookMemo').value.trim()||null,
+    updated_at:new Date().toISOString(),
+  };
+  let res;
+  if(editBookId){
+    res=await sb.from('slit_books').update(data).eq('id',editBookId);
+  } else {
+    res=await sb.from('slit_books').insert(data);
+  }
+  if(res.error){showToast('저장 실패: '+res.error.message);return;}
+  closeModal('bookModal');
+  await loadBooks();
+  renderBooksKanban();
+  showToast('저장되었습니다');
+}
+
+async function deleteBook(){
+  if(!editBookId)return;
+  if(!confirm('이 책을 삭제할까요? 필사 기록도 함께 삭제됩니다.'))return;
+  const res=await sb.from('slit_books').delete().eq('id',editBookId);
+  if(res.error){showToast('삭제 실패');return;}
+  closeModal('bookModal');
+  await loadBooks();
+  renderBooksKanban();
+  showToast('삭제되었습니다');
+}
+
+function openExcerptsModal(bookId){
+  excerptBookId=bookId;
+  const b=books.find(x=>x.id===bookId);
+  document.getElementById('excerptModalTitle').textContent=(b?b.title:'')+'  필사';
+  document.getElementById('excerptContent').value='';
+  document.getElementById('excerptPageRef').value='';
+  renderExcerptList();
+  document.getElementById('excerptModal').classList.add('open');
+  setTimeout(()=>document.getElementById('excerptContent').focus(),100);
+}
+
+function renderExcerptList(){
+  const el=document.getElementById('excerptList');if(!el)return;
+  const list=bookExcerpts.filter(e=>e.book_id===excerptBookId);
+  if(!list.length){el.innerHTML=`<div style="text-align:center;padding:20px;font-size:13px;color:var(--text3);">아직 필사한 문장이 없어요</div>`;return;}
+  el.innerHTML=list.map(e=>`<div class="excerpt-item">
+    <div class="excerpt-item-content">${e.content}</div>
+    <div class="excerpt-item-meta">
+      <span>${e.page_ref||''}</span>
+      <button onclick="deleteExcerpt('${e.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;">삭제</button>
+    </div>
+  </div>`).join('');
+}
+
+async function saveExcerpt(){
+  const content=document.getElementById('excerptContent').value.trim();
+  if(!content){showToast('내용을 입력해주세요');return;}
+  const pageRef=document.getElementById('excerptPageRef').value.trim();
+  const res=await sb.from('slit_book_excerpts').insert({book_id:excerptBookId,content,page_ref:pageRef||null});
+  if(res.error){showToast('저장 실패: '+res.error.message);return;}
+  document.getElementById('excerptContent').value='';
+  document.getElementById('excerptPageRef').value='';
+  const{data}=await sb.from('slit_book_excerpts').select('*').eq('book_id',excerptBookId).order('created_at',{ascending:false});
+  bookExcerpts=[...bookExcerpts.filter(e=>e.book_id!==excerptBookId),...(data||[])];
+  renderExcerptList();
+  renderBooksKanban();
+  showToast('필사 저장 완료');
+}
+
+async function deleteExcerpt(id){
+  if(!confirm('이 필사를 삭제할까요?'))return;
+  await sb.from('slit_book_excerpts').delete().eq('id',id);
+  bookExcerpts=bookExcerpts.filter(e=>e.id!==id);
+  renderExcerptList();
+  renderBooksKanban();
+}
+
 async function init() {
-  await loadAll(); await loadWaves(); await loadRoutines(); await loadVmv(); await loadWork(); await loadBeingExtras(); await loadLearn(); await loadPersonalPlans(); await loadWorkPlans(); startClock(); renderToday(); renderStats(); initMemo();
+  await loadAll(); await loadWaves(); await loadRoutines(); await loadVmv(); await loadWork(); await loadBeingExtras(); await loadLearn(); await loadPersonalPlans(); await loadWorkPlans(); await loadHappiness(); await loadBooks(); startClock(); renderToday(); renderStats(); initMemo();
 }
 async function loadAll() {
   try {
@@ -2631,13 +2938,17 @@ function renderMoneyView(){
 
 // ── 가꾸기 탭 ──
 function switchGardenTab(tab,btn){
-  ['gardenTabVmv','gardenTabJourney','gardenTabPeople','gardenTabMoney'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
+  ['gardenTabVmv','gardenTabJourney','gardenTabPeople','gardenTabMoney','gardenTabHappiness','gardenTabBooks'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
   btn.classList.add('active');
   document.getElementById('gardenVmv').style.display=tab==='vmv'?'block':'none';
   document.getElementById('gardenJourney').style.display=tab==='journey'?'block':'none';
   document.getElementById('gardenPeople').style.display=tab==='people'?'block':'none';
   document.getElementById('gardenMoney').style.display=tab==='money'?'block':'none';
+  document.getElementById('gardenHappiness').style.display=tab==='happiness'?'block':'none';
+  document.getElementById('gardenBooks').style.display=tab==='books'?'block':'none';
   if(tab==='money') renderMoneyView();
+  if(tab==='happiness') renderHappiness();
+  if(tab==='books') renderBooksKanban();
 }
 
 // ── VMV ──
@@ -7841,6 +8152,120 @@ init();
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('routineModal')">취소</button>
       <button class="btn btn-primary" onclick="saveRoutine()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- HAPPINESS MODAL -->
+<div class="modal-overlay" id="happinessModal">
+  <div class="modal-box" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title" id="happinessModalTitle">행복 기록</div>
+      <button class="modal-close" onclick="closeModal('happinessModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">날짜</label>
+      <input class="form-input" type="date" id="happinessDate">
+    </div>
+    <div class="form-group">
+      <label class="form-label">이모지</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="happinessEmojiPicker">
+        <button class="happiness-emoji-btn active" onclick="selectHappinessEmoji(this,'✨')">✨</button>
+        <button class="happiness-emoji-btn" onclick="selectHappinessEmoji(this,'😊')">😊</button>
+        <button class="happiness-emoji-btn" onclick="selectHappinessEmoji(this,'🌸')">🌸</button>
+        <button class="happiness-emoji-btn" onclick="selectHappinessEmoji(this,'☀️')">☀️</button>
+        <button class="happiness-emoji-btn" onclick="selectHappinessEmoji(this,'🍀')">🍀</button>
+        <button class="happiness-emoji-btn" onclick="selectHappinessEmoji(this,'🎵')">🎵</button>
+        <button class="happiness-emoji-btn" onclick="selectHappinessEmoji(this,'🌙')">🌙</button>
+        <button class="happiness-emoji-btn" onclick="selectHappinessEmoji(this,'🍵')">🍵</button>
+        <button class="happiness-emoji-btn" onclick="selectHappinessEmoji(this,'💚')">💚</button>
+        <button class="happiness-emoji-btn" onclick="selectHappinessEmoji(this,'🌿')">🌿</button>
+      </div>
+      <input type="hidden" id="happinessEmoji" value="✨">
+    </div>
+    <div class="form-group">
+      <label class="form-label">기록</label>
+      <textarea class="form-textarea" id="happinessContent" placeholder="오늘 어떤 순간이 좋았나요?" style="min-height:100px;"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" id="happinessDeleteBtn" onclick="deleteHappiness()" style="display:none;">삭제</button>
+      <div style="flex:1;"></div>
+      <button class="btn btn-ghost" onclick="closeModal('happinessModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveHappiness()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOOK MODAL -->
+<div class="modal-overlay" id="bookModal">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-header">
+      <div class="modal-title" id="bookModalTitle">책 추가</div>
+      <button class="modal-close" onclick="closeModal('bookModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">제목 *</label>
+      <input class="form-input" id="bookTitle" placeholder="책 제목">
+    </div>
+    <div class="form-group">
+      <label class="form-label">저자</label>
+      <input class="form-input" id="bookAuthor" placeholder="저자명">
+    </div>
+    <div class="form-group">
+      <label class="form-label">표지 이미지 URL</label>
+      <input class="form-input" id="bookCoverUrl" placeholder="https://..." oninput="previewBookCover()">
+      <img id="bookCoverPreview" style="margin-top:8px;max-height:80px;border-radius:4px;display:none;" alt="표지">
+    </div>
+    <div class="form-group">
+      <label class="form-label">상태</label>
+      <div style="display:flex;gap:8px;">
+        <button class="book-status-btn active" data-status="want" onclick="selectBookStatus(this)">읽고 싶다</button>
+        <button class="book-status-btn" data-status="reading" onclick="selectBookStatus(this)">읽는 중</button>
+        <button class="book-status-btn" data-status="done" onclick="selectBookStatus(this)">완독</button>
+      </div>
+      <input type="hidden" id="bookStatus" value="want">
+    </div>
+    <div style="display:flex;gap:10px;">
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">시작일</label>
+        <input class="form-input" type="date" id="bookStartDate">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">완독일</label>
+        <input class="form-input" type="date" id="bookEndDate">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">메모</label>
+      <textarea class="form-textarea" id="bookMemo" placeholder="이 책에 대한 생각, 관련 콘텐츠 등" style="min-height:80px;"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" id="bookDeleteBtn" onclick="deleteBook()" style="display:none;">삭제</button>
+      <div style="flex:1;"></div>
+      <button class="btn btn-ghost" onclick="closeModal('bookModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveBook()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXCERPT MODAL -->
+<div class="modal-overlay" id="excerptModal">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title" id="excerptModalTitle">필사</div>
+      <button class="modal-close" onclick="closeModal('excerptModal')">✕</button>
+    </div>
+    <div style="margin-bottom:14px;">
+      <textarea class="form-textarea" id="excerptContent" placeholder="마음에 와닿은 문장을 적어보세요..." style="min-height:120px;"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+        <input class="form-input" id="excerptPageRef" placeholder="p.123" style="width:100px;flex-shrink:0;">
+        <button class="btn btn-primary btn-sm" onclick="saveExcerpt()" style="white-space:nowrap;">+ 추가</button>
+      </div>
+    </div>
+    <div id="excerptList" style="max-height:300px;overflow-y:auto;"></div>
+    <div class="modal-actions" style="margin-top:8px;">
+      <div style="flex:1;"></div>
+      <button class="btn btn-ghost" onclick="closeModal('excerptModal')">닫기</button>
     </div>
   </div>
 </div>
