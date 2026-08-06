@@ -45,19 +45,23 @@
 .book-status-btn.active[data-status="want"]{background:var(--ft-bg);border-color:var(--ft-border);color:var(--ft);}
 .book-status-btn.active[data-status="reading"]{background:var(--ing-bg);border-color:var(--ing-border);color:var(--ing);}
 .book-status-btn.active[data-status="done"]{background:var(--end-bg);border-color:var(--end-border);color:var(--end);}
-.books-col{flex:1;min-width:160px;max-width:220px;}
-.books-col-header{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 10px;border-radius:var(--radius);margin-bottom:8px;text-align:center;}
-.books-col-header.want{background:var(--ft-bg);color:var(--ft);}
-.books-col-header.reading{background:var(--ing-bg);color:var(--ing);}
-.books-col-header.done{background:var(--end-bg);color:var(--end);}
-.book-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px;cursor:pointer;transition:background 0.1s;}
+.books-status-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.books-status-tab{flex:1;padding:8px 4px;font-size:12px;font-weight:600;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text2);text-align:center;transition:all 0.12s;}
+.books-status-tab.want.active{background:var(--ft-bg);border-color:var(--ft-border);color:var(--ft);}
+.books-status-tab.reading.active{background:var(--ing-bg);border-color:var(--ing-border);color:var(--ing);}
+.books-status-tab.done.active{background:var(--end-bg);border-color:var(--end-border);color:var(--end);}
+.book-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:10px;cursor:pointer;transition:background 0.1s;display:flex;gap:12px;align-items:flex-start;}
 .book-card:hover{background:var(--surface2);}
-.book-card-cover{width:100%;max-height:80px;object-fit:cover;border-radius:4px;margin-bottom:6px;}
-.book-card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;line-height:1.3;}
-.book-card-author{font-size:11px;color:var(--text3);}
-.book-card-actions{display:flex;gap:4px;margin-top:8px;}
-.book-action-btn{flex:1;padding:4px;font-size:10px;border:1px solid var(--border2);border-radius:4px;background:none;cursor:pointer;color:var(--text2);font-weight:500;}
-.book-action-btn:hover{background:var(--surface2);}
+.book-card-cover-wrap{flex-shrink:0;width:52px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center;}
+.book-card-cover{width:100%;height:100%;object-fit:cover;}
+.book-card-cover-placeholder{font-size:22px;line-height:1;}
+.book-card-body{flex:1;min-width:0;}
+.book-card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;line-height:1.3;}
+.book-card-author{font-size:12px;color:var(--text3);margin-bottom:4px;}
+.book-card-date{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:6px;}
+.book-card-actions{display:flex;gap:4px;flex-wrap:wrap;}
+.book-action-btn{padding:4px 8px;font-size:11px;border:1px solid var(--border2);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text2);font-weight:500;white-space:nowrap;}
+.book-action-btn:hover{background:var(--border);}
 .excerpt-item{padding:12px;border-left:3px solid var(--accent);background:var(--accent-bg);border-radius:0 var(--radius) var(--radius) 0;margin-bottom:10px;}
 .excerpt-item-content{font-size:14px;color:var(--text);line-height:1.6;font-style:italic;}
 .excerpt-item-meta{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:6px;display:flex;justify-content:space-between;}
@@ -1924,36 +1928,55 @@ async function loadBooks(){
   }catch(e){books=[];bookExcerpts=[];}
 }
 
+let booksActiveTab='reading';
+
 function renderBooksKanban(){
   const el=document.getElementById('booksKanban');if(!el)return;
-  const cols=[
-    {status:'want',label:'읽고 싶다',cls:'want'},
-    {status:'reading',label:'읽는 중',cls:'reading'},
-    {status:'done',label:'완독',cls:'done'},
+  const tabs=[
+    {status:'want',label:'읽고 싶다'},
+    {status:'reading',label:'읽는 중'},
+    {status:'done',label:'완독'},
   ];
-  el.innerHTML=`<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;">
-    ${cols.map(col=>{
-      const colBooks=books.filter(b=>b.status===col.status);
-      return `<div class="books-col">
-        <div class="books-col-header ${col.cls}">${col.label} ${colBooks.length?`<span style="opacity:0.7;">(${colBooks.length})</span>`:''}</div>
-        ${colBooks.length?colBooks.map(b=>bookCardHtml(b)).join(''):`<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3);border:1.5px dashed var(--border);border-radius:var(--radius);">비어있어요</div>`}
-      </div>`;
-    }).join('')}
-  </div>`;
+  const colBooks=books.filter(b=>b.status===booksActiveTab);
+  el.innerHTML=`
+    <div class="books-status-tabs">
+      ${tabs.map(t=>{
+        const cnt=books.filter(b=>b.status===t.status).length;
+        return `<button class="books-status-tab ${t.status}${booksActiveTab===t.status?' active':''}" onclick="switchBooksTab('${t.status}')">
+          ${t.label}${cnt?` <span style="opacity:0.65;font-size:10px;">(${cnt})</span>`:''}
+        </button>`;
+      }).join('')}
+    </div>
+    <div id="booksTabContent">
+      ${colBooks.length
+        ? colBooks.map(b=>bookCardHtml(b)).join('')
+        : `<div style="padding:32px 16px;text-align:center;font-size:13px;color:var(--text3);">아직 없어요<br><span style="font-size:11px;opacity:0.6;">+ 책 추가로 등록해보세요</span></div>`
+      }
+    </div>`;
+}
+
+function switchBooksTab(status){
+  booksActiveTab=status;
+  renderBooksKanban();
 }
 
 function bookCardHtml(b){
   const excerptCount=bookExcerpts.filter(e=>e.book_id===b.id).length;
+  const coverHtml=b.cover_url
+    ? `<img class="book-card-cover" src="${b.cover_url}" alt="${b.title}" onerror="this.parentElement.innerHTML='<span class=\\'book-card-cover-placeholder\\'>📖</span>'">`
+    : `<span class="book-card-cover-placeholder">📖</span>`;
+  const statusLabels={want:'읽고싶다',reading:'읽는중',done:'완독'};
+  const otherStatuses=Object.entries(statusLabels).filter(([s])=>s!==b.status);
   return `<div class="book-card" onclick="openBookModal('${b.id}')">
-    ${b.cover_url?`<img class="book-card-cover" src="${b.cover_url}" alt="${b.title}" onerror="this.style.display='none'">`:''}
-    <div class="book-card-title">${b.title}</div>
-    ${b.author?`<div class="book-card-author">${b.author}</div>`:''}
-    ${b.start_date||b.end_date?`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;">${b.start_date||'?'} ~ ${b.end_date||''}</div>`:''}
-    <div class="book-card-actions" onclick="event.stopPropagation()">
-      <button class="book-action-btn" onclick="openExcerptsModal('${b.id}')">✏ 필사${excerptCount?` (${excerptCount})`:''}</button>
-      ${b.status!=='want'?`<button class="book-action-btn" onclick="moveBook('${b.id}','want')">읽고싶다</button>`:''}
-      ${b.status!=='reading'?`<button class="book-action-btn" onclick="moveBook('${b.id}','reading')">읽는중</button>`:''}
-      ${b.status!=='done'?`<button class="book-action-btn" onclick="moveBook('${b.id}','done')">완독</button>`:''}
+    <div class="book-card-cover-wrap">${coverHtml}</div>
+    <div class="book-card-body">
+      <div class="book-card-title">${b.title}</div>
+      ${b.author?`<div class="book-card-author">${b.author}</div>`:''}
+      ${b.start_date||b.end_date?`<div class="book-card-date">${b.start_date||'?'} ~ ${b.end_date||''}</div>`:''}
+      <div class="book-card-actions" onclick="event.stopPropagation()">
+        <button class="book-action-btn" onclick="openExcerptsModal('${b.id}')">✏ 필사${excerptCount?` (${excerptCount})`:''}</button>
+        ${otherStatuses.map(([s,l])=>`<button class="book-action-btn" onclick="moveBook('${b.id}','${s}')">${l}</button>`).join('')}
+      </div>
     </div>
   </div>`;
 }
