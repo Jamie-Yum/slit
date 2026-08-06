@@ -174,8 +174,9 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .btn-sm { padding:6px 11px; font-size:10px; }
 
 /* Modal */
-.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.2); z-index:200; align-items:flex-end; justify-content:center; }
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.3); z-index:200; align-items:flex-end; justify-content:center; }
 .modal-overlay.open { display:flex; }
+.modal-box { background:var(--surface); border-radius:var(--radius-lg) var(--radius-lg) 0 0; padding:20px; width:100%; overflow-y:auto; max-height:90vh; }
 .modal { background:var(--surface); border-radius:var(--radius-lg) var(--radius-lg) 0 0; padding:20px; width:100%; max-width:640px; max-height:92vh; overflow-y:auto; border-top:1px solid var(--border); display:flex; flex-direction:column; }
 .modal.slit-modal { padding:0; overflow:hidden; max-height:92dvh; height:92dvh; }
 .modal-scroll { overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px 20px 8px; flex:1; min-height:0; }
