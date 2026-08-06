@@ -2002,6 +2002,49 @@ function previewBookCover(){
   prev.src=url;prev.style.display=url?'block':'none';
 }
 
+const ALADIN_KEY='ttbyumspresso2318002';
+function searchBooks(){
+  const q=document.getElementById('bookSearchInput').value.trim();
+  if(!q)return;
+  const resultsEl=document.getElementById('bookSearchResults');
+  resultsEl.style.display='block';
+  resultsEl.innerHTML=`<div style="padding:14px;text-align:center;font-size:13px;color:var(--text3);">검색 중...</div>`;
+  const cb='_aladinCb_'+Date.now();
+  window[cb]=function(data){
+    delete window[cb];
+    document.getElementById('bookSearchScript')?.remove();
+    const items=data?.item||[];
+    if(!items.length){resultsEl.innerHTML=`<div style="padding:14px;text-align:center;font-size:13px;color:var(--text3);">결과가 없어요</div>`;return;}
+    resultsEl.innerHTML=items.map((item,i)=>`
+      <div onclick="selectAladinBook(${i})" data-idx="${i}" style="display:flex;gap:10px;padding:10px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.1s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+        ${item.cover?`<img src="${item.cover}" style="width:40px;height:56px;object-fit:cover;border-radius:3px;flex-shrink:0;" onerror="this.style.display='none'">`:'<div style="width:40px;height:56px;background:var(--surface2);border-radius:3px;flex-shrink:0;"></div>'}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
+          <div style="font-size:11px;color:var(--text3);">${item.author||''}</div>
+        </div>
+      </div>`).join('');
+    window._aladinItems=items;
+  };
+  const script=document.createElement('script');
+  script.id='bookSearchScript';
+  script.src=`https://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey=${ALADIN_KEY}&Query=${encodeURIComponent(q)}&QueryType=Keyword&MaxResults=10&SearchTarget=Book&output=js&Version=20131101&Callback=${cb}`;
+  script.onerror=()=>{resultsEl.innerHTML=`<div style="padding:14px;text-align:center;font-size:13px;color:var(--text3);">검색 실패. 다시 시도해주세요.</div>`;};
+  document.body.appendChild(script);
+}
+
+function selectAladinBook(idx){
+  const item=window._aladinItems?.[idx];if(!item)return;
+  document.getElementById('bookTitle').value=item.title||'';
+  const author=(item.author||'').replace(/\s*(지은이|저|글|역|옮김)\s*/g,'').replace(/,/g,' ·').trim();
+  document.getElementById('bookAuthor').value=author;
+  const cover=item.cover||'';
+  document.getElementById('bookCoverUrl').value=cover;
+  const prev=document.getElementById('bookCoverPreview');
+  prev.src=cover;prev.style.display=cover?'block':'none';
+  document.getElementById('bookSearchResults').style.display='none';
+  document.getElementById('bookSearchInput').value='';
+}
+
 async function saveBook(){
   const title=document.getElementById('bookTitle').value.trim();
   if(!title){showToast('제목을 입력해주세요');return;}
@@ -8203,6 +8246,16 @@ init();
       <div class="modal-title" id="bookModalTitle">책 추가</div>
       <button class="modal-close" onclick="closeModal('bookModal')">✕</button>
     </div>
+    <!-- 알라딘 검색 -->
+    <div class="form-group" id="bookSearchGroup">
+      <label class="form-label">책 검색 (알라딘)</label>
+      <div style="display:flex;gap:6px;">
+        <input class="form-input" id="bookSearchInput" placeholder="제목 또는 저자 검색..." onkeydown="if(event.key==='Enter')searchBooks()" style="flex:1;">
+        <button class="btn btn-ghost btn-sm" onclick="searchBooks()" style="white-space:nowrap;">검색</button>
+      </div>
+      <div id="bookSearchResults" style="margin-top:8px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);display:none;"></div>
+    </div>
+    <div style="border-top:1px solid var(--border);margin:4px 0 12px;"></div>
     <div class="form-group">
       <label class="form-label">제목 *</label>
       <input class="form-input" id="bookTitle" placeholder="책 제목">
