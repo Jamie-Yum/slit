@@ -790,6 +790,8 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
 .work-plan-period{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:600;flex:1;display:flex;align-items:center;gap:4px;}
 .plan-week-nav{background:none;border:none;color:var(--text2);cursor:pointer;font-size:13px;padding:0 2px;line-height:1;flex-shrink:0;}
 .plan-week-nav:hover{color:var(--accent);}
+.work-month-nav{background:none;border:none;color:var(--text2);cursor:pointer;font-size:24px;font-weight:300;padding:0 6px;line-height:1;flex-shrink:0;opacity:0.6;transition:opacity 0.1s,color 0.1s;}
+.work-month-nav:hover{color:var(--accent);opacity:1;}
 .work-plan-chevron{font-size:11px;color:var(--text3);transition:transform 0.15s;}
 .work-plan-chevron.open{transform:rotate(90deg);}
 .work-plan-body{padding:12px 14px;border-top:1px solid var(--border);}
@@ -1380,10 +1382,12 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <!-- 월간 계획 -->
         <div class="work-plan-section" id="workMonthlySection">
           <div class="work-plan-header" onclick="toggleWorkPlan('monthly')">
+            <button class="work-month-nav" onclick="event.stopPropagation();moveWorkMonth(-1)">‹</button>
             <span class="work-plan-label">📅 월간 업무 계획</span>
             <span class="work-plan-period" id="workMonthlyPeriod"></span>
             <span class="work-plan-progress" id="workMonthlyProgress"></span>
             <span class="work-plan-chevron" id="workMonthlyChevron">▸</span>
+            <button class="work-month-nav" onclick="event.stopPropagation();moveWorkMonth(1)">›</button>
           </div>
           <div class="work-plan-body" id="workMonthlyBody" style="display:none;">
             <div id="workMonthlyList"></div>
@@ -3376,7 +3380,18 @@ function renderWeekCal(){
   }).join('')}</div>`;
 }
 
-function workPlanMonthKey(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1);}
+let workMonthlyOffset=0;
+function workPlanMonthKey(){
+  const d=new Date();
+  d.setMonth(d.getMonth()+workMonthlyOffset);
+  return d.getFullYear()+'-'+pad(d.getMonth()+1);
+}
+function workMonthLabel(){
+  const d=new Date();
+  d.setMonth(d.getMonth()+workMonthlyOffset);
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월`;
+}
+function moveWorkMonth(dir){workMonthlyOffset+=dir;renderWorkPlans();}
 function workPlanWeekKey(){
   const dt=new Date();
   const day=dt.getDay()||7;
@@ -3539,7 +3554,7 @@ async function moveWorkPlanItem(type,i,dir){
 function moveWorkWeek(dir){ workWeekOffset+=dir; renderWorkPlans(); renderWorkWeekCal(); }
 function renderWorkPlans(){
   const now=new Date();
-  document.getElementById('workMonthlyPeriod').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월`;
+  document.getElementById('workMonthlyPeriod').textContent=workMonthLabel();
   document.getElementById('workWeeklyPlanPeriod').innerHTML=
     `<button class="plan-week-nav" onclick="event.stopPropagation();moveWorkWeek(-1)">‹</button><span>${workPlanWeekLabel(weekKeyWithOffset(workWeekOffset))}</span><button class="plan-week-nav" onclick="event.stopPropagation();moveWorkWeek(1)">›</button>`;
   ['monthly','weekly'].forEach(type=>{
