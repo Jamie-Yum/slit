@@ -1010,10 +1010,12 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <!-- 개인 월간 계획 -->
       <div class="work-plan-section" id="personalMonthlySection" style="margin-bottom:8px;">
         <div class="work-plan-header" onclick="togglePersonalPlan('monthly')">
+          <button class="work-month-nav" onclick="event.stopPropagation();movePersonalMonth(-1)">‹</button>
           <span class="work-plan-label">🌙 월간</span>
           <span class="work-plan-period" id="personalMonthlyPeriod"></span>
           <span class="work-plan-progress" id="personalMonthlyProgress"></span>
           <span class="work-plan-chevron" id="personalMonthlyChevron">▸</span>
+          <button class="work-month-nav" onclick="event.stopPropagation();movePersonalMonth(1)">›</button>
         </div>
         <div class="work-plan-body" id="personalMonthlyBody" style="display:none;">
           <div id="personalMonthlyList"></div>
@@ -1027,10 +1029,12 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <!-- 개인 주간 계획 -->
       <div class="work-plan-section" id="personalWeeklySection" style="margin-bottom:12px;">
         <div class="work-plan-header" onclick="togglePersonalPlan('weekly')">
+          <button class="work-month-nav" onclick="event.stopPropagation();movePersonalWeek(-1)">‹</button>
           <span class="work-plan-label">✦ 주간</span>
           <span class="work-plan-period" id="personalWeeklyPeriod"></span>
           <span class="work-plan-progress" id="personalWeeklyProgress"></span>
           <span class="work-plan-chevron" id="personalWeeklyChevron">▸</span>
+          <button class="work-month-nav" onclick="event.stopPropagation();movePersonalWeek(1)">›</button>
         </div>
         <div class="work-plan-body" id="personalWeeklyBody" style="display:none;">
           <div id="personalWeeklyList"></div>
@@ -1401,10 +1405,12 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <!-- 주간 계획 -->
         <div class="work-plan-section" id="workWeeklyPlanSection">
           <div class="work-plan-header" onclick="toggleWorkPlan('weekly')">
+            <button class="work-month-nav" onclick="event.stopPropagation();moveWorkWeek(-1)">‹</button>
             <span class="work-plan-label">📋 주간 업무 계획</span>
             <span class="work-plan-period" id="workWeeklyPlanPeriod"></span>
             <span class="work-plan-progress" id="workWeeklyPlanProgress"></span>
             <span class="work-plan-chevron" id="workWeeklyPlanChevron">▸</span>
+            <button class="work-month-nav" onclick="event.stopPropagation();moveWorkWeek(1)">›</button>
           </div>
           <div class="work-plan-body" id="workWeeklyPlanBody" style="display:none;">
             <div id="workWeeklyPlanList"></div>
@@ -3124,7 +3130,7 @@ function weekKeyWithOffset(offset){
   return toDateStr(dt);
 }
 function personalPlanItems(type){
-  const key=type==='monthly'?workPlanMonthKey():weekKeyWithOffset(personalWeekOffset);
+  const key=type==='monthly'?personalPlanMonthKey():weekKeyWithOffset(personalWeekOffset);
   const p=personalPlans[type+'_'+key];
   if(!p?.content) return [];
   try{return JSON.parse(p.content);}catch{return [];}
@@ -3156,12 +3162,20 @@ async function movePersonalPlanItem(type,i,dir){
   await _savePersonalPlanItems(type,items);
   renderPersonalPlanList(type);
 }
+let personalMonthlyOffset=0;
+function personalPlanMonthKey(){
+  const d=new Date(); d.setMonth(d.getMonth()+personalMonthlyOffset);
+  return d.getFullYear()+'-'+pad(d.getMonth()+1);
+}
+function personalMonthLabel(){
+  const d=new Date(); d.setMonth(d.getMonth()+personalMonthlyOffset);
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월`;
+}
+function movePersonalMonth(dir){ personalMonthlyOffset+=dir; renderPersonalPlans(); }
 function movePersonalWeek(dir){ personalWeekOffset+=dir; renderPersonalPlans(); renderWeekCal(); }
 function renderPersonalPlans(){
-  const now=new Date();
-  document.getElementById('personalMonthlyPeriod').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월`;
-  document.getElementById('personalWeeklyPeriod').innerHTML=
-    `<button class="plan-week-nav" onclick="event.stopPropagation();movePersonalWeek(-1)">‹</button><span>${workPlanWeekLabel(weekKeyWithOffset(personalWeekOffset))}</span><button class="plan-week-nav" onclick="event.stopPropagation();movePersonalWeek(1)">›</button>`;
+  document.getElementById('personalMonthlyPeriod').textContent=personalMonthLabel();
+  document.getElementById('personalWeeklyPeriod').textContent=workPlanWeekLabel(weekKeyWithOffset(personalWeekOffset));
   ['monthly','weekly'].forEach(type=>{
     const items=personalPlanItems(type);
     const done=items.filter(x=>x.done).length;
@@ -3184,7 +3198,7 @@ function togglePersonalPlan(type){
   if(open) document.getElementById(type==='monthly'?'personalMonthlyAddInput':'personalWeeklyAddInput').focus();
 }
 async function _savePersonalPlanItems(type,items){
-  const key=type==='monthly'?workPlanMonthKey():weekKeyWithOffset(personalWeekOffset);
+  const key=type==='monthly'?personalPlanMonthKey():weekKeyWithOffset(personalWeekOffset);
   const content=JSON.stringify(items);
   const existing=personalPlans[type+'_'+key];
   let res;
@@ -3555,8 +3569,7 @@ function moveWorkWeek(dir){ workWeekOffset+=dir; renderWorkPlans(); renderWorkWe
 function renderWorkPlans(){
   const now=new Date();
   document.getElementById('workMonthlyPeriod').textContent=workMonthLabel();
-  document.getElementById('workWeeklyPlanPeriod').innerHTML=
-    `<button class="plan-week-nav" onclick="event.stopPropagation();moveWorkWeek(-1)">‹</button><span>${workPlanWeekLabel(weekKeyWithOffset(workWeekOffset))}</span><button class="plan-week-nav" onclick="event.stopPropagation();moveWorkWeek(1)">›</button>`;
+  document.getElementById('workWeeklyPlanPeriod').textContent=workPlanWeekLabel(weekKeyWithOffset(workWeekOffset));
   ['monthly','weekly'].forEach(type=>{
     const items=workPlanItems(type);
     const done=items.filter(x=>x.done).length;
