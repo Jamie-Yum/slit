@@ -50,6 +50,12 @@
 .portfolio-stacked-bar{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:1px;}
 .portfolio-cat-btn{padding:5px 10px;font-size:12px;font-weight:600;border-radius:20px;border:1.5px solid var(--border2);background:var(--surface);cursor:pointer;color:var(--text2);transition:all 0.12s;}
 .portfolio-cat-btn.active{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);}
+.portfolio-flow-btn{padding:5px 12px;font-size:12px;font-weight:600;border-radius:20px;border:1.5px solid var(--border2);background:var(--surface);cursor:pointer;color:var(--text2);transition:all 0.12s;}
+.portfolio-flow-btn.active-working{border-color:#e07b1a;background:#fff5eb;color:#a85200;}
+.portfolio-flow-btn.active-idle{border-color:#1a56a0;background:#ebf0fd;color:#1a3a8a;}
+.portfolio-flow-btn.active-none{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);}
+.portfolio-group-header{display:flex;align-items:center;gap:6px;padding:12px 0 6px;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.04em;}
+.portfolio-group-header::after{content:'';flex:1;height:1px;background:var(--border);}
 .happiness-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:background 0.1s;}
 .happiness-item:hover{background:var(--surface2);}
 .happiness-item-emoji{font-size:24px;flex-shrink:0;line-height:1;}
@@ -2903,20 +2909,52 @@ function renderPortfolio(){
   const total=portfolioItems.reduce((s,p)=>s+Number(p.amount||0),0);
 
   if(!portfolioItems.length){
-    totalEl.innerHTML='';
-    barEl.innerHTML='';
+    totalEl.innerHTML='';barEl.innerHTML='';
     listEl.innerHTML=`<div style="padding:24px 0;text-align:center;font-size:13px;color:var(--text3);">포트폴리오를 구성해보세요</div>`;
     return;
   }
 
-  // 총액
-  totalEl.innerHTML=`<div style="display:flex;align-items:baseline;gap:6px;">
-    <span style="font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);">${total.toLocaleString()}</span>
-    <span style="font-size:12px;color:var(--text3);">원</span>
-    <span style="font-size:11px;color:var(--text3);margin-left:2px;">${portfolioItems.length}개 항목</span>
-  </div>`;
+  const working=portfolioItems.filter(p=>p.is_working===true);
+  const idle=portfolioItems.filter(p=>p.is_working===false);
+  const unclassified=portfolioItems.filter(p=>p.is_working!==true&&p.is_working!==false);
+  const wTotal=working.reduce((s,p)=>s+Number(p.amount||0),0);
+  const iTotal=idle.reduce((s,p)=>s+Number(p.amount||0),0);
+  const uTotal=unclassified.reduce((s,p)=>s+Number(p.amount||0),0);
 
-  // 스택 바
+  // 총액 + 분류 요약 카드
+  const summaryCards=[
+    wTotal>0?`<div style="flex:1;min-width:90px;background:var(--surface2);border:1.5px solid #e07b1a33;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:10px;font-weight:700;color:#a85200;letter-spacing:0.04em;margin-bottom:3px;">🔄 굴러가는 돈</div>
+      <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);">${fmtMoney(wTotal)}</div>
+      <div style="font-size:10px;color:var(--text3);">${total>0?(wTotal/total*100).toFixed(0):'0'}%</div>
+    </div>`:'',
+    iTotal>0?`<div style="flex:1;min-width:90px;background:var(--surface2);border:1.5px solid #1a56a033;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:10px;font-weight:700;color:#1a3a8a;letter-spacing:0.04em;margin-bottom:3px;">💤 멈춰있는 돈</div>
+      <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);">${fmtMoney(iTotal)}</div>
+      <div style="font-size:10px;color:var(--text3);">${total>0?(iTotal/total*100).toFixed(0):'0'}%</div>
+    </div>`:'',
+    uTotal>0&&(wTotal>0||iTotal>0)?`<div style="flex:1;min-width:90px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+      <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:0.04em;margin-bottom:3px;">— 미분류</div>
+      <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);">${fmtMoney(uTotal)}</div>
+      <div style="font-size:10px;color:var(--text3);">${total>0?(uTotal/total*100).toFixed(0):'0'}%</div>
+    </div>`:''
+  ].filter(Boolean);
+
+  totalEl.innerHTML=`
+    <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px;">
+      <span style="font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);">${total.toLocaleString()}</span>
+      <span style="font-size:12px;color:var(--text3);">원</span>
+      <span style="font-size:11px;color:var(--text3);margin-left:2px;">${portfolioItems.length}개 항목</span>
+    </div>
+    ${summaryCards.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">${summaryCards.join('')}</div>`:''}
+    ${wTotal>0&&iTotal>0?`<div style="display:flex;height:5px;border-radius:3px;overflow:hidden;gap:1px;margin-bottom:4px;">
+      <div style="flex:${wTotal};background:#e07b1a;"></div>
+      <div style="flex:${iTotal};background:#1a56a0;"></div>
+      ${uTotal>0?`<div style="flex:${uTotal};background:var(--border);"></div>`:''}
+    </div>`:''}
+  `;
+
+  // 카테고리별 스택 바
   const segments=portfolioItems.map(p=>{
     const pct=total>0?Math.round(p.amount/total*100):0;
     const col=PORTFOLIO_COLORS[p.category]||'#6b7280';
@@ -2924,8 +2962,7 @@ function renderPortfolio(){
   }).join('');
   barEl.innerHTML=`<div class="portfolio-stacked-bar">${segments}</div>`;
 
-  // 항목 목록
-  listEl.innerHTML=portfolioItems.map(p=>{
+  function itemCard(p){
     const pct=total>0?(p.amount/total*100).toFixed(1):0;
     const col=PORTFOLIO_COLORS[p.category]||'#6b7280';
     return `<div class="portfolio-item" onclick="openPortfolioModal('${p.id}')">
@@ -2946,13 +2983,37 @@ function renderPortfolio(){
       <div class="portfolio-pct">${pct}%</div>
       ${p.note?`<div class="portfolio-note">${p.note}</div>`:''}
     </div>`;
-  }).join('');
+  }
+
+  let html='';
+  if(working.length){
+    html+=`<div class="portfolio-group-header">🔄 굴러가는 돈 <span style="font-weight:400;color:var(--text3);font-size:10px;">${fmtMoney(wTotal)}</span></div>`;
+    html+=working.map(itemCard).join('');
+  }
+  if(idle.length){
+    html+=`<div class="portfolio-group-header">💤 멈춰있는 돈 <span style="font-weight:400;color:var(--text3);font-size:10px;">${fmtMoney(iTotal)}</span></div>`;
+    html+=idle.map(itemCard).join('');
+  }
+  if(unclassified.length){
+    const noLabel=!working.length&&!idle.length;
+    if(!noLabel) html+=`<div class="portfolio-group-header">— 미분류</div>`;
+    html+=unclassified.map(itemCard).join('');
+  }
+  listEl.innerHTML=html;
 }
 
 function selectPortfolioCat(btn,cat){
   document.querySelectorAll('.portfolio-cat-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('portfolioCategory').value=cat;
+}
+
+let portfolioIsWorkingVal=null;
+function selectPortfolioFlow(btn,type){
+  document.querySelectorAll('.portfolio-flow-btn').forEach(b=>b.classList.remove('active-working','active-idle','active-none'));
+  if(type==='working'){btn.classList.add('active-working');portfolioIsWorkingVal=true;}
+  else if(type==='idle'){btn.classList.add('active-idle');portfolioIsWorkingVal=false;}
+  else{btn.classList.add('active-none');portfolioIsWorkingVal=null;}
 }
 
 let taxGuideOpen=false;
@@ -2973,13 +3034,19 @@ function openPortfolioModal(id){
     document.getElementById('portfolioNote').value=p.note||'';
     document.getElementById('portfolioCategory').value=p.category;
     document.querySelectorAll('.portfolio-cat-btn').forEach(b=>b.classList.toggle('active',b.textContent.trim()===p.category));
+    portfolioIsWorkingVal=p.is_working===true?true:p.is_working===false?false:null;
   } else {
     document.getElementById('portfolioLabel').value='';
     document.getElementById('portfolioAmount').value='';
     document.getElementById('portfolioNote').value='';
     document.getElementById('portfolioCategory').value='현금';
     document.querySelectorAll('.portfolio-cat-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+    portfolioIsWorkingVal=null;
   }
+  document.querySelectorAll('.portfolio-flow-btn').forEach(b=>b.classList.remove('active-working','active-idle','active-none'));
+  if(portfolioIsWorkingVal===true) document.getElementById('flowBtnWorking').classList.add('active-working');
+  else if(portfolioIsWorkingVal===false) document.getElementById('flowBtnIdle').classList.add('active-idle');
+  else document.getElementById('flowBtnNone').classList.add('active-none');
   document.getElementById('portfolioModal').classList.add('open');
   setTimeout(()=>document.getElementById('portfolioLabel').focus(),100);
 }
@@ -2993,6 +3060,7 @@ async function savePortfolioItem(){
     amount,
     category:document.getElementById('portfolioCategory').value||'기타',
     note:document.getElementById('portfolioNote').value.trim()||null,
+    is_working:portfolioIsWorkingVal,
     updated_at:new Date().toISOString(),
   };
   const res=editPortfolioId
@@ -8679,6 +8747,14 @@ init();
         <button class="portfolio-cat-btn" onclick="selectPortfolioCat(this,'기타')">기타</button>
       </div>
       <input type="hidden" id="portfolioCategory" value="현금">
+    </div>
+    <div class="form-group">
+      <label class="form-label">자금 성격</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="portfolio-flow-btn" id="flowBtnWorking" onclick="selectPortfolioFlow(this,'working')">🔄 굴러가는 돈</button>
+        <button class="portfolio-flow-btn" id="flowBtnIdle" onclick="selectPortfolioFlow(this,'idle')">💤 멈춰있는 돈</button>
+        <button class="portfolio-flow-btn active-none" id="flowBtnNone" onclick="selectPortfolioFlow(this,'none')">— 미분류</button>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">항목명 *</label>
