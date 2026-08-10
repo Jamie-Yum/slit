@@ -36,6 +36,20 @@
 .money-type-btn.active-loss{background:#fdf0ef;border-color:#e8a89e;color:#c0392b;}
 .happiness-emoji-btn{background:var(--surface2);border:2px solid transparent;border-radius:8px;padding:6px 8px;font-size:18px;cursor:pointer;transition:all 0.12s;}
 .happiness-emoji-btn.active{border-color:var(--accent);background:var(--accent-bg);}
+.portfolio-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:background 0.1s;}
+.portfolio-item:hover{background:var(--surface2);}
+.portfolio-item-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.portfolio-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.portfolio-cat{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;}
+.portfolio-label{font-size:15px;font-weight:600;color:var(--text);flex:1;}
+.portfolio-amount{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);}
+.portfolio-bar-wrap{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:4px;}
+.portfolio-bar-fill{height:100%;border-radius:3px;transition:width 0.3s;}
+.portfolio-pct{font-family:var(--mono);font-size:10px;color:var(--text3);}
+.portfolio-note{font-size:12px;color:var(--text3);margin-top:6px;line-height:1.4;}
+.portfolio-stacked-bar{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:1px;}
+.portfolio-cat-btn{padding:5px 10px;font-size:12px;font-weight:600;border-radius:20px;border:1.5px solid var(--border2);background:var(--surface);cursor:pointer;color:var(--text2);transition:all 0.12s;}
+.portfolio-cat-btn.active{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);}
 .happiness-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:background 0.1s;}
 .happiness-item:hover{background:var(--surface2);}
 .happiness-item-emoji{font-size:24px;flex-shrink:0;line-height:1;}
@@ -1307,6 +1321,17 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <div id="moneySummaryMonth" style="display:flex;gap:10px;margin-bottom:14px;"></div>
         <!-- 기록 목록 -->
         <div id="moneyList"></div>
+
+        <!-- 자금 포트폴리오 -->
+        <div style="margin-top:24px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text2);">Portfolio</div>
+            <button class="btn btn-ghost btn-sm" onclick="openPortfolioModal()">+ 추가</button>
+          </div>
+          <div id="portfolioTotal" style="margin-bottom:12px;"></div>
+          <div id="portfolioBar" style="margin-bottom:14px;"></div>
+          <div id="portfolioList"></div>
+        </div>
       </div>
 
       <!-- 행복 기록 -->
@@ -2161,7 +2186,7 @@ async function deleteExcerpt(id){
 }
 
 async function init() {
-  await loadAll(); await loadWaves(); await loadRoutines(); await loadVmv(); await loadWork(); await loadBeingExtras(); await loadLearn(); await loadPersonalPlans(); await loadWorkPlans(); await loadHappiness(); await loadBooks(); startClock(); renderToday(); renderStats(); initMemo();
+  await loadAll(); await loadWaves(); await loadRoutines(); await loadVmv(); await loadWork(); await loadBeingExtras(); await loadLearn(); await loadPersonalPlans(); await loadWorkPlans(); await loadHappiness(); await loadBooks(); await loadPortfolio(); startClock(); renderToday(); renderStats(); initMemo();
 }
 async function loadAll() {
   try {
@@ -2718,6 +2743,142 @@ let moneyCurrentYear=new Date().getFullYear();
 let moneyCurrentMonth=new Date().getMonth()+1;
 let moneyType='income';
 
+// ── 포트폴리오 ──
+let portfolioItems=[];
+let editPortfolioId=null;
+
+const PORTFOLIO_COLORS={
+  '현금':'#2d6a4f','예금·적금':'#1a56a0','주식':'#e07b1a',
+  '펀드·ETF':'#6d28d9','부동산':'#be185d','연금':'#0891b2',
+  '가상자산':'#7c3aed','기타':'#6b7280'
+};
+
+async function loadPortfolio(){
+  try{
+    const{data,error}=await sb.from('slit_portfolio').select('*').order('order_index').order('created_at');
+    if(error) throw error;
+    portfolioItems=data||[];
+  }catch(e){portfolioItems=[];}
+  renderPortfolio();
+}
+
+function fmtMoney(n){
+  if(n>=100000000) return (n/100000000).toFixed(n%100000000===0?0:1)+'억';
+  if(n>=10000) return Math.round(n/10000).toLocaleString()+'만';
+  return n.toLocaleString()+'원';
+}
+
+function renderPortfolio(){
+  const totalEl=document.getElementById('portfolioTotal');
+  const barEl=document.getElementById('portfolioBar');
+  const listEl=document.getElementById('portfolioList');
+  if(!totalEl) return;
+
+  const total=portfolioItems.reduce((s,p)=>s+Number(p.amount||0),0);
+
+  if(!portfolioItems.length){
+    totalEl.innerHTML='';
+    barEl.innerHTML='';
+    listEl.innerHTML=`<div style="padding:24px 0;text-align:center;font-size:13px;color:var(--text3);">포트폴리오를 구성해보세요</div>`;
+    return;
+  }
+
+  // 총액
+  totalEl.innerHTML=`<div style="display:flex;align-items:baseline;gap:8px;">
+    <span style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);">${total.toLocaleString()}</span>
+    <span style="font-size:13px;color:var(--text3);">원</span>
+    <span style="font-size:12px;color:var(--text3);margin-left:4px;">${portfolioItems.length}개 항목</span>
+  </div>`;
+
+  // 스택 바
+  const segments=portfolioItems.map(p=>{
+    const pct=total>0?Math.round(p.amount/total*100):0;
+    const col=PORTFOLIO_COLORS[p.category]||'#6b7280';
+    return `<div title="${p.label} ${pct}%" style="flex:${p.amount};background:${col};min-width:${pct>0?'4px':'0'};"></div>`;
+  }).join('');
+  barEl.innerHTML=`<div class="portfolio-stacked-bar">${segments}</div>`;
+
+  // 항목 목록
+  listEl.innerHTML=portfolioItems.map(p=>{
+    const pct=total>0?(p.amount/total*100).toFixed(1):0;
+    const col=PORTFOLIO_COLORS[p.category]||'#6b7280';
+    return `<div class="portfolio-item" onclick="openPortfolioModal('${p.id}')">
+      <div class="portfolio-item-top">
+        <div class="portfolio-dot" style="background:${col};"></div>
+        <div>
+          <div class="portfolio-cat">${p.category}</div>
+          <div class="portfolio-label">${p.label}</div>
+        </div>
+        <div style="margin-left:auto;text-align:right;">
+          <div class="portfolio-amount">${Number(p.amount).toLocaleString()}원</div>
+          <div style="font-size:11px;color:var(--text3);">${fmtMoney(Number(p.amount))}</div>
+        </div>
+      </div>
+      <div class="portfolio-bar-wrap">
+        <div class="portfolio-bar-fill" style="width:${pct}%;background:${col};"></div>
+      </div>
+      <div class="portfolio-pct">${pct}%</div>
+      ${p.note?`<div class="portfolio-note">${p.note}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function selectPortfolioCat(btn,cat){
+  document.querySelectorAll('.portfolio-cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('portfolioCategory').value=cat;
+}
+
+function openPortfolioModal(id){
+  editPortfolioId=id||null;
+  document.getElementById('portfolioModalTitle').textContent=id?'포트폴리오 수정':'포트폴리오 추가';
+  document.getElementById('portfolioDeleteBtn').style.display=id?'':'none';
+  if(id){
+    const p=portfolioItems.find(x=>x.id===id);if(!p)return;
+    document.getElementById('portfolioLabel').value=p.label;
+    document.getElementById('portfolioAmount').value=p.amount;
+    document.getElementById('portfolioNote').value=p.note||'';
+    document.getElementById('portfolioCategory').value=p.category;
+    document.querySelectorAll('.portfolio-cat-btn').forEach(b=>b.classList.toggle('active',b.textContent.trim()===p.category));
+  } else {
+    document.getElementById('portfolioLabel').value='';
+    document.getElementById('portfolioAmount').value='';
+    document.getElementById('portfolioNote').value='';
+    document.getElementById('portfolioCategory').value='현금';
+    document.querySelectorAll('.portfolio-cat-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  }
+  document.getElementById('portfolioModal').classList.add('open');
+  setTimeout(()=>document.getElementById('portfolioLabel').focus(),100);
+}
+
+async function savePortfolioItem(){
+  const label=document.getElementById('portfolioLabel').value.trim();
+  const amount=Number(document.getElementById('portfolioAmount').value);
+  if(!label||!amount){showToast('항목명과 금액을 입력해주세요');return;}
+  const data={
+    label,
+    amount,
+    category:document.getElementById('portfolioCategory').value||'기타',
+    note:document.getElementById('portfolioNote').value.trim()||null,
+    updated_at:new Date().toISOString(),
+  };
+  const res=editPortfolioId
+    ? await sb.from('slit_portfolio').update(data).eq('id',editPortfolioId)
+    : await sb.from('slit_portfolio').insert(data);
+  if(res.error){showToast('저장 실패: '+res.error.message);return;}
+  closeWorkModal('portfolioModal');
+  await loadPortfolio();
+  showToast('저장됐어요');
+}
+
+async function deletePortfolioItem(){
+  if(!editPortfolioId||!confirm('삭제할까요?'))return;
+  await sb.from('slit_portfolio').delete().eq('id',editPortfolioId);
+  closeWorkModal('portfolioModal');
+  await loadPortfolio();
+  showToast('삭제됐어요');
+}
+
 async function loadMoneyRecords(){
   const{data,error}=await sb.from('slit_money_records').select('*').order('record_date',{ascending:false});
   if(!error) moneyRecords=data||[];
@@ -2875,6 +3036,7 @@ function moneyFmt(n){
 }
 
 function renderMoneyView(){
+  renderPortfolio();
   const y=moneyCurrentYear, m=moneyCurrentMonth;
   document.getElementById('moneyMonthLabel').textContent=`${y}년 ${m}월`;
 
@@ -8362,6 +8524,46 @@ init();
     <div class="modal-actions" style="margin-top:8px;">
       <div style="flex:1;"></div>
       <button class="btn btn-ghost" onclick="closeWorkModal('excerptModal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- PORTFOLIO MODAL -->
+<div class="work-modal-overlay" id="portfolioModal">
+  <div class="work-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="portfolioModalTitle">포트폴리오 추가</div>
+    <div class="form-group">
+      <label class="form-label">카테고리</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;" id="portfolioCatPicker">
+        <button class="portfolio-cat-btn active" onclick="selectPortfolioCat(this,'현금')">현금</button>
+        <button class="portfolio-cat-btn" onclick="selectPortfolioCat(this,'예금·적금')">예금·적금</button>
+        <button class="portfolio-cat-btn" onclick="selectPortfolioCat(this,'주식')">주식</button>
+        <button class="portfolio-cat-btn" onclick="selectPortfolioCat(this,'펀드·ETF')">펀드·ETF</button>
+        <button class="portfolio-cat-btn" onclick="selectPortfolioCat(this,'부동산')">부동산</button>
+        <button class="portfolio-cat-btn" onclick="selectPortfolioCat(this,'연금')">연금</button>
+        <button class="portfolio-cat-btn" onclick="selectPortfolioCat(this,'가상자산')">가상자산</button>
+        <button class="portfolio-cat-btn" onclick="selectPortfolioCat(this,'기타')">기타</button>
+      </div>
+      <input type="hidden" id="portfolioCategory" value="현금">
+    </div>
+    <div class="form-group">
+      <label class="form-label">항목명 *</label>
+      <input class="form-input" id="portfolioLabel" placeholder="예: KB국민은행 통장, 삼성전자">
+    </div>
+    <div class="form-group">
+      <label class="form-label">금액 (원) *</label>
+      <input class="form-input" type="number" id="portfolioAmount" placeholder="50000000">
+    </div>
+    <div class="form-group">
+      <label class="form-label">메모</label>
+      <textarea class="form-textarea" id="portfolioNote" placeholder="세부 내용, 비중 조절 목표 등" style="min-height:70px;"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" id="portfolioDeleteBtn" onclick="deletePortfolioItem()" style="display:none;">삭제</button>
+      <div style="flex:1;"></div>
+      <button class="btn btn-ghost" onclick="closeWorkModal('portfolioModal')">취소</button>
+      <button class="btn btn-primary" onclick="savePortfolioItem()">저장</button>
     </div>
   </div>
 </div>
