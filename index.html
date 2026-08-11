@@ -5085,7 +5085,7 @@ function renderWorkMemoList(){
   const el=document.getElementById('workMemoList');if(!el)return;
   if(!wMemos.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">메모를 작성해보세요</div></div>`;return;}
   el.innerHTML=wMemos.map(m=>`
-    <div class="wmemo-card" onclick="openWorkMemoEditor('${m.id}')">
+    <div class="wmemo-card" onclick="openWorkMemoView('${m.id}')">
       <div class="wmemo-card-header">
         <span class="wmemo-card-title">${m.title||'제목 없음'}</span>
         <span class="wmemo-card-date">${(m.updated_at||m.created_at||'').slice(0,10)}</span>
@@ -5093,6 +5093,26 @@ function renderWorkMemoList(){
       <div class="wmemo-card-preview">${(m.content||'').replace(/[#*\-`]/g,'').slice(0,80)}</div>
     </div>`).join('');
 }
+let wMemoViewId=null;
+function openWorkMemoView(id){
+  const m=wMemos.find(x=>x.id===id); if(!m) return;
+  wMemoViewId=id;
+  document.getElementById('workMemoViewTitle').textContent=m.title||'제목 없음';
+  document.getElementById('workMemoViewDate').textContent=(m.updated_at||m.created_at||'').slice(0,10);
+  document.getElementById('workMemoViewContent').innerHTML=mdToHtml(m.content||'');
+  document.getElementById('workMemoViewModal').classList.add('open');
+}
+function editWorkMemoFromView(){
+  closeWorkModal('workMemoViewModal');
+  if(wMemoViewId) setTimeout(()=>openWorkMemoEditor(wMemoViewId),200);
+}
+async function deleteWorkMemoFromView(){
+  if(!wMemoViewId||!confirm('삭제할까요?')) return;
+  await sb.from('slit_work_memos').delete().eq('id',wMemoViewId);
+  closeWorkModal('workMemoViewModal');
+  await loadWorkMemos(); showToast('삭제됐어요');
+}
+
 let wMemoEditId=null;
 function openWorkMemoEditor(id){
   wMemoEditId=id;
@@ -8775,6 +8795,24 @@ init();
     <div class="modal-actions" style="margin-top:8px;">
       <div style="flex:1;"></div>
       <button class="btn btn-ghost" onclick="closeWorkModal('excerptModal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- WORK MEMO VIEW MODAL -->
+<div class="work-modal-overlay" id="workMemoViewModal">
+  <div class="work-modal">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div id="workMemoViewTitle" style="font-size:16px;font-weight:700;color:var(--text);"></div>
+      <div id="workMemoViewDate" style="font-size:11px;color:var(--text3);flex-shrink:0;margin-left:12px;"></div>
+    </div>
+    <div id="workMemoViewContent" style="font-size:14px;color:var(--text);line-height:1.8;min-height:60px;overflow-y:auto;max-height:60vh;"></div>
+    <div class="modal-actions" style="margin-top:20px;">
+      <button class="btn btn-danger btn-sm" onclick="deleteWorkMemoFromView()">삭제</button>
+      <div style="flex:1;"></div>
+      <button class="btn btn-ghost" onclick="closeWorkModal('workMemoViewModal')">닫기</button>
+      <button class="btn btn-primary" onclick="editWorkMemoFromView()">수정</button>
     </div>
   </div>
 </div>
