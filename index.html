@@ -2815,13 +2815,9 @@ function renderStatsMemos(){
           <div class="memo-timeline-dot" style="background:${color};box-shadow:0 0 0 3px ${bg};"></div>
           ${list.indexOf(m)<list.length-1?'<div class="memo-timeline-connector"></div>':''}
         </div>
-        <div class="memo-timeline-card" id="statsMemoItem-${m.id}" style="border-left-color:${color};">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div class="memo-timeline-card" id="statsMemoItem-${m.id}" style="border-left-color:${color};cursor:pointer;" onclick="openMemoViewModal('${m.id}')">
+          <div style="margin-bottom:4px;">
             <span class="memo-item-type" style="background:${bg};color:${color};font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">${m.type}</span>
-            <div style="display:flex;gap:4px;">
-              <button class="memo-item-del" onclick="editStatsMemo('${m.id}')" style="color:var(--text2);">✎</button>
-              <button class="memo-item-del" onclick="deleteStatsMemo('${m.id}')">×</button>
-            </div>
           </div>
           <div class="memo-item-content">${m.content}</div>
         </div>
@@ -2841,6 +2837,28 @@ function renderStatsMemos(){
     </div>
     ${dateBlocks}
   `;
+}
+
+let memoViewId=null;
+function openMemoViewModal(id){
+  const m=memos.find(x=>x.id===id); if(!m) return;
+  memoViewId=id;
+  const [bg,color]=MEMO_COLORS[m.type]||MEMO_COLORS['기타'];
+  const t=new Date(m.created_at);
+  document.getElementById('memoViewType').innerHTML=`<span style="background:${bg};color:${color};font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">${m.type}</span>`;
+  document.getElementById('memoViewTime').textContent=t.toLocaleString('ko-KR',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('memoViewContent').textContent=m.content;
+  document.getElementById('memoViewModal').classList.add('open');
+}
+function editMemoFromView(){
+  closeWorkModal('memoViewModal');
+  if(memoViewId) setTimeout(()=>editStatsMemo(memoViewId),200);
+}
+async function deleteMemoFromView(){
+  if(!memoViewId||!confirm('이 메모를 삭제할까요?')) return;
+  await sb.from('slit_memos').delete().eq('id',memoViewId);
+  closeWorkModal('memoViewModal');
+  await loadAll(); renderStatsMemos(); showToast('삭제됐어요');
 }
 
 function editStatsMemo(id){
@@ -8757,6 +8775,24 @@ init();
     <div class="modal-actions" style="margin-top:8px;">
       <div style="flex:1;"></div>
       <button class="btn btn-ghost" onclick="closeWorkModal('excerptModal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEMO VIEW MODAL -->
+<div class="work-modal-overlay" id="memoViewModal">
+  <div class="work-modal">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <span id="memoViewType"></span>
+      <span id="memoViewTime" style="font-size:11px;color:var(--text3);"></span>
+    </div>
+    <div id="memoViewContent" style="font-size:14px;color:var(--text);line-height:1.8;white-space:pre-wrap;min-height:60px;padding:2px 0;"></div>
+    <div class="modal-actions" style="margin-top:20px;">
+      <button class="btn btn-danger btn-sm" id="memoViewDeleteBtn" onclick="deleteMemoFromView()">삭제</button>
+      <div style="flex:1;"></div>
+      <button class="btn btn-ghost" onclick="closeWorkModal('memoViewModal')">닫기</button>
+      <button class="btn btn-primary" onclick="editMemoFromView()">수정</button>
     </div>
   </div>
 </div>
