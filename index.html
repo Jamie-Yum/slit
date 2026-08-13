@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -2176,8 +2176,6 @@ function bookCardHtml(b){
   const coverHtml=b.cover_url
     ? `<img class="book-card-cover" src="${b.cover_url}" alt="${b.title}" onerror="this.parentElement.innerHTML='<span class=\\'book-card-cover-placeholder\\'>📖</span>'">`
     : `<span class="book-card-cover-placeholder">📖</span>`;
-  const statusLabels={want:'읽고싶다',reading:'읽는중',done:'완독'};
-  const otherStatuses=Object.entries(statusLabels).filter(([s])=>s!==b.status);
   return `<div class="book-card" onclick="openBookModal('${b.id}')">
     <div class="book-card-cover-wrap">${coverHtml}</div>
     <div class="book-card-body">
@@ -2186,7 +2184,6 @@ function bookCardHtml(b){
       ${b.start_date||b.end_date?`<div class="book-card-date">${b.start_date||'?'} ~ ${b.end_date||''}</div>`:''}
       <div class="book-card-actions" onclick="event.stopPropagation()">
         <button class="book-action-btn" onclick="openExcerptsModal('${b.id}')">✏ 필사${excerptCount?` (${excerptCount})`:''}</button>
-        ${otherStatuses.map(([s,l])=>`<button class="book-action-btn" onclick="moveBook('${b.id}','${s}')">${l}</button>`).join('')}
       </div>
     </div>
   </div>`;
