@@ -1693,9 +1693,10 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <!-- 분기 리뷰 뷰 -->
       <div id="workQReview" style="display:none;">
         <div style="display:flex;align-items:center;gap:0;margin-bottom:20px;">
-          <button class="work-month-nav" style="font-size:18px;padding:0 10px;" onclick="moveQReview(-1)">‹</button>
+          <button class="work-month-nav" id="qReviewPrev" style="font-size:18px;padding:0 10px;" onclick="moveQReview(-1)">‹</button>
           <span id="qReviewLabel" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);flex:1;text-align:center;"></span>
-          <button class="work-month-nav" style="font-size:18px;padding:0 10px;" onclick="moveQReview(1)">›</button>
+          <button class="work-month-nav" id="qReviewNext" style="font-size:18px;padding:0 10px;" onclick="moveQReview(1)">›</button>
+          <button id="qReviewListToggle" onclick="toggleQReviewList()" style="margin-left:6px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;">목록</button>
         </div>
         <div id="qReviewContent"></div>
       </div>
@@ -5124,6 +5125,60 @@ function renderQReview(){
 
 function moveQReview(dir){
   qReviewOffset+=dir;
+  renderQReview();
+}
+
+let qReviewListMode=false;
+function toggleQReviewList(){
+  qReviewListMode=!qReviewListMode;
+  const btn=document.getElementById('qReviewListToggle');
+  const prev=document.getElementById('qReviewPrev');
+  const next=document.getElementById('qReviewNext');
+  const label=document.getElementById('qReviewLabel');
+  if(qReviewListMode){
+    btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.borderColor='var(--accent)';
+    prev.style.visibility='hidden';next.style.visibility='hidden';label.style.visibility='hidden';
+    renderQReviewList();
+  } else {
+    btn.style.background='var(--surface)';btn.style.color='var(--text2)';btn.style.borderColor='var(--border2)';
+    prev.style.visibility='';next.style.visibility='';label.style.visibility='';
+    renderQReview();
+  }
+}
+
+function renderQReviewList(){
+  const contentEl=document.getElementById('qReviewContent');
+  if(!contentEl) return;
+  if(!qReviews.length){
+    contentEl.innerHTML=`<div style="text-align:center;padding:40px 0;font-size:13px;color:var(--text3);">작성된 리뷰가 없어요</div>`;
+    return;
+  }
+  const sorted=[...qReviews].sort((a,b)=>b.year-a.year||b.quarter-a.quarter);
+  contentEl.innerHTML=sorted.map(r=>{
+    const stars='★'.repeat(r.rating||0)+'☆'.repeat(5-(r.rating||0));
+    const preview=r.achievements?r.achievements.split('\n').slice(0,2).join(' ').slice(0,80):'';
+    return `<div onclick="jumpToQReview(${r.year},${r.quarter})" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:background 0.1s;" onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background='var(--surface)'">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);">${r.year}년 Q${r.quarter}</span>
+        <span style="font-size:13px;color:#f59e0b;letter-spacing:1px;">${stars}</span>
+      </div>
+      ${preview?`<div style="font-size:12px;color:var(--text3);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${preview}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function jumpToQReview(year,quarter){
+  const now=new Date();
+  const curY=now.getFullYear();
+  const curQ=Math.ceil((now.getMonth()+1)/3);
+  qReviewOffset=(year-curY)*4+(quarter-curQ);
+  qReviewListMode=false;
+  const btn=document.getElementById('qReviewListToggle');
+  const prev=document.getElementById('qReviewPrev');
+  const next=document.getElementById('qReviewNext');
+  const label=document.getElementById('qReviewLabel');
+  btn.style.background='var(--surface)';btn.style.color='var(--text2)';btn.style.borderColor='var(--border2)';
+  prev.style.visibility='';next.style.visibility='';label.style.visibility='';
   renderQReview();
 }
 
