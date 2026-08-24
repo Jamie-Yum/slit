@@ -5617,7 +5617,7 @@ function renderWorkGoalList(){
           ?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);">${m.repeat_detail}</span>`:'';
         const priMap={urgent:{icon:'🔴',label:'긴급'},normal:{icon:'🟡',label:'보통'},low:{icon:'🟢',label:'여유'}};
         const pri=m.priority&&priMap[m.priority]?priMap[m.priority]:null;
-        return `<div class="ms-row" draggable="true" ondragstart="wDragStart(event,'ms','${m.id}')" ondragover="wDragOver(event,'ms','${m.goal_id}')" ondrop="wDrop(event,'ms','${m.id}')">
+        return `<div class="ms-row" draggable="true" ondragstart="event.stopPropagation();wDragStart(event,'ms','${m.id}')" ondragover="event.stopPropagation();wDragOver(event,'ms','${m.goal_id}')" ondrop="event.stopPropagation();wDrop(event,'ms','${m.id}')">
           <div class="ms-row-left" style="flex:1;min-width:0;gap:6px;">
             <span style="color:var(--text3);cursor:grab;font-size:13px;flex-shrink:0;">⠿</span>
             ${pri?`<span title="${pri.label}" style="font-size:11px;flex-shrink:0;">${pri.icon}</span>`:''}
