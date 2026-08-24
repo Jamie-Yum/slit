@@ -1221,7 +1221,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <div class="vmv-card" id="vmvVisionCard">
           <div class="vmv-card-header">
             <div class="vmv-icon" style="background:#e8f0fb;color:var(--ft);">V</div>
-            <div><div class="vmv-label">Vision</div><div class="vmv-sublabel">내가 되고 싶은 모습</div></div>
+            <div><div class="vmv-label">Vision</div><div class="vmv-sublabel" id="vmvVisionSublabel" onclick="startVmvSublabelEdit('vision')" title="클릭해서 수정" style="cursor:text;">내가 되고 싶은 모습</div></div>
             <button class="vmv-edit-btn" onclick="toggleVmvEdit('vision')">✎</button>
           </div>
           <div class="vmv-content" id="vmvVisionView">
@@ -1239,7 +1239,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <div class="vmv-card" id="vmvMissionCard">
           <div class="vmv-card-header">
             <div class="vmv-icon" style="background:var(--ing-bg);color:var(--ing);">M</div>
-            <div><div class="vmv-label">Mission</div><div class="vmv-sublabel">내가 매일 해야 할 것</div></div>
+            <div><div class="vmv-label">Mission</div><div class="vmv-sublabel" id="vmvMissionSublabel" onclick="startVmvSublabelEdit('mission')" title="클릭해서 수정" style="cursor:text;">인생의 사명감을 가지고 해야할 것</div></div>
             <button class="vmv-edit-btn" onclick="toggleVmvEdit('mission')">✎</button>
           </div>
           <div class="vmv-content" id="vmvMissionView">
@@ -1257,7 +1257,7 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <div class="vmv-card" id="vmvValueCard">
           <div class="vmv-card-header">
             <div class="vmv-icon" style="background:var(--end-bg);color:var(--end);">V</div>
-            <div><div class="vmv-label">Value</div><div class="vmv-sublabel">내가 중요하게 여기는 것</div></div>
+            <div><div class="vmv-label">Value</div><div class="vmv-sublabel" id="vmvValueSublabel" onclick="startVmvSublabelEdit('value')" title="클릭해서 수정" style="cursor:text;">내가 중요하게 여기는 것</div></div>
             <button class="vmv-edit-btn" onclick="toggleVmvEdit('value')">✎</button>
           </div>
           <div class="vmv-content" id="vmvValueView">
@@ -2359,7 +2359,7 @@ async function deleteExcerpt(id){
 }
 
 async function init() {
-  await loadAll(); await loadWaves(); await loadRoutines(); await loadVmv(); await loadWork(); await loadBeingExtras(); await loadLearn(); await loadPersonalPlans(); await loadWorkPlans(); await loadHappiness(); await loadBooks(); await loadPortfolio(); await loadQReviews(); startClock(); renderToday(); renderStats(); initMemo();
+  await loadAll(); await loadWaves(); await loadRoutines(); await loadVmv(); await loadWork(); await loadBeingExtras(); await loadLearn(); await loadPersonalPlans(); await loadWorkPlans(); await loadHappiness(); await loadBooks(); await loadPortfolio(); await loadQReviews(); startClock(); renderToday(); renderStats(); initMemo(); initVmvSublabels();
 }
 async function loadAll() {
   try {
@@ -3450,6 +3450,42 @@ function switchGardenTab(tab,btn){
 // ── VMV ──
 const VMV_KEYS=['vision','mission','value','today'];
 let vmvData={}; // { vision:'', mission:'', value:'', today:'' }
+
+const VMV_SUBLABEL_DEFAULTS={vision:'내가 되고 싶은 모습',mission:'인생의 사명감을 가지고 해야할 것',value:'내가 중요하게 여기는 것'};
+
+function initVmvSublabels(){
+  ['vision','mission','value'].forEach(k=>{
+    const id='vmv'+k.charAt(0).toUpperCase()+k.slice(1)+'Sublabel';
+    const el=document.getElementById(id);
+    if(!el) return;
+    const saved=localStorage.getItem('vmv_sublabel_'+k);
+    if(saved) el.textContent=saved;
+  });
+}
+
+function startVmvSublabelEdit(key){
+  const id='vmv'+key.charAt(0).toUpperCase()+key.slice(1)+'Sublabel';
+  const el=document.getElementById(id);
+  if(!el) return;
+  const current=el.textContent;
+  const input=document.createElement('input');
+  input.type='text';
+  input.value=current;
+  input.style.cssText='font-size:11px;color:var(--text2);border:none;border-bottom:1.5px solid var(--accent);background:transparent;outline:none;width:160px;';
+  el.textContent='';
+  el.appendChild(input);
+  input.focus();input.select();
+  const save=()=>{
+    const val=input.value.trim()||VMV_SUBLABEL_DEFAULTS[key];
+    localStorage.setItem('vmv_sublabel_'+key,val);
+    el.textContent=val;
+  };
+  input.onblur=save;
+  input.onkeydown=e=>{
+    if(e.key==='Enter'){e.preventDefault();input.blur();}
+    if(e.key==='Escape'){el.textContent=current;}
+  };
+}
 
 async function loadVmv(){
   try{
@@ -4870,12 +4906,28 @@ async function wDrop(e,type,targetId){
   showToast('순서 변경됐어요!');
 }
 
+async function moveMsInGoal(id, goalId, dir){
+  const goalMs=wMilestones.filter(m=>m.goal_id===goalId);
+  const idx=goalMs.findIndex(m=>m.id===id);
+  const swapIdx=idx+dir;
+  if(swapIdx<0||swapIdx>=goalMs.length)return;
+  [goalMs[idx],goalMs[swapIdx]]=[goalMs[swapIdx],goalMs[idx]];
+  // update wMilestones in place
+  goalMs.forEach((m,i)=>{
+    const wi=wMilestones.findIndex(x=>x.id===m.id);
+    if(wi>=0) wMilestones[wi]=m;
+  });
+  const updates=goalMs.map((m,i)=>sb.from('slit_work_milestones').update({order_index:i}).eq('id',m.id));
+  await Promise.all(updates);
+  renderWorkGoalList();
+}
+
 async function loadWork(){
   try{
     const[c,g,m,s]=await Promise.all([
       sb.from('slit_work_cores').select('*').order('order_index'),
       sb.from('slit_work_goals').select('*').order('order_index'),
-      sb.from('slit_work_milestones').select('*').order('order_index'),
+      sb.from('slit_work_milestones').select('*').order('goal_id').order('order_index'),
       sb.from('slit_work_steps').select('*').order('step_date').order('start_time'),
     ]);
     wCores=c.data||[];wGoals=g.data||[];wMilestones=m.data||[];wSteps=s.data||[];
@@ -5572,8 +5624,10 @@ function renderWorkGoalList(){
             <span class="ms-row-title" style="${isDone?'text-decoration:line-through;color:var(--text3);':''}">${m.title}</span>
             ${repBadge}${repDetail}
           </div>
-          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
             ${m.due_date?`<span class="ms-row-due">${m.due_date}</span>`:''}
+            <button onclick="event.stopPropagation();moveMsInGoal('${m.id}','${m.goal_id}',-1)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 2px;line-height:1;" title="위로">▲</button>
+            <button onclick="event.stopPropagation();moveMsInGoal('${m.id}','${m.goal_id}',1)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 2px;line-height:1;" title="아래로">▼</button>
             <button class="ms-row-edit" onclick="openEditWorkMs('${m.id}')">✎</button>
           </div>
         </div>`;
