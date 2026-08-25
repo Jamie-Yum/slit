@@ -5703,7 +5703,8 @@ function renderWorkSteps(){
         <span class="step-time-txt">${s.start_time?s.start_time.slice(0,5):''} ${s.end_time?'– '+s.end_time.slice(0,5):''}</span>
         ${dur?`<span class="step-dur-txt">${dur}분</span>`:''}
         ${remainHtml}
-        <span style="margin-left:auto;font-size:11px;color:var(--text3);">✎</span>
+        <span onclick="event.stopPropagation();openStepNote('${s.id}')" title="상세 노트" style="margin-left:auto;font-size:13px;cursor:pointer;${s.note?'color:var(--accent);':'color:var(--text3);opacity:0.5;'}">📝</span>
+        <span style="font-size:11px;color:var(--text3);">✎</span>
       </div>
       <div class="step-tag-row">
         ${core?`<span class="step-tag t-core" style="background:${col.bg};color:${col.main};">${core.title}</span>`:''}
@@ -5958,6 +5959,30 @@ function openAddGoalForCore(coreId){
     const sel=document.getElementById('workGoalCoreSelect');
     if(sel)sel.value=coreId;
   },50);
+}
+
+let stepNoteId=null;
+function openStepNote(id){
+  const s=wSteps.find(x=>x.id===id);if(!s)return;
+  stepNoteId=id;
+  const label=[
+    s.start_time?s.start_time.slice(0,5):'',
+    s.end_time?'~ '+s.end_time.slice(0,5):'',
+  ].filter(Boolean).join(' ');
+  document.getElementById('stepNoteModalTitle').textContent=label||'Step 노트';
+  document.getElementById('stepNoteInput').value=s.note||'';
+  document.getElementById('stepNoteModal').classList.add('open');
+  setTimeout(()=>document.getElementById('stepNoteInput').focus(),100);
+}
+async function saveStepNote(){
+  if(!stepNoteId)return;
+  const note=document.getElementById('stepNoteInput').value.trim()||null;
+  const s=wSteps.find(x=>x.id===stepNoteId);if(!s)return;
+  s.note=note;
+  await sb.from('slit_work_steps').update({note}).eq('id',stepNoteId);
+  closeWorkModal('stepNoteModal');
+  renderWorkSteps();
+  showToast('저장됐어요!');
 }
 
 function openEditWorkStep(id){
@@ -8607,6 +8632,19 @@ init();
       <button class="btn btn-ghost btn-sm" onclick="addWorkStepDivider()" style="white-space:nowrap;">구분선</button>
       <button class="btn btn-ghost" onclick="closeWorkModal('workStepModal')">취소</button>
       <button class="btn btn-primary" onclick="saveWorkStep()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Step 노트 모달 -->
+<div class="work-modal-overlay" id="stepNoteModal">
+  <div class="work-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="stepNoteModalTitle" style="font-size:14px;color:var(--text2);margin-bottom:12px;"></div>
+    <textarea id="stepNoteInput" class="form-textarea" placeholder="상세 내용을 자유롭게 적어보세요..." style="min-height:200px;font-size:14px;line-height:1.7;"></textarea>
+    <div class="modal-actions" style="margin-top:12px;">
+      <button onclick="closeWorkModal('stepNoteModal')">닫기</button>
+      <button onclick="saveStepNote()" style="background:var(--accent);color:#fff;border-color:var(--accent);">저장</button>
     </div>
   </div>
 </div>
