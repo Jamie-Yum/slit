@@ -5718,10 +5718,14 @@ function renderWorkSteps(){
         ?`<div style="display:flex;align-items:center;gap:6px;padding:2px 0;"><div style="flex:1;height:1px;background:var(--border2);"></div></div>`
         :`<div class="step-check-item">
           <button class="step-check-box ${c.done?'done':''}" onclick="event.stopPropagation();toggleWorkCheck('${s.id}',${i})"></button>
-          <span class="step-check-label ${c.done?'done':''}">${c.text}</span>
-          <span style="margin-left:auto;display:flex;align-items:center;gap:5px;flex-shrink:0;">
+          <div style="flex:1;min-width:0;">
+            <span class="step-check-label ${c.done?'done':''}">${c.text}</span>
+            ${c.note?`<div style="font-size:11px;color:var(--text3);margin-top:2px;line-height:1.5;white-space:pre-wrap;">${c.note}</div>`:''}
+          </div>
+          <span style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
             ${c.due_date?`<span style="font-family:var(--mono);font-size:9px;color:var(--text3);">${c.due_date.slice(5).replace('-','/')}</span>`:''}
             ${c.duration_minutes?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);">${c.duration_minutes}분</span>`:''}
+            <span onclick="event.stopPropagation();openCheckNote('${s.id}',${i})" title="상세 노트" style="cursor:pointer;font-size:12px;${c.note?'color:var(--accent);':'color:var(--text3);opacity:0.4;'}">📝</span>
           </span>
         </div>`).join('')}</div>`:''}
       ${realChecks.length?`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;">${doneChecks}/${realChecks.length} 완료${realChecks.some(c=>c.duration_minutes)?` · 총 ${realChecks.reduce((a,c)=>a+(c.duration_minutes||0),0)}분`:''}</div>`:''}
@@ -5959,6 +5963,28 @@ function openAddGoalForCore(coreId){
     const sel=document.getElementById('workGoalCoreSelect');
     if(sel)sel.value=coreId;
   },50);
+}
+
+let checkNoteStepId=null, checkNoteIdx=null;
+function openCheckNote(stepId, idx){
+  const s=wSteps.find(x=>x.id===stepId);if(!s)return;
+  const c=(s.checklist||[])[idx];if(!c||c._divider)return;
+  checkNoteStepId=stepId; checkNoteIdx=idx;
+  document.getElementById('checkNoteTitle').textContent=c.text;
+  document.getElementById('checkNoteInput').value=c.note||'';
+  document.getElementById('checkNoteModal').classList.add('open');
+  setTimeout(()=>document.getElementById('checkNoteInput').focus(),100);
+}
+async function saveCheckNote(){
+  if(checkNoteStepId===null||checkNoteIdx===null)return;
+  const s=wSteps.find(x=>x.id===checkNoteStepId);if(!s)return;
+  const checklist=[...(s.checklist||[])];
+  checklist[checkNoteIdx]={...checklist[checkNoteIdx],note:document.getElementById('checkNoteInput').value.trim()||null};
+  s.checklist=checklist;
+  await sb.from('slit_work_steps').update({checklist}).eq('id',checkNoteStepId);
+  closeWorkModal('checkNoteModal');
+  renderWorkSteps();
+  showToast('저장됐어요!');
 }
 
 let stepNoteId=null;
@@ -8645,6 +8671,19 @@ init();
     <div class="modal-actions" style="margin-top:12px;">
       <button onclick="closeWorkModal('stepNoteModal')">닫기</button>
       <button onclick="saveStepNote()" style="background:var(--accent);color:#fff;border-color:var(--accent);">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 체크리스트 항목 노트 모달 -->
+<div class="work-modal-overlay" id="checkNoteModal">
+  <div class="work-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="checkNoteTitle" style="font-size:14px;margin-bottom:12px;"></div>
+    <textarea id="checkNoteInput" class="form-textarea" placeholder="이 항목에 대한 상세 내용, 참고사항, 링크 등 자유롭게 작성하세요." style="min-height:180px;font-size:14px;line-height:1.7;"></textarea>
+    <div class="modal-actions" style="margin-top:12px;">
+      <button onclick="closeWorkModal('checkNoteModal')">닫기</button>
+      <button onclick="saveCheckNote()" style="background:var(--accent);color:#fff;border-color:var(--accent);">저장</button>
     </div>
   </div>
 </div>
