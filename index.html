@@ -5716,17 +5716,18 @@ function renderWorkSteps(){
       </div>
       ${checks.length?`<div class="step-checklist">${checks.map((c,i)=>c._divider
         ?`<div style="display:flex;align-items:center;gap:6px;padding:2px 0;"><div style="flex:1;height:1px;background:var(--border2);"></div></div>`
-        :`<div class="step-check-item">
-          <button class="step-check-box ${c.done?'done':''}" onclick="event.stopPropagation();toggleWorkCheck('${s.id}',${i})"></button>
-          <div style="flex:1;min-width:0;">
-            <span class="step-check-label ${c.done?'done':''}">${c.text}</span>
-            ${c.note?`<div style="font-size:11px;color:var(--text3);margin-top:2px;line-height:1.5;white-space:pre-wrap;">${c.note}</div>`:''}
+        :`<div class="step-check-item" style="flex-direction:column;align-items:stretch;gap:0;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button class="step-check-box ${c.done?'done':''}" onclick="event.stopPropagation();toggleWorkCheck('${s.id}',${i})"></button>
+            <span class="step-check-label ${c.done?'done':''}" style="flex:1;">${c.text}</span>
+            <span style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+              ${c.due_date?`<span style="font-family:var(--mono);font-size:9px;color:var(--text3);">${c.due_date.slice(5).replace('-','/')}</span>`:''}
+              ${c.duration_minutes?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);">${c.duration_minutes}분</span>`:''}
+              ${c.note?`<button onclick="event.stopPropagation();toggleCheckNoteExpand('${s.id}',${i})" id="cnbtn_${s.id}_${i}" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--accent);padding:0 2px;line-height:1;">∨ 펼치기</button>`:''}
+              <span onclick="event.stopPropagation();openCheckNote('${s.id}',${i})" title="노트 편집" style="cursor:pointer;font-size:12px;${c.note?'color:var(--accent);':'color:var(--text3);opacity:0.4;'}">📝</span>
+            </span>
           </div>
-          <span style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
-            ${c.due_date?`<span style="font-family:var(--mono);font-size:9px;color:var(--text3);">${c.due_date.slice(5).replace('-','/')}</span>`:''}
-            ${c.duration_minutes?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);">${c.duration_minutes}분</span>`:''}
-            <span onclick="event.stopPropagation();openCheckNote('${s.id}',${i})" title="상세 노트" style="cursor:pointer;font-size:12px;${c.note?'color:var(--accent);':'color:var(--text3);opacity:0.4;'}">📝</span>
-          </span>
+          ${c.note?`<div id="cn_${s.id}_${i}" style="display:none;margin-top:6px;margin-left:24px;font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap;background:var(--surface2);border-radius:8px;padding:8px 12px;">${c.note}</div>`:''}
         </div>`).join('')}</div>`:''}
       ${realChecks.length?`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;">${doneChecks}/${realChecks.length} 완료${realChecks.some(c=>c.duration_minutes)?` · 총 ${realChecks.reduce((a,c)=>a+(c.duration_minutes||0),0)}분`:''}</div>`:''}
     </div>`;
@@ -5963,6 +5964,15 @@ function openAddGoalForCore(coreId){
     const sel=document.getElementById('workGoalCoreSelect');
     if(sel)sel.value=coreId;
   },50);
+}
+
+function toggleCheckNoteExpand(stepId,idx){
+  const el=document.getElementById(`cn_${stepId}_${idx}`);
+  const btn=document.getElementById(`cnbtn_${stepId}_${idx}`);
+  if(!el)return;
+  const open=el.style.display==='none';
+  el.style.display=open?'block':'none';
+  if(btn)btn.textContent=open?'∧ 접기':'∨ 펼치기';
 }
 
 let checkNoteStepId=null, checkNoteIdx=null;
