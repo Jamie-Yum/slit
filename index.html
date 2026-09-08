@@ -2500,6 +2500,7 @@ function selectAladinBook(idx){
 async function saveBook(){
   const title=document.getElementById('bookTitle').value.trim();
   if(!title){showToast('제목을 입력해주세요');return;}
+  if(!(window._editBookPurposes||[]).length){showToast('목적을 하나 이상 선택해주세요');return;}
   const data={
     title,
     author:document.getElementById('bookAuthor').value.trim()||null,
