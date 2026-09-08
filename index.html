@@ -82,6 +82,26 @@
 .book-card-actions{display:flex;gap:4px;flex-wrap:wrap;}
 .book-action-btn{padding:4px 8px;font-size:11px;border:1px solid var(--border2);border-radius:4px;background:var(--surface2);cursor:pointer;color:var(--text2);font-weight:500;white-space:nowrap;}
 .book-action-btn:hover{background:var(--border);}
+/* Book Matrix */
+.book-matrix{width:100%;border-collapse:separate;border-spacing:0;}
+.book-matrix thead th{padding:8px 10px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;text-align:left;color:var(--text3);background:var(--surface2);border-bottom:1px solid var(--border);}
+.book-matrix thead th:first-child{border-radius:8px 0 0 0;width:76px;}
+.book-matrix thead th:last-child{border-radius:0 8px 0 0;}
+.book-matrix thead th.bm-want{color:var(--start);}
+.book-matrix thead th.bm-reading{color:var(--ing);}
+.book-matrix thead th.bm-done{color:var(--end);}
+.book-matrix tbody tr td{vertical-align:top;padding:6px;border-bottom:1px solid var(--border);}
+.book-matrix tbody tr:last-child td{border-bottom:none;}
+.book-matrix tbody tr td:not(:last-child){border-right:1px solid var(--border);}
+.bm-row-label{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text2);padding:10px 8px;white-space:nowrap;vertical-align:middle;}
+.bm-book{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:5px;cursor:pointer;transition:background .1s,transform .12s;}
+.bm-book:hover{background:var(--surface2);transform:translateY(-1px);}
+.bm-book.want{border-left:3px solid var(--start);}
+.bm-book.reading{border-left:3px solid var(--ing);}
+.bm-book.done{border-left:3px solid var(--end);}
+.bm-title{font-size:12px;font-weight:600;color:var(--text);line-height:1.35;margin-bottom:2px;}
+.bm-author{font-size:10px;color:var(--text3);font-family:var(--mono);}
+.bm-empty{padding:18px 6px;text-align:center;font-size:18px;color:var(--border2);}
 .excerpt-item{padding:12px;border-left:3px solid var(--accent);background:var(--accent-bg);border-radius:0 var(--radius) var(--radius) 0;margin-bottom:10px;}
 .excerpt-item-content{font-size:14px;color:var(--text);line-height:1.6;font-style:italic;}
 .excerpt-item-meta{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:6px;display:flex;justify-content:space-between;}
@@ -1511,7 +1531,10 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
       <div id="gardenBooks" style="display:none;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
           <div class="section-title" style="margin:0;">독서</div>
-          <button class="btn btn-ghost btn-sm" onclick="openBookModal()">+ 책 추가</button>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button id="booksViewToggle" class="btn btn-ghost btn-sm" onclick="toggleBooksView()" title="매트릭스 / 탭 전환" style="font-family:var(--mono);font-size:11px;">⊞ 매트릭스</button>
+            <button class="btn btn-ghost btn-sm" onclick="openBookModal()">+ 책 추가</button>
+          </div>
         </div>
         <div id="booksKanban"></div>
       </div>
@@ -2130,6 +2153,7 @@ async function deleteHappiness(){
 let books=[], bookExcerpts=[], bookPurposes=[];
 let editBookId=null, excerptBookId=null;
 let booksActivePurpose=null;
+let booksViewMode='tab'; // 'tab' | 'matrix'
 
 async function loadBooks(){
   try{
@@ -2151,34 +2175,56 @@ function renderBooksKanban(){
     {status:'reading',label:'읽는 중'},
     {status:'done',label:'완독'},
   ];
+  // 토글 버튼 상태 동기화
+  const toggleBtn=document.getElementById('booksViewToggle');
+  if(toggleBtn){
+    toggleBtn.textContent=booksViewMode==='matrix'?'☰ 탭':'⊞ 매트릭스';
+    toggleBtn.style.color=booksViewMode==='matrix'?'var(--accent)':'';
+    toggleBtn.style.borderColor=booksViewMode==='matrix'?'var(--accent)':'';
+    toggleBtn.style.background=booksViewMode==='matrix'?'var(--accent-bg)':'';
+  }
+
+  // ── 매트릭스 뷰 ──
+  if(booksViewMode==='matrix'){
+    const activePurposes=bookPurposes.length
+      ? bookPurposes
+      : [...new Set(books.flatMap(b=>b.purposes||[]))].map(n=>({name:n}));
+    const rows=activePurposes.map(p=>{
+      const cells=tabs.map(t=>{
+        const sc=books.filter(b=>(b.purposes||[]).includes(p.name)&&b.status===t.status);
+        return`<td style="vertical-align:top;padding:6px;min-width:110px;">${
+          sc.map(b=>`<div class="bm-book ${b.status}" onclick="openBookModal('${b.id}')">
+            <div class="bm-title">${b.title}</div>
+            <div class="bm-author">${b.author||''}</div>
+          </div>`).join('')||`<div class="bm-empty">—</div>`
+        }</td>`;
+      }).join('');
+      return`<tr><td class="bm-row-label">${p.name}</td>${rows}</tr>`.replace(`${rows}`,cells);
+    }).join('');
+    el.innerHTML=`<div style="overflow-x:auto;"><table class="book-matrix">
+      <thead><tr>
+        <th></th>
+        <th class="bm-want">읽고 싶다</th>
+        <th class="bm-reading">읽는 중</th>
+        <th class="bm-done">완독</th>
+      </tr></thead>
+      <tbody>${rows||`<tr><td colspan="4" style="padding:32px;text-align:center;color:var(--text3);font-size:13px;">아직 없어요</td></tr>`}</tbody>
+    </table></div>`;
+    return;
+  }
+
+  // ── 탭 뷰 (기존) ──
   const purposeChips=bookPurposes.length?`
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);">
       <button onclick="filterBookPurpose(null)" style="padding:4px 10px;border-radius:20px;border:1px solid ${!booksActivePurpose?'var(--accent)':'var(--border2)'};background:${!booksActivePurpose?'var(--accent-bg)':'none'};color:${!booksActivePurpose?'var(--accent)':'var(--text3)'};font-size:12px;cursor:pointer;">전체</button>
       ${bookPurposes.map(p=>`<button onclick="filterBookPurpose('${p.name}')" style="padding:4px 10px;border-radius:20px;border:1px solid ${booksActivePurpose===p.name?'var(--accent)':'var(--border2)'};background:${booksActivePurpose===p.name?'var(--accent-bg)':'none'};color:${booksActivePurpose===p.name?'var(--accent)':'var(--text3)'};font-size:12px;cursor:pointer;">${p.name}</button>`).join('')}
     </div>`:'';
-
-  if(booksActivePurpose){
-    // 목적 선택 시 — 상태 탭 없이 전체 책을 상태별 섹션으로
-    const filtered=books.filter(b=>(b.purposes||[]).includes(booksActivePurpose));
-    const sections=tabs.map(t=>{
-      const sec=filtered.filter(b=>b.status===t.status);
-      if(!sec.length)return'';
-      return `<div style="margin-bottom:18px;">
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">${t.label} · ${sec.length}권</div>
-        ${sec.map(b=>bookCardHtml(b)).join('')}
-      </div>`;
-    }).join('');
-    el.innerHTML=`${purposeChips}<div>${sections||`<div style="padding:32px 16px;text-align:center;font-size:13px;color:var(--text3);">아직 없어요</div>`}</div>`;
-    return;
-  }
-
-  // 목적 미선택 — 기존 상태 탭 뷰
-  const colBooks=books.filter(b=>b.status===booksActiveTab);
+  const colBooks=books.filter(b=>b.status===booksActiveTab&&(!booksActivePurpose||(b.purposes||[]).includes(booksActivePurpose)));
   el.innerHTML=`
     <div class="books-status-tabs">
       ${tabs.map(t=>{
-        const cnt=books.filter(b=>b.status===t.status).length;
-        return `<button class="books-status-tab ${t.status}${booksActiveTab===t.status?' active':''}" onclick="switchBooksTab('${t.status}')">
+        const cnt=books.filter(b=>b.status===t.status&&(!booksActivePurpose||(b.purposes||[]).includes(booksActivePurpose))).length;
+        return`<button class="books-status-tab ${t.status}${booksActiveTab===t.status?' active':''}" onclick="switchBooksTab('${t.status}')">
           <div>${t.label}</div>${cnt?`<div style="font-size:10px;opacity:0.6;font-weight:400;">${cnt}권</div>`:''}
         </button>`;
       }).join('')}
@@ -2186,10 +2232,15 @@ function renderBooksKanban(){
     ${purposeChips}
     <div id="booksTabContent">
       ${colBooks.length
-        ? colBooks.map(b=>bookCardHtml(b)).join('')
-        : `<div style="padding:32px 16px;text-align:center;font-size:13px;color:var(--text3);">아직 없어요<br><span style="font-size:11px;opacity:0.6;">+ 책 추가로 등록해보세요</span></div>`
+        ?colBooks.map(b=>bookCardHtml(b)).join('')
+        :`<div style="padding:32px 16px;text-align:center;font-size:13px;color:var(--text3);">아직 없어요<br><span style="font-size:11px;opacity:0.6;">+ 책 추가로 등록해보세요</span></div>`
       }
     </div>`;
+}
+
+function toggleBooksView(){
+  booksViewMode=booksViewMode==='matrix'?'tab':'matrix';
+  renderBooksKanban();
 }
 
 function switchBooksTab(status){
