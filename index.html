@@ -1532,6 +1532,18 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
     <div id="view-learn" class="view">
       <!-- 메인: 카테고리 그리드 -->
       <div id="learnMain">
+        <!-- 독서 -->
+        <div style="margin-bottom:24px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:0.12em;text-transform:uppercase;font-weight:700;">독서</div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button id="booksViewToggle" class="btn btn-ghost btn-sm" onclick="toggleBooksView()" title="매트릭스 / 탭 전환" style="font-family:var(--mono);font-size:11px;">⊞ 매트릭스</button>
+              <button class="btn btn-ghost btn-sm" onclick="openBookModal()">+ 책 추가</button>
+            </div>
+          </div>
+          <div id="booksKanban"></div>
+        </div>
+
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <div style="font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:0.12em;text-transform:uppercase;font-weight:700;">Learn</div>
           <button class="btn-quick" style="padding:6px 14px;font-size:13px;" onclick="openLearnSubjectModal()">+ 추가</button>
@@ -1549,17 +1561,6 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
           <div class="learn-cal-grid" id="learnCalGrid"></div>
         </div>
 
-        <!-- 독서 -->
-        <div style="margin-top:24px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <div style="font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:0.12em;text-transform:uppercase;font-weight:700;">독서</div>
-            <div style="display:flex;gap:6px;align-items:center;">
-              <button id="booksViewToggle" class="btn btn-ghost btn-sm" onclick="toggleBooksView()" title="매트릭스 / 탭 전환" style="font-family:var(--mono);font-size:11px;">⊞ 매트릭스</button>
-              <button class="btn btn-ghost btn-sm" onclick="openBookModal()">+ 책 추가</button>
-            </div>
-          </div>
-          <div id="booksKanban"></div>
-        </div>
       </div>
 
       <!-- 상세: 카테고리별 기록 -->
