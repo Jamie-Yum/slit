@@ -2151,15 +2151,29 @@ function renderBooksKanban(){
     {status:'reading',label:'읽는 중'},
     {status:'done',label:'완독'},
   ];
-  let colBooks=books.filter(b=>b.status===booksActiveTab);
-  if(booksActivePurpose){
-    colBooks=colBooks.filter(b=>(b.purposes||[]).includes(booksActivePurpose));
-  }
   const purposeChips=bookPurposes.length?`
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);">
       <button onclick="filterBookPurpose(null)" style="padding:4px 10px;border-radius:20px;border:1px solid ${!booksActivePurpose?'var(--accent)':'var(--border2)'};background:${!booksActivePurpose?'var(--accent-bg)':'none'};color:${!booksActivePurpose?'var(--accent)':'var(--text3)'};font-size:12px;cursor:pointer;">전체</button>
       ${bookPurposes.map(p=>`<button onclick="filterBookPurpose('${p.name}')" style="padding:4px 10px;border-radius:20px;border:1px solid ${booksActivePurpose===p.name?'var(--accent)':'var(--border2)'};background:${booksActivePurpose===p.name?'var(--accent-bg)':'none'};color:${booksActivePurpose===p.name?'var(--accent)':'var(--text3)'};font-size:12px;cursor:pointer;">${p.name}</button>`).join('')}
     </div>`:'';
+
+  if(booksActivePurpose){
+    // 목적 선택 시 — 상태 탭 없이 전체 책을 상태별 섹션으로
+    const filtered=books.filter(b=>(b.purposes||[]).includes(booksActivePurpose));
+    const sections=tabs.map(t=>{
+      const sec=filtered.filter(b=>b.status===t.status);
+      if(!sec.length)return'';
+      return `<div style="margin-bottom:18px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">${t.label} · ${sec.length}권</div>
+        ${sec.map(b=>bookCardHtml(b)).join('')}
+      </div>`;
+    }).join('');
+    el.innerHTML=`${purposeChips}<div>${sections||`<div style="padding:32px 16px;text-align:center;font-size:13px;color:var(--text3);">아직 없어요</div>`}</div>`;
+    return;
+  }
+
+  // 목적 미선택 — 기존 상태 탭 뷰
+  const colBooks=books.filter(b=>b.status===booksActiveTab);
   el.innerHTML=`
     <div class="books-status-tabs">
       ${tabs.map(t=>{
