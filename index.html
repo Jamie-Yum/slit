@@ -2172,7 +2172,7 @@ let booksActiveTab='reading';
 function renderBooksKanban(){
   const el=document.getElementById('booksKanban');if(!el)return;
   const tabs=[
-    {status:'want',label:'읽고 싶다'},
+    {status:'want',label:'읽을 예정'},
     {status:'reading',label:'읽는 중'},
     {status:'done',label:'완독'},
   ];
@@ -2205,7 +2205,7 @@ function renderBooksKanban(){
     el.innerHTML=`<div style="overflow-x:auto;"><table class="book-matrix">
       <thead><tr>
         <th></th>
-        <th class="bm-want">읽고 싶다</th>
+        <th class="bm-want">읽을 예정</th>
         <th class="bm-reading">읽는 중</th>
         <th class="bm-done">완독</th>
       </tr></thead>
@@ -9191,7 +9191,7 @@ init();
     <div class="form-group">
       <label class="form-label">상태</label>
       <div style="display:flex;gap:8px;">
-        <button class="book-status-btn active" data-status="want" onclick="selectBookStatus(this)">읽고 싶다</button>
+        <button class="book-status-btn active" data-status="want" onclick="selectBookStatus(this)">읽을 예정</button>
         <button class="book-status-btn" data-status="reading" onclick="selectBookStatus(this)">읽는 중</button>
         <button class="book-status-btn" data-status="done" onclick="selectBookStatus(this)">완독</button>
       </div>
