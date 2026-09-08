@@ -2154,7 +2154,8 @@ async function deleteHappiness(){
 let books=[], bookExcerpts=[], bookPurposes=[];
 let editBookId=null, excerptBookId=null;
 let booksActivePurpose=null;
-let booksViewMode='tab'; // 'tab' | 'matrix'
+let booksViewMode='tab'; // 'tab' | 'matrix' | 'period'
+let booksMatrixYear=new Date().getFullYear();
 
 async function loadBooks(){
   try{
@@ -2189,40 +2190,95 @@ function renderBooksKanban(){
 
   // ── 매트릭스 뷰 ──
   if(booksViewMode==='matrix'){
+    const y=booksMatrixYear;
     const activePurposes=bookPurposes.length
       ? bookPurposes
       : [...new Set(books.flatMap(b=>b.purposes||[]))].map(n=>({name:n}));
-    const rows=activePurposes.map(p=>{
-      const cells=tabs.map(t=>{
-        const sc=books.filter(b=>(b.purposes||[]).includes(p.name)&&b.status===t.status);
-        return`<td style="vertical-align:top;padding:6px;min-width:100px;">${
-          sc.map(b=>{
-            const s=b.start_date?b.start_date.slice(2).replace('-','.'):'';
-            const e=b.end_date?b.end_date.slice(2).replace('-','.'):'';
-            const period=s&&e?`${s} ~ ${e}`:s?`${s} ~`:e?`~ ${e}`:'';
-            return`<div class="bm-book ${b.status}" onclick="openBookModal('${b.id}')" style="display:flex;gap:8px;align-items:flex-start;">
-              ${b.cover_url
-                ?`<img src="${b.cover_url}" style="width:32px;height:44px;object-fit:cover;border-radius:3px;flex-shrink:0;" onerror="this.style.display='none'">`
-                :`<div style="width:32px;height:44px;background:var(--surface2);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;">📖</div>`}
-              <div>
-                <div class="bm-title" style="font-size:11px;">${b.title}</div>
-                ${period?`<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px;">${period}</div>`:''}
-              </div>
+    const cols=activePurposes.length||1;
+    const gc=`38px repeat(${cols},1fr)`;
+
+    // 연도 목록
+    const dataYears=[...new Set(
+      books.flatMap(b=>[b.start_date,b.end_date]).filter(Boolean).map(d=>+d.slice(0,4))
+    )].sort((a,b)=>b-a);
+    if(!dataYears.includes(y))dataYears.unshift(y);
+
+    // 헬퍼
+    const mS=(m)=>new Date(y,m-1,1);
+    const mE=(m)=>new Date(y,m,0,23,59,59);
+    const overlaps=(b,m)=>{
+      const bs=b.start_date?new Date(b.start_date):null;
+      const be=b.end_date?new Date(b.end_date):(b.status==='reading'?new Date():null);
+      if(!bs&&!be)return false;
+      if(bs&&bs>mE(m))return false;
+      if(be&&be<mS(m))return false;
+      return true;
+    };
+    const isFirst=(b,m)=>{
+      if(!b.start_date)return false;
+      const d=new Date(b.start_date);
+      if(d.getFullYear()<y)return m===1;
+      return d.getFullYear()===y&&d.getMonth()+1===m;
+    };
+
+    // 날짜 없는 책 (맨 아래)
+    const noDates=books.filter(b=>!b.start_date&&!b.end_date);
+
+    const yearBtns=dataYears.map(yr=>`<button onclick="booksMatrixYear=${yr};renderBooksKanban()" style="padding:3px 8px;border-radius:4px;border:1px solid ${yr===y?'var(--accent)':'var(--border2)'};background:${yr===y?'var(--accent-bg)':'none'};color:${yr===y?'var(--accent)':'var(--text3)'};font-family:var(--mono);font-size:10px;cursor:pointer;">${yr}</button>`).join('');
+
+    const header=`<div style="display:grid;grid-template-columns:${gc};border-bottom:2px solid var(--border);">
+      <div></div>
+      ${activePurposes.map(p=>`<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text2);padding:8px 6px;border-left:1px solid var(--border);text-align:center;letter-spacing:.05em;">${p.name}</div>`).join('')}
+    </div>`;
+
+    const body=Array.from({length:12},(_,i)=>i+1).map(m=>{
+      const cells=activePurposes.map(p=>{
+        const mb=books.filter(b=>(b.purposes||[]).includes(p.name)&&overlaps(b,m));
+        const html=mb.map(b=>{
+          const first=isFirst(b,m);
+          const gray=b.status==='done';
+          const col=gray?'#999':'var(--accent)';
+          const bg=gray?'var(--surface2)':'var(--accent-bg)';
+          const gs=gray?'filter:grayscale(0.85);opacity:0.72;':'';
+          if(first){
+            return`<div onclick="openBookModal('${b.id}')" style="display:flex;align-items:center;gap:5px;padding:4px 6px;border-radius:6px;background:${bg};border-left:3px solid ${col};cursor:pointer;margin-bottom:3px;${gs}">
+              ${b.cover_url?`<img src="${b.cover_url}" style="width:22px;height:30px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">`:''}
+              <span style="font-size:10px;font-weight:600;color:var(--text);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100px;">${b.title}</span>
             </div>`;
-          }).join('')||`<div class="bm-empty">—</div>`
-        }</td>`;
+          }
+          return`<div onclick="openBookModal('${b.id}')" title="${b.title}" style="height:8px;border-radius:0 3px 3px 0;background:${bg};border-left:3px solid ${col};margin-bottom:3px;cursor:pointer;${gs}"></div>`;
+        }).join('');
+        return`<div style="border-left:1px solid var(--border);padding:4px 5px;min-height:28px;">${html}</div>`;
       }).join('');
-      return`<tr><td class="bm-row-label">${p.name}</td>${cells}</tr>`;
+      return`<div style="display:grid;grid-template-columns:${gc};border-bottom:1px solid var(--border);">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);padding:8px 4px;display:flex;align-items:flex-start;flex-shrink:0;">${m}월</div>
+        ${cells}
+      </div>`;
     }).join('');
-    el.innerHTML=`<div style="overflow-x:auto;"><table class="book-matrix">
-      <thead><tr>
-        <th></th>
-        <th class="bm-want">읽을 예정</th>
-        <th class="bm-reading">읽는 중</th>
-        <th class="bm-done">완독</th>
-      </tr></thead>
-      <tbody>${rows||`<tr><td colspan="4" style="padding:32px;text-align:center;color:var(--text3);font-size:13px;">아직 없어요</td></tr>`}</tbody>
-    </table></div>`;
+
+    const bottom=noDates.length?`<div style="margin-top:16px;padding-top:14px;border-top:2px dashed var(--border);">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;">읽을 예정 · 날짜 미정</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${noDates.map(b=>`<div onclick="openBookModal('${b.id}')" style="display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--border);cursor:pointer;">
+          ${b.cover_url?`<img src="${b.cover_url}" style="width:26px;height:36px;object-fit:cover;border-radius:3px;">`:'<div style="width:26px;height:36px;background:var(--surface2);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:14px;">📖</div>'}
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.3;">${b.title}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px;">${(b.purposes||[]).join(' · ')}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>`:'';
+
+    el.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="display:flex;gap:4px;">${yearBtns}</div>
+        <div style="display:flex;gap:10px;font-family:var(--mono);font-size:10px;color:var(--text3);align-items:center;">
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:14px;height:4px;background:var(--accent);border-radius:2px;display:inline-block;"></span>읽는 중</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:14px;height:4px;background:#bbb;border-radius:2px;display:inline-block;"></span>완독</span>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">${header}${body}</div>
+      ${bottom}`;
     return;
   }
 
