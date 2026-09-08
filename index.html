@@ -2279,11 +2279,27 @@ function renderBooksKanban(){
       <button onclick="filterBookPurpose(null)" style="padding:4px 10px;border-radius:20px;border:1px solid ${!booksActivePurpose?'var(--accent)':'var(--border2)'};background:${!booksActivePurpose?'var(--accent-bg)':'none'};color:${!booksActivePurpose?'var(--accent)':'var(--text3)'};font-size:12px;cursor:pointer;">전체</button>
       ${bookPurposes.map(p=>`<button onclick="filterBookPurpose('${p.name}')" style="padding:4px 10px;border-radius:20px;border:1px solid ${booksActivePurpose===p.name?'var(--accent)':'var(--border2)'};background:${booksActivePurpose===p.name?'var(--accent-bg)':'none'};color:${booksActivePurpose===p.name?'var(--accent)':'var(--text3)'};font-size:12px;cursor:pointer;">${p.name}</button>`).join('')}
     </div>`:'';
-  const colBooks=books.filter(b=>b.status===booksActiveTab&&(!booksActivePurpose||(b.purposes||[]).includes(booksActivePurpose)));
+  // 목적 선택 시 → 전체 상태 섹션으로
+  if(booksActivePurpose){
+    const filtered=books.filter(b=>(b.purposes||[]).includes(booksActivePurpose));
+    const sections=tabs.map(t=>{
+      const sec=filtered.filter(b=>b.status===t.status);
+      if(!sec.length)return'';
+      return`<div style="margin-bottom:20px;">
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">${t.label} · ${sec.length}권</div>
+        ${sec.map(b=>bookCardHtml(b)).join('')}
+      </div>`;
+    }).join('');
+    el.innerHTML=`${purposeChips}${sections||`<div style="padding:32px 16px;text-align:center;font-size:13px;color:var(--text3);">아직 없어요</div>`}`;
+    return;
+  }
+
+  // 목적 미선택 → 기존 상태 탭
+  const colBooks=books.filter(b=>b.status===booksActiveTab);
   el.innerHTML=`
     <div class="books-status-tabs">
       ${tabs.map(t=>{
-        const cnt=books.filter(b=>b.status===t.status&&(!booksActivePurpose||(b.purposes||[]).includes(booksActivePurpose))).length;
+        const cnt=books.filter(b=>b.status===t.status).length;
         return`<button class="books-status-tab ${t.status}${booksActiveTab===t.status?' active':''}" onclick="switchBooksTab('${t.status}')">
           <div>${t.label}</div>${cnt?`<div style="font-size:10px;opacity:0.6;font-weight:400;">${cnt}권</div>`:''}
         </button>`;
