@@ -2193,10 +2193,12 @@ function renderBooksKanban(){
     const rows=activePurposes.map(p=>{
       const cells=tabs.map(t=>{
         const sc=books.filter(b=>(b.purposes||[]).includes(p.name)&&b.status===t.status);
-        return`<td style="vertical-align:top;padding:6px;min-width:110px;">${
-          sc.map(b=>`<div class="bm-book ${b.status}" onclick="openBookModal('${b.id}')">
-            <div class="bm-title">${b.title}</div>
-            <div class="bm-author">${b.author||''}</div>
+        return`<td style="vertical-align:top;padding:6px;min-width:100px;">${
+          sc.map(b=>`<div class="bm-book ${b.status}" onclick="openBookModal('${b.id}')" style="display:flex;gap:8px;align-items:center;">
+            ${b.cover_url
+              ?`<img src="${b.cover_url}" style="width:32px;height:44px;object-fit:cover;border-radius:3px;flex-shrink:0;" onerror="this.style.display='none'">`
+              :`<div style="width:32px;height:44px;background:var(--surface2);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;">📖</div>`}
+            <div class="bm-title" style="font-size:11px;">${b.title}</div>
           </div>`).join('')||`<div class="bm-empty">—</div>`
         }</td>`;
       }).join('');
