@@ -2340,7 +2340,7 @@ function renderBooksKanban(){
   if(booksActivePurpose){
     const filtered=books.filter(b=>(b.purposes||[]).includes(booksActivePurpose));
     const sections=tabs.map(t=>{
-      const sec=filtered.filter(b=>b.status===t.status);
+      const sec=filtered.filter(b=>b.status===t.status).sort((a,b)=>t.status==='done'?(b.end_date||'').localeCompare(a.end_date||''):0);
       if(!sec.length)return'';
       return`<div style="margin-bottom:20px;">
         <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">${t.label} · ${sec.length}권</div>
@@ -2352,7 +2352,10 @@ function renderBooksKanban(){
   }
 
   // 목적 미선택 → 기존 상태 탭
-  const colBooks=books.filter(b=>b.status===booksActiveTab);
+  const colBooks=books.filter(b=>b.status===booksActiveTab).sort((a,b)=>{
+    if(booksActiveTab!=='done')return 0;
+    return (b.end_date||'').localeCompare(a.end_date||'');
+  });
   el.innerHTML=`
     <div class="books-status-tabs">
       ${tabs.map(t=>{
