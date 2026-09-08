@@ -2199,7 +2199,7 @@ function renderBooksKanban(){
           </div>`).join('')||`<div class="bm-empty">—</div>`
         }</td>`;
       }).join('');
-      return`<tr><td class="bm-row-label">${p.name}</td>${rows}</tr>`.replace(`${rows}`,cells);
+      return`<tr><td class="bm-row-label">${p.name}</td>${cells}</tr>`;
     }).join('');
     el.innerHTML=`<div style="overflow-x:auto;"><table class="book-matrix">
       <thead><tr>
