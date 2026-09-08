@@ -2178,11 +2178,13 @@ function renderBooksKanban(){
   ];
   // 토글 버튼 상태 동기화
   const toggleBtn=document.getElementById('booksViewToggle');
+  const VIEW_LABELS={'tab':'⊞ 매트릭스','matrix':'📅 기간','period':'☰ 탭'};
   if(toggleBtn){
-    toggleBtn.textContent=booksViewMode==='matrix'?'☰ 탭':'⊞ 매트릭스';
-    toggleBtn.style.color=booksViewMode==='matrix'?'var(--accent)':'';
-    toggleBtn.style.borderColor=booksViewMode==='matrix'?'var(--accent)':'';
-    toggleBtn.style.background=booksViewMode==='matrix'?'var(--accent-bg)':'';
+    toggleBtn.textContent=VIEW_LABELS[booksViewMode]||'⊞ 매트릭스';
+    const on=booksViewMode!=='tab';
+    toggleBtn.style.color=on?'var(--accent)':'';
+    toggleBtn.style.borderColor=on?'var(--accent)':'';
+    toggleBtn.style.background=on?'var(--accent-bg)':'';
   }
 
   // ── 매트릭스 뷰 ──
@@ -2224,6 +2226,53 @@ function renderBooksKanban(){
     return;
   }
 
+  // ── 기간 뷰 ──
+  if(booksViewMode==='period'){
+    const dateOf=b=>b.end_date||b.start_date||null;
+    const halfOf=d=>{if(!d)return null;const[y,m]=d.split('-');return{y:+y,h:+m<=6?1:2,key:`${y}-${+m<=6?1:2}`};};
+    const labelOf=k=>{if(!k)return'날짜 없음';const[y,h]=k.split('-');return`${y} ${h==='1'?'상반기':'하반기'}`;};
+    const grouped={};
+    books.forEach(b=>{
+      const hf=halfOf(dateOf(b));
+      const key=hf?hf.key:'none';
+      if(!grouped[key])grouped[key]=[];
+      grouped[key].push(b);
+    });
+    // 최신순 정렬
+    const keys=Object.keys(grouped).sort((a,b)=>{
+      if(a==='none')return 1;if(b==='none')return-1;
+      return b.localeCompare(a);
+    });
+    const statusLabel={want:'읽을 예정',reading:'읽는 중',done:'완독'};
+    const statusColor={want:'var(--start)',reading:'var(--ing)',done:'var(--end)'};
+    el.innerHTML=keys.map(k=>{
+      const bks=grouped[k].sort((a,b)=>(dateOf(b)||'').localeCompare(dateOf(a)||''));
+      return`<div style="margin-bottom:24px;">
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">${labelOf(k)} · ${bks.length}권</div>
+        ${bks.map(b=>{
+          const s=b.start_date?b.start_date.slice(2).replace(/-(\d+)$/,m=>`.${m.slice(1)}`):'';
+          const e=b.end_date?b.end_date.slice(2).replace(/-(\d+)$/,m=>`.${m.slice(1)}`):'';
+          const period=s&&e?`${s} ~ ${e}`:s?`${s} ~`:e?`~ ${e}`:'';
+          const purposes=(b.purposes||[]).map(p=>`<span style="padding:1px 6px;border-radius:8px;font-size:9px;background:var(--accent-bg);color:var(--accent);font-family:var(--mono);">${p}</span>`).join('');
+          return`<div onclick="openBookModal('${b.id}')" style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;">
+            ${b.cover_url
+              ?`<img src="${b.cover_url}" style="width:36px;height:50px;object-fit:cover;border-radius:4px;flex-shrink:0;">`
+              :`<div style="width:36px;height:50px;background:var(--surface2);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;">📖</div>`}
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;line-height:1.3;">${b.title}</div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="font-family:var(--mono);font-size:10px;color:${statusColor[b.status]};">${statusLabel[b.status]}</span>
+                ${period?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);">${period}</span>`:''}
+                ${purposes}
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }).join('')||`<div style="padding:32px;text-align:center;font-size:13px;color:var(--text3);">아직 없어요</div>`;
+    return;
+  }
+
   // ── 탭 뷰 (기존) ──
   const purposeChips=bookPurposes.length?`
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);">
@@ -2250,7 +2299,7 @@ function renderBooksKanban(){
 }
 
 function toggleBooksView(){
-  booksViewMode=booksViewMode==='matrix'?'tab':'matrix';
+  booksViewMode=booksViewMode==='tab'?'matrix':booksViewMode==='matrix'?'period':'tab';
   renderBooksKanban();
 }
 
