@@ -1232,7 +1232,6 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <button class="stats-tab" id="gardenTabPeople" onclick="switchGardenTab('people',this)">사람</button>
         <button class="stats-tab" id="gardenTabMoney" onclick="switchGardenTab('money',this)">Money</button>
         <button class="stats-tab" id="gardenTabHappiness" onclick="switchGardenTab('happiness',this)">행복</button>
-        <button class="stats-tab" id="gardenTabBooks" onclick="switchGardenTab('books',this)">독서</button>
       </div>
 
       <!-- Light -->
@@ -1527,17 +1526,6 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
         <div id="happinessList"></div>
       </div>
 
-      <!-- 독서 칸반 -->
-      <div id="gardenBooks" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <div class="section-title" style="margin:0;">독서</div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <button id="booksViewToggle" class="btn btn-ghost btn-sm" onclick="toggleBooksView()" title="매트릭스 / 탭 전환" style="font-family:var(--mono);font-size:11px;">⊞ 매트릭스</button>
-            <button class="btn btn-ghost btn-sm" onclick="openBookModal()">+ 책 추가</button>
-          </div>
-        </div>
-        <div id="booksKanban"></div>
-      </div>
     </div>
 
     <!-- LEARN VIEW -->
@@ -1559,6 +1547,18 @@ main { flex:1; padding:20px; max-width:640px; margin:0 auto; width:100%; }
             <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="openLearnSessionModal(null)">+ 일정</button>
           </div>
           <div class="learn-cal-grid" id="learnCalGrid"></div>
+        </div>
+
+        <!-- 독서 -->
+        <div style="margin-top:24px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:0.12em;text-transform:uppercase;font-weight:700;">독서</div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button id="booksViewToggle" class="btn btn-ghost btn-sm" onclick="toggleBooksView()" title="매트릭스 / 탭 전환" style="font-family:var(--mono);font-size:11px;">⊞ 매트릭스</button>
+              <button class="btn btn-ghost btn-sm" onclick="openBookModal()">+ 책 추가</button>
+            </div>
+          </div>
+          <div id="booksKanban"></div>
         </div>
       </div>
 
@@ -2545,7 +2545,7 @@ function showView(name,btn){
   if(name==='wave')renderWaves();
   if(name==='stats'){renderStats();}
   if(name==='garden'){loadVmv();renderPeople();loadBeingExtras();loadMoneyRecords();}
-  if(name==='learn'){closeLearnDetail&&typeof closeLearnDetail==='function'&&closeLearnDetail();loadLearn();}
+  if(name==='learn'){closeLearnDetail&&typeof closeLearnDetail==='function'&&closeLearnDetail();loadLearn();loadBooks().then(()=>renderBooksKanban());}
   if(name==='work'){loadWork();loadWorkPlans();}
 }
 
@@ -3559,10 +3559,8 @@ function switchGardenTab(tab,btn){
   document.getElementById('gardenPeople').style.display=tab==='people'?'block':'none';
   document.getElementById('gardenMoney').style.display=tab==='money'?'block':'none';
   document.getElementById('gardenHappiness').style.display=tab==='happiness'?'block':'none';
-  document.getElementById('gardenBooks').style.display=tab==='books'?'block':'none';
   if(tab==='money') renderMoneyView();
   if(tab==='happiness') renderHappiness();
-  if(tab==='books') renderBooksKanban();
 }
 
 // ── VMV ──
