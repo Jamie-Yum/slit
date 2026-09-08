@@ -2127,17 +2127,19 @@ async function deleteHappiness(){
 }
 
 // ── 독서 칸반 ──
-let books=[], bookExcerpts=[];
+let books=[], bookExcerpts=[], bookPurposes=[];
 let editBookId=null, excerptBookId=null;
+let booksActivePurpose=null;
 
 async function loadBooks(){
   try{
-    const[b,e]=await Promise.all([
+    const[b,e,p]=await Promise.all([
       sb.from('slit_books').select('*').order('order_index').order('created_at',{ascending:false}),
       sb.from('slit_book_excerpts').select('*').order('created_at',{ascending:false}),
+      sb.from('slit_book_purposes').select('*').order('order_index'),
     ]);
-    books=b.data||[]; bookExcerpts=e.data||[];
-  }catch(e){books=[];bookExcerpts=[];}
+    books=b.data||[]; bookExcerpts=e.data||[]; bookPurposes=p.data||[];
+  }catch(e){books=[];bookExcerpts=[];bookPurposes=[];}
 }
 
 let booksActiveTab='reading';
@@ -2149,7 +2151,15 @@ function renderBooksKanban(){
     {status:'reading',label:'읽는 중'},
     {status:'done',label:'완독'},
   ];
-  const colBooks=books.filter(b=>b.status===booksActiveTab);
+  let colBooks=books.filter(b=>b.status===booksActiveTab);
+  if(booksActivePurpose){
+    colBooks=colBooks.filter(b=>(b.purposes||[]).includes(booksActivePurpose));
+  }
+  const purposeChips=bookPurposes.length?`
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+      <button onclick="filterBookPurpose(null)" style="padding:4px 10px;border-radius:20px;border:1px solid ${!booksActivePurpose?'var(--accent)':'var(--border2)'};background:${!booksActivePurpose?'var(--accent-bg)':'none'};color:${!booksActivePurpose?'var(--accent)':'var(--text3)'};font-size:12px;cursor:pointer;">전체</button>
+      ${bookPurposes.map(p=>`<button onclick="filterBookPurpose('${p.name}')" style="padding:4px 10px;border-radius:20px;border:1px solid ${booksActivePurpose===p.name?'var(--accent)':'var(--border2)'};background:${booksActivePurpose===p.name?'var(--accent-bg)':'none'};color:${booksActivePurpose===p.name?'var(--accent)':'var(--text3)'};font-size:12px;cursor:pointer;">${p.name}</button>`).join('')}
+    </div>`:'';
   el.innerHTML=`
     <div class="books-status-tabs">
       ${tabs.map(t=>{
@@ -2159,6 +2169,7 @@ function renderBooksKanban(){
         </button>`;
       }).join('')}
     </div>
+    ${purposeChips}
     <div id="booksTabContent">
       ${colBooks.length
         ? colBooks.map(b=>bookCardHtml(b)).join('')
@@ -2172,17 +2183,26 @@ function switchBooksTab(status){
   renderBooksKanban();
 }
 
+function filterBookPurpose(name){
+  booksActivePurpose=name;
+  renderBooksKanban();
+}
+
 function bookCardHtml(b){
   const excerptCount=bookExcerpts.filter(e=>e.book_id===b.id).length;
   const coverHtml=b.cover_url
     ? `<img class="book-card-cover" src="${b.cover_url}" alt="${b.title}" onerror="this.parentElement.innerHTML='<span class=\\'book-card-cover-placeholder\\'>📖</span>'">`
     : `<span class="book-card-cover-placeholder">📖</span>`;
+  const purposeTags=(b.purposes||[]).length
+    ?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">${(b.purposes||[]).map(p=>`<span style="padding:2px 7px;border-radius:10px;font-size:10px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent);opacity:0.85;">${p}</span>`).join('')}</div>`
+    :'';
   return `<div class="book-card" onclick="openBookModal('${b.id}')">
     <div class="book-card-cover-wrap">${coverHtml}</div>
     <div class="book-card-body">
       <div class="book-card-title">${b.title}</div>
       ${b.author?`<div class="book-card-author">${b.author}</div>`:''}
       ${b.start_date||b.end_date?`<div class="book-card-date">${b.start_date||'?'} ~ ${b.end_date||''}</div>`:''}
+      ${purposeTags}
       <div class="book-card-actions" onclick="event.stopPropagation()">
         <button class="book-action-btn" onclick="openExcerptsModal('${b.id}')">✏ 필사${excerptCount?` (${excerptCount})`:''}</button>
       </div>
@@ -2212,12 +2232,15 @@ function openBookModal(id){
     document.getElementById('bookMemo').value=b.memo||'';
     const prev=document.getElementById('bookCoverPreview');
     prev.src=b.cover_url||'';prev.style.display=b.cover_url?'block':'none';
+    window._editBookPurposes=[...(b.purposes||[])];
   } else {
     ['bookTitle','bookAuthor','bookCoverUrl','bookStartDate','bookEndDate','bookMemo'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('bookStatus').value='want';
     document.getElementById('bookCoverPreview').style.display='none';
+    window._editBookPurposes=[];
   }
   document.querySelectorAll('.book-status-btn').forEach(b=>b.classList.toggle('active',b.dataset.status===(document.getElementById('bookStatus').value)));
+  renderBookPurposeChips();
   document.getElementById('bookModal').classList.add('open');
   setTimeout(()=>document.getElementById('bookTitle').focus(),100);
 }
@@ -2285,6 +2308,7 @@ async function saveBook(){
     start_date:document.getElementById('bookStartDate').value||null,
     end_date:document.getElementById('bookEndDate').value||null,
     memo:document.getElementById('bookMemo').value.trim()||null,
+    purposes:window._editBookPurposes||[],
     updated_at:new Date().toISOString(),
   };
   let res;
@@ -2298,6 +2322,35 @@ async function saveBook(){
   await loadBooks();
   renderBooksKanban();
   showToast('저장되었습니다');
+}
+
+function renderBookPurposeChips(){
+  const el=document.getElementById('bookPurposeChips');if(!el)return;
+  const sel=window._editBookPurposes||[];
+  el.innerHTML=bookPurposes.map(p=>{
+    const on=sel.includes(p.name);
+    return `<button type="button" onclick="toggleBookPurpose('${p.name}')" style="padding:5px 12px;border-radius:20px;border:1.5px solid ${on?'var(--accent)':'var(--border2)'};background:${on?'var(--accent-bg)':'none'};color:${on?'var(--accent)':'var(--text2)'};font-size:12px;cursor:pointer;transition:all 0.12s;">${p.name}</button>`;
+  }).join('')+`<button type="button" onclick="addBookPurposePrompt()" style="padding:5px 12px;border-radius:20px;border:1.5px dashed var(--border2);background:none;color:var(--text3);font-size:12px;cursor:pointer;">+ 추가</button>`;
+}
+
+function toggleBookPurpose(name){
+  const sel=window._editBookPurposes||[];
+  const idx=sel.indexOf(name);
+  if(idx>=0) sel.splice(idx,1); else sel.push(name);
+  window._editBookPurposes=sel;
+  renderBookPurposeChips();
+}
+
+async function addBookPurposePrompt(){
+  const name=prompt('새 목적 이름을 입력하세요');
+  if(!name||!name.trim())return;
+  const n=name.trim();
+  if(bookPurposes.find(p=>p.name===n)){showToast('이미 있어요');return;}
+  const{error}=await sb.from('slit_book_purposes').insert({name:n,order_index:bookPurposes.length});
+  if(error){showToast('추가 실패');return;}
+  await loadBooks();
+  if(!(window._editBookPurposes||[]).includes(n)) (window._editBookPurposes=window._editBookPurposes||[]).push(n);
+  renderBookPurposeChips();
 }
 
 async function deleteBook(){
@@ -9089,6 +9142,10 @@ init();
         <label class="form-label">완독일</label>
         <input class="form-input" type="date" id="bookEndDate">
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">목적</label>
+      <div id="bookPurposeChips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
     </div>
     <div class="form-group">
       <label class="form-label">메모</label>
