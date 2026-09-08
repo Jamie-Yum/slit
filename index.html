@@ -2425,13 +2425,15 @@ function openBookModal(id){
     document.getElementById('bookCoverUrl').value=b.cover_url||'';
     document.getElementById('bookStatus').value=b.status||'want';
     document.getElementById('bookStartDate').value=(b.start_date||'').slice(0,7);
+    document.getElementById('bookStartDay').value=b.start_date&&b.start_date.length>7?+b.start_date.slice(8):'';
     document.getElementById('bookEndDate').value=(b.end_date||'').slice(0,7);
+    document.getElementById('bookEndDay').value=b.end_date&&b.end_date.length>7?+b.end_date.slice(8):'';
     document.getElementById('bookMemo').value=b.memo||'';
     const prev=document.getElementById('bookCoverPreview');
     prev.src=b.cover_url||'';prev.style.display=b.cover_url?'block':'none';
     window._editBookPurposes=[...(b.purposes||[])];
   } else {
-    ['bookTitle','bookAuthor','bookCoverUrl','bookStartDate','bookEndDate','bookMemo'].forEach(id=>document.getElementById(id).value='');
+    ['bookTitle','bookAuthor','bookCoverUrl','bookStartDate','bookStartDay','bookEndDate','bookEndDay','bookMemo'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('bookStatus').value='want';
     document.getElementById('bookCoverPreview').style.display='none';
     window._editBookPurposes=[];
@@ -2502,8 +2504,8 @@ async function saveBook(){
     author:document.getElementById('bookAuthor').value.trim()||null,
     cover_url:document.getElementById('bookCoverUrl').value.trim()||null,
     status:document.getElementById('bookStatus').value||'want',
-    start_date:document.getElementById('bookStartDate').value||null,
-    end_date:document.getElementById('bookEndDate').value||null,
+    start_date:(()=>{const m=document.getElementById('bookStartDate').value;const d=document.getElementById('bookStartDay').value;return m?(d?`${m}-${String(d).padStart(2,'0')}`:m):null;})(),
+    end_date:(()=>{const m=document.getElementById('bookEndDate').value;const d=document.getElementById('bookEndDay').value;return m?(d?`${m}-${String(d).padStart(2,'0')}`:m):null;})(),
     memo:document.getElementById('bookMemo').value.trim()||null,
     purposes:window._editBookPurposes||[],
     updated_at:new Date().toISOString(),
@@ -9330,12 +9332,18 @@ init();
     </div>
     <div style="display:flex;gap:10px;">
       <div class="form-group" style="flex:1;">
-        <label class="form-label">시작 월</label>
-        <input class="form-input" type="month" id="bookStartDate">
+        <label class="form-label">시작</label>
+        <div style="display:flex;gap:5px;">
+          <input class="form-input" type="month" id="bookStartDate" style="flex:1;">
+          <input class="form-input" type="number" id="bookStartDay" min="1" max="31" placeholder="일" style="width:58px;" title="일(선택)">
+        </div>
       </div>
       <div class="form-group" style="flex:1;">
-        <label class="form-label">완독 월</label>
-        <input class="form-input" type="month" id="bookEndDate">
+        <label class="form-label">완독</label>
+        <div style="display:flex;gap:5px;">
+          <input class="form-input" type="month" id="bookEndDate" style="flex:1;">
+          <input class="form-input" type="number" id="bookEndDay" min="1" max="31" placeholder="일" style="width:58px;" title="일(선택)">
+        </div>
       </div>
     </div>
     <div class="form-group">
