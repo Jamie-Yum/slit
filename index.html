@@ -2353,7 +2353,7 @@ async function searchBooks(){
 function selectAladinBook(idx){
   const item=window._aladinItems?.[idx];if(!item)return;
   document.getElementById('bookTitle').value=item.title||'';
-  const author=(item.author||'').replace(/\s*\([^)]*\)\s*/g,'').replace(/,/g,' ·').trim();
+  const author=(item.author||'').replace(/\(\s*\)/g,'').replace(/,/g,' ·').trim();
   document.getElementById('bookAuthor').value=author;
   const cover=item.cover||'';
   document.getElementById('bookCoverUrl').value=cover;
