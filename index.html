@@ -2289,9 +2289,17 @@ function renderBooksKanban(){
       <button onclick="filterBookPurpose(null)" style="padding:4px 10px;border-radius:20px;border:1px solid ${!booksActivePurpose?'var(--accent)':'var(--border2)'};background:${!booksActivePurpose?'var(--accent-bg)':'none'};color:${!booksActivePurpose?'var(--accent)':'var(--text3)'};font-size:12px;cursor:pointer;">전체</button>
       ${bookPurposes.map(p=>`<button onclick="filterBookPurpose('${p.name}')" style="padding:4px 10px;border-radius:20px;border:1px solid ${booksActivePurpose===p.name?'var(--accent)':'var(--border2)'};background:${booksActivePurpose===p.name?'var(--accent-bg)':'none'};color:${booksActivePurpose===p.name?'var(--accent)':'var(--text3)'};font-size:12px;cursor:pointer;">${p.name}</button>`).join('')}
     </div>`:'';
-  // 목적 선택 시 → 전체 상태 섹션으로
+  // 목적 선택 시 → 상태 카드 유지 + 전체 상태 섹션
   if(booksActivePurpose){
     const filtered=books.filter(b=>(b.purposes||[]).includes(booksActivePurpose));
+    const statusTabs=`<div class="books-status-tabs">
+      ${tabs.map(t=>{
+        const cnt=filtered.filter(b=>b.status===t.status).length;
+        return`<button class="books-status-tab ${t.status}" style="opacity:${cnt?1:0.4};">
+          <div>${t.label}</div>${cnt?`<div style="font-size:10px;opacity:0.6;font-weight:400;">${cnt}권</div>`:''}
+        </button>`;
+      }).join('')}
+    </div>`;
     const sections=tabs.map(t=>{
       const sec=filtered.filter(b=>b.status===t.status).sort((a,b)=>t.status==='done'?(b.end_date||'').localeCompare(a.end_date||''):0);
       if(!sec.length)return'';
@@ -2300,7 +2308,7 @@ function renderBooksKanban(){
         ${sec.map(b=>bookCardHtml(b)).join('')}
       </div>`;
     }).join('');
-    el.innerHTML=`${purposeChips}${sections||`<div style="padding:32px 16px;text-align:center;font-size:13px;color:var(--text3);">아직 없어요</div>`}`;
+    el.innerHTML=`${statusTabs}${purposeChips}${sections||`<div style="padding:32px 16px;text-align:center;font-size:13px;color:var(--text3);">아직 없어요</div>`}`;
     return;
   }
 
