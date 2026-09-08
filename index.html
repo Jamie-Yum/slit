@@ -2204,21 +2204,22 @@ function renderBooksKanban(){
     if(!dataYears.includes(y))dataYears.unshift(y);
 
     // 헬퍼
-    const mS=(m)=>new Date(y,m-1,1);
-    const mE=(m)=>new Date(y,m,0,23,59,59);
+    const parseYM=(s)=>{if(!s)return null;const p=s.split('-');return{y:+p[0],m:+p[1]};};
+    const cmpYM=(a,b)=>a.y!==b.y?a.y-b.y:a.m-b.m;
+    const nowYM={y:new Date().getFullYear(),m:new Date().getMonth()+1};
     const overlaps=(b,m)=>{
-      const bs=b.start_date?new Date(b.start_date):null;
-      const be=b.end_date?new Date(b.end_date):(b.status==='reading'?new Date():null);
+      const bs=b.start_date?parseYM(b.start_date):null;
+      const be=b.end_date?parseYM(b.end_date):(b.status==='reading'?nowYM:null);
       if(!bs&&!be)return false;
-      if(bs&&bs>mE(m))return false;
-      if(be&&be<mS(m))return false;
+      if(bs&&cmpYM(bs,{y,m})>0)return false;
+      if(be&&cmpYM(be,{y,m})<0)return false;
       return true;
     };
     const isFirst=(b,m)=>{
       if(!b.start_date)return false;
-      const d=new Date(b.start_date);
-      if(d.getFullYear()<y)return m===1;
-      return d.getFullYear()===y&&d.getMonth()+1===m;
+      const d=parseYM(b.start_date);
+      if(d.y<y)return m===1;
+      return d.y===y&&d.m===m;
     };
 
     // 날짜 없는 책 (맨 아래)
