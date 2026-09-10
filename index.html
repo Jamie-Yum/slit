@@ -3545,6 +3545,8 @@ function openMoneyModal(id){
   document.getElementById('moneyBuyPrice').value=rec?rec.buy_price||'':'';
   document.getElementById('moneySellPrice').value=rec?rec.sell_price||'':'';
   document.getElementById('moneyQuantity').value=rec?rec.quantity||'':'';
+  const bp=rec?rec.buy_price:0,sp=rec?rec.sell_price:0;
+  document.getElementById('moneyReturnRate').value=(bp&&sp)?((sp-bp)/bp*100).toFixed(2):'';
   document.getElementById('moneyExchangeRate').value=rec?rec.exchange_rate||'':'';
   const bp=rec?rec.buy_price:0,sp=rec?rec.sell_price:0;
   document.getElementById('moneyReturnRate').value=(bp&&sp)?((sp-bp)/bp*100).toFixed(2):'';
@@ -9671,7 +9673,7 @@ init();
           <option value="보험료">보험료</option>
           <option value="이자">이자</option>
           <option value="부동산">부동산</option>
-          <option value="프리랜서">프리랜서</option>
+          <option value="모임운영">모임운영</option>
           <option value="기타">기타</option>
         </select>
       </div>
