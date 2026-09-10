@@ -3548,8 +3548,6 @@ function openMoneyModal(id){
   const bp=rec?rec.buy_price:0,sp=rec?rec.sell_price:0;
   document.getElementById('moneyReturnRate').value=(bp&&sp)?((sp-bp)/bp*100).toFixed(2):'';
   document.getElementById('moneyExchangeRate').value=rec?rec.exchange_rate||'':'';
-  const bp=rec?rec.buy_price:0,sp=rec?rec.sell_price:0;
-  document.getElementById('moneyReturnRate').value=(bp&&sp)?((sp-bp)/bp*100).toFixed(2):'';
   document.getElementById('moneyExchangeInfo').textContent='';
   selectMoneyType(rec?rec.type:'income');
   moneyUpdateCategoryOther();
